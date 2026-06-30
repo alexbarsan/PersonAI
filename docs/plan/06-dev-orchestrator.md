@@ -47,6 +47,7 @@ If the plan files have not yet moved to `docs/plan/`, read them from the reposit
 - commit hash
 - verification command
 - notes
+- next step summary
 
 ## Human 5-Minute Audit
 
@@ -59,6 +60,7 @@ After each slice, the human should check:
 - Did any decision conflict require updating `decision-record.md`?
 - Are privacy and logging invariants preserved?
 - Is `SLICE-STATUS.md` updated?
+- Does `SLICE-STATUS.md` summarize the next step?
 - Is there exactly one commit for the slice?
 
 ## Stuck Or Red-Suite Recovery

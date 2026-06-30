@@ -17,3 +17,12 @@ jobs:
       - name: Check S0 structure
         shell: pwsh
         run: ./scripts/check-s0-structure.ps1
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Test API
+        shell: pwsh
+        run: dotnet test api/DreamLens.sln --configuration Release
