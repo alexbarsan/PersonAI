@@ -11,7 +11,10 @@ public static class HealthEndpoints
             .WithName("GetLiveHealth")
             .WithSummary("Reports whether the API process is alive.");
 
-        group.MapGet("/ready", () => Results.Ok(new HealthResponse("Ready")))
+        group.MapGet("/ready", async (IDatabaseReadinessProbe readinessProbe, CancellationToken cancellationToken) =>
+            await readinessProbe.IsReadyAsync(cancellationToken)
+                ? Results.Ok(new HealthResponse("Ready"))
+                : Results.StatusCode(StatusCodes.Status503ServiceUnavailable))
             .WithName("GetReadyHealth")
             .WithSummary("Reports whether the API is ready to receive traffic.");
 

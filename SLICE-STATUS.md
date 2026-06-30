@@ -6,7 +6,7 @@ Status values: `Not started`, `In progress`, `Blocked`, `Done`.
 | --- | --- | --- | --- | --- | --- | --- |
 | S0 | Done | 2026-06-30 | S0 commit | `powershell -ExecutionPolicy Bypass -File scripts/check-s0-structure.ps1` | Normalized monorepo foundation, CI skeleton, and plan docs under `docs/plan/`. | Build S1 walking skeleton API. |
 | S1 | Done | 2026-07-01 | S1 commit | `dotnet test api/DreamLens.sln --configuration Release` | Added .NET 9 API solution, health endpoints, development OpenAPI, Dockerfile, CI API test step, and unit/integration test projects. Docker image build was attempted but skipped because the Docker daemon is not running. | Start S2: add PostgreSQL, EF Core 9, migrations, and Testcontainers integration fixture. |
-| S2 | Not started |  |  |  |  | Add PostgreSQL, EF Core 9, and Testcontainers fixture. |
+| S2 | Done | 2026-07-01 | S2 commit | `dotnet test api/DreamLens.sln --configuration Release`; `powershell -ExecutionPolicy Bypass -File scripts/check-s0-structure.ps1` | Added PostgreSQL EF Core 9 foundation, initial migration, DbContext, readiness probing, and Testcontainers PostgreSQL fixture. Docker-backed tests skip locally when the Docker daemon is unavailable; CI now runs on Ubuntu for Docker support. | Start S3: add Cognito JWT validation, local dev/test tokens, `ICurrentUser`, and `/v1/me`. |
 | S3 | Not started |  |  |  |  | Add Cognito JWT validation, dev tokens, and `/v1/me`. |
 | S4 | Not started |  |  |  |  | Add encrypted profile, traits, and consent endpoints. |
 | S5 | Not started |  |  |  |  | Add PersonaKit DeepSeek chat client and resilience decorators. |

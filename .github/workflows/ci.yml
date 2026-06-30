@@ -9,7 +9,7 @@ on:
 jobs:
   foundation:
     name: foundation
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
