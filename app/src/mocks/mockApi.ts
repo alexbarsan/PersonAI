@@ -4,6 +4,7 @@ import { mockDream, mockInsights, mockJournal, mockMe, mockProfile } from "@/moc
 export const mockApiClient: ApiClient = {
   getMe: async () => mockMe,
   getProfile: async () => mockProfile,
+  updateProfile: async (request) => request,
   submitDream: async () => mockDream,
   listDreams: async () => mockJournal,
   getDream: async () => mockDream,

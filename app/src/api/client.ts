@@ -3,6 +3,7 @@ import {
   DreamResponse,
   InsightsResponse,
   MeResponse,
+  ProfileUpdateRequest,
   ProfileResponse,
   SubmitDreamRequest
 } from "@/api/dto";
@@ -18,6 +19,7 @@ export type ApiClientOptions = {
 export type ApiClient = {
   getMe: () => Promise<MeResponse>;
   getProfile: () => Promise<ProfileResponse>;
+  updateProfile: (request: ProfileUpdateRequest) => Promise<ProfileResponse>;
   submitDream: (request: SubmitDreamRequest) => Promise<DreamResponse>;
   listDreams: () => Promise<DreamJournalResponse>;
   getDream: (id: string) => Promise<DreamResponse>;
@@ -70,6 +72,11 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
   return {
     getMe: () => request<MeResponse>("/v1/me"),
     getProfile: () => request<ProfileResponse>("/v1/profile"),
+    updateProfile: (body) =>
+      request<ProfileResponse>("/v1/profile", {
+        method: "PUT",
+        body: JSON.stringify(body)
+      }),
     submitDream: (body) =>
       request<DreamResponse>("/v1/dreams", {
         method: "POST",

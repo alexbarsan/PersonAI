@@ -15,6 +15,8 @@ export type ProfileResponse = {
   consent: ConsentFlags;
 };
 
+export type ProfileUpdateRequest = ProfileResponse;
+
 export type ProfileTraits = {
   fears: string[];
   allergies: string[];

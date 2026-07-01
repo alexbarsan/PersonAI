@@ -5,6 +5,8 @@ import { mockDream, mockInsights, mockJournal, mockMe, mockProfile } from "@/moc
 export const handlers = [
   rest.get("http://localhost/v1/me", (_, response, context) => response(context.json(mockMe))),
   rest.get("http://localhost/v1/profile", (_, response, context) => response(context.json(mockProfile))),
+  rest.put("http://localhost/v1/profile", async (request, response, context) =>
+    response(context.json(await request.json()))),
   rest.post("http://localhost/v1/dreams", (_, response, context) => response(context.json(mockDream))),
   rest.get("http://localhost/v1/dreams", (_, response, context) => response(context.json(mockJournal))),
   rest.get("http://localhost/v1/dreams/:id", (_, response, context) => response(context.json(mockDream))),

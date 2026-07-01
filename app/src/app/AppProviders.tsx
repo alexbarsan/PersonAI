@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PropsWithChildren, useState } from "react";
 
+import { ApiClientProvider } from "@/api/apiContext";
 import { ThemeProvider } from "@/theme/ThemeProvider";
 
 export function AppProviders({ children }: PropsWithChildren) {
@@ -18,7 +19,9 @@ export function AppProviders({ children }: PropsWithChildren) {
 
   return (
     <ThemeProvider>
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      <ApiClientProvider>
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      </ApiClientProvider>
     </ThemeProvider>
   );
 }

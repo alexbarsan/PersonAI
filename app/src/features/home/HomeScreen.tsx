@@ -1,20 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
-import { createApiClient } from "@/api/client";
-import { appConfig } from "@/app/config";
-import { getAccessToken, useAuthStore } from "@/auth/authStore";
+import { Link } from "expo-router";
+
+import { useApiClient } from "@/api/apiContext";
+import { useAuthStore } from "@/auth/authStore";
 import { useDreamDraftStore } from "@/state/dreamDraftStore";
 import { useTheme } from "@/theme/ThemeProvider";
 
-const api = createApiClient({
-  baseUrl: appConfig.apiBaseUrl,
-  getAccessToken,
-  mockMode: appConfig.mockApi
-});
-
 export function HomeScreen() {
   const theme = useTheme();
+  const api = useApiClient();
   const user = useAuthStore((state) => state.user);
   const signInWithMockUser = useAuthStore((state) => state.signInWithMockUser);
   const signOut = useAuthStore((state) => state.signOut);
@@ -71,6 +67,11 @@ export function HomeScreen() {
             >
               <Text style={[styles.buttonText, { color: theme.colors.primaryText }]}>Save draft</Text>
             </Pressable>
+            <Link href="/profile" asChild>
+              <Pressable accessibilityRole="button" style={styles.secondaryButton}>
+                <Text style={[styles.secondaryButtonText, { color: theme.colors.primary }]}>Profile</Text>
+              </Pressable>
+            </Link>
             <Pressable accessibilityRole="button" onPress={signOut} style={styles.secondaryButton}>
               <Text style={[styles.secondaryButtonText, { color: theme.colors.primary }]}>Sign out</Text>
             </Pressable>
@@ -88,6 +89,11 @@ export function HomeScreen() {
             >
               <Text style={[styles.buttonText, { color: theme.colors.primaryText }]}>Use mock account</Text>
             </Pressable>
+            <Link href="/onboarding" asChild>
+              <Pressable accessibilityRole="button" style={styles.secondaryButton}>
+                <Text style={[styles.secondaryButtonText, { color: theme.colors.primary }]}>Onboarding</Text>
+              </Pressable>
+            </Link>
           </>
         )}
       </View>
