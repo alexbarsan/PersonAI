@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react-native";
 
-import { AppProviders } from "@/app/AppProviders";
+import { AppProviders } from "@/core/AppProviders";
 import { useAuthStore } from "@/auth/authStore";
 import { HomeScreen } from "@/features/home/HomeScreen";
 import { useDreamDraftStore } from "@/state/dreamDraftStore";

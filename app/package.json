@@ -7,7 +7,9 @@
     "start": "expo start",
     "web": "expo start --web",
     "test": "node --no-webstorage ./node_modules/jest/bin/jest.js --runInBand --forceExit",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "e2e:web": "playwright test",
+    "e2e:mobile": "maestro test ../e2e/maestro"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
@@ -33,6 +35,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.28.0",
+    "@playwright/test": "^1.61.1",
     "@testing-library/react-native": "^13.3.0",
     "@types/jest": "^29.5.14",
     "@types/react": "~19.2.0",

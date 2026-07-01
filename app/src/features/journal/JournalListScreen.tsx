@@ -49,10 +49,10 @@ export function JournalListScreen() {
         {journal.data?.items.map((item) => (
           <View key={item.id} style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
             <Link href={`/journal/${item.id}`} asChild>
-              <Pressable accessibilityRole="button" style={styles.cardLink}>
+              <Pressable accessibilityRole="button" style={styles.cardLink} testID={`journal-item-${item.id}`}>
                 <Text style={[styles.cardTitle, { color: theme.colors.text }]}>{item.summary ?? "Dream interpretation"}</Text>
                 <Text style={[styles.body, { color: theme.colors.mutedText }]}>
-                  {[item.occurredAt, item.mood].filter(Boolean).join(" · ") || item.createdAt}
+                  {[item.occurredAt, item.mood].filter(Boolean).join(" - ") || item.createdAt}
                 </Text>
               </Pressable>
             </Link>
@@ -60,6 +60,7 @@ export function JournalListScreen() {
               accessibilityRole="button"
               onPress={() => deleteDream.mutate(item.id)}
               style={styles.deleteButton}
+              testID={`delete-dream-${item.id}`}
             >
               <Text style={[styles.deleteText, { color: theme.colors.warning }]}>Delete</Text>
             </Pressable>

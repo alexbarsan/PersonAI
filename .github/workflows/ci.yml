@@ -26,3 +26,30 @@ jobs:
       - name: Test API
         shell: pwsh
         run: dotnet test api/DreamLens.sln --configuration Release
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install app dependencies
+        working-directory: app
+        run: npm ci
+
+      - name: Test app
+        working-directory: app
+        run: npm test
+
+      - name: Typecheck app
+        working-directory: app
+        run: npm run typecheck
+
+      - name: Install Playwright browsers
+        working-directory: app
+        run: npx playwright install --with-deps chromium
+
+      - name: Playwright web E2E
+        working-directory: app
+        run: npm run e2e:web

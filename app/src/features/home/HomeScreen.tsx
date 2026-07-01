@@ -68,22 +68,22 @@ export function HomeScreen() {
               <Text style={[styles.buttonText, { color: theme.colors.primaryText }]}>Save draft</Text>
             </Pressable>
             <Link href="/dreams/capture" asChild>
-              <Pressable accessibilityRole="button" style={styles.secondaryButton}>
+              <Pressable accessibilityRole="button" style={styles.secondaryButton} testID="go-dream-capture">
                 <Text style={[styles.secondaryButtonText, { color: theme.colors.primary }]}>Interpret dream</Text>
               </Pressable>
             </Link>
             <Link href="/journal" asChild>
-              <Pressable accessibilityRole="button" style={styles.secondaryButton}>
+              <Pressable accessibilityRole="button" style={styles.secondaryButton} testID="go-journal">
                 <Text style={[styles.secondaryButtonText, { color: theme.colors.primary }]}>Journal</Text>
               </Pressable>
             </Link>
             <Link href="/insights" asChild>
-              <Pressable accessibilityRole="button" style={styles.secondaryButton}>
+              <Pressable accessibilityRole="button" style={styles.secondaryButton} testID="go-insights">
                 <Text style={[styles.secondaryButtonText, { color: theme.colors.primary }]}>Insights</Text>
               </Pressable>
             </Link>
             <Link href="/profile" asChild>
-              <Pressable accessibilityRole="button" style={styles.secondaryButton}>
+              <Pressable accessibilityRole="button" style={styles.secondaryButton} testID="go-profile">
                 <Text style={[styles.secondaryButtonText, { color: theme.colors.primary }]}>Profile</Text>
               </Pressable>
             </Link>
@@ -101,11 +101,12 @@ export function HomeScreen() {
               accessibilityRole="button"
               onPress={signInWithMockUser}
               style={[styles.button, { backgroundColor: theme.colors.primary }]}
+              testID="mock-sign-in"
             >
               <Text style={[styles.buttonText, { color: theme.colors.primaryText }]}>Use mock account</Text>
             </Pressable>
             <Link href="/onboarding" asChild>
-              <Pressable accessibilityRole="button" style={styles.secondaryButton}>
+              <Pressable accessibilityRole="button" style={styles.secondaryButton} testID="go-onboarding">
                 <Text style={[styles.secondaryButtonText, { color: theme.colors.primary }]}>Onboarding</Text>
               </Pressable>
             </Link>

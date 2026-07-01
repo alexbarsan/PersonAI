@@ -7,6 +7,7 @@ import {
   ProfileResponse,
   SubmitDreamRequest
 } from "@/api/dto";
+import { ApiError } from "@/api/errors";
 import { mockApiClient } from "@/mocks/mockApi";
 
 export type ApiClientOptions = {
@@ -27,15 +28,7 @@ export type ApiClient = {
   getInsights: () => Promise<InsightsResponse>;
 };
 
-export class ApiError extends Error {
-  constructor(
-    message: string,
-    public readonly status: number,
-    public readonly body: unknown
-  ) {
-    super(message);
-  }
-}
+export { ApiError };
 
 export function createApiClient(options: ApiClientOptions): ApiClient {
   if (options.mockMode) {

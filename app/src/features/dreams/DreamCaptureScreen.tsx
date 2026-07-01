@@ -68,6 +68,7 @@ export function DreamCaptureScreen({ onSubmitted }: DreamCaptureScreenProps) {
         <Pressable
           accessibilityRole="button"
           onPress={onSubmit}
+          testID="submit-dream"
           style={[styles.button, { backgroundColor: theme.colors.primary }]}
         >
           <Text style={[styles.buttonText, { color: theme.colors.primaryText }]}>
@@ -113,6 +114,7 @@ function Field({
               multiline ? styles.textArea : styles.input,
               { borderColor: theme.colors.border, color: theme.colors.text }
             ]}
+            testID={`dream-${String(name)}`}
             textAlignVertical={multiline ? "top" : "center"}
             value={field.value}
           />

@@ -1,8 +1,8 @@
 import { PropsWithChildren, createContext, useContext } from "react";
 
 import { ApiClient, createApiClient } from "@/api/client";
-import { appConfig } from "@/app/config";
 import { getAccessToken } from "@/auth/authStore";
+import { appConfig } from "@/core/config";
 
 const defaultApiClient = createApiClient({
   baseUrl: appConfig.apiBaseUrl,

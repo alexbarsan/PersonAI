@@ -1,6 +1,6 @@
 import * as AuthSession from "expo-auth-session";
 
-import { appConfig } from "@/app/config";
+import { appConfig } from "@/core/config";
 
 export function createCognitoAuthRequest() {
   if (!appConfig.cognitoDomain || !appConfig.cognitoClientId) {

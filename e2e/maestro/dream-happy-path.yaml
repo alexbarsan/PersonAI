@@ -1,0 +1,17 @@
+appId: host.exp.Exponent
+---
+- launchApp
+- tapOn:
+    id: "mock-sign-in"
+- tapOn:
+    id: "go-dream-capture"
+- tapOn:
+    id: "dream-text"
+- inputText: "I was walking through a quiet station while holding a blue notebook."
+- tapOn:
+    id: "dream-mood"
+- inputText: "curious"
+- tapOn:
+    id: "submit-dream"
+- assertVisible: "Dream result"
+- assertVisible: "Guidance"

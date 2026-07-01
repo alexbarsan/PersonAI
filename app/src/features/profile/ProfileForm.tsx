@@ -92,6 +92,7 @@ export function ProfileForm({ mode }: ProfileFormProps) {
         <Pressable
           accessibilityRole="button"
           onPress={onSubmit}
+          testID="save-profile"
           style={[styles.button, { backgroundColor: theme.colors.primary }]}
         >
           <Text style={[styles.buttonText, { color: theme.colors.primaryText }]}>
@@ -131,6 +132,7 @@ function Field({
             placeholder={placeholder}
             placeholderTextColor={theme.colors.mutedText}
             style={[styles.input, { borderColor: theme.colors.border, color: theme.colors.text }]}
+            testID={`profile-${String(name)}`}
             value={String(field.value ?? "")}
           />
           {fieldState.error ? (
@@ -170,6 +172,7 @@ function Consent({
             <Switch
               accessibilityLabel={label}
               onValueChange={field.onChange}
+              testID={`profile-${String(name)}`}
               value={Boolean(field.value)}
             />
           </View>
