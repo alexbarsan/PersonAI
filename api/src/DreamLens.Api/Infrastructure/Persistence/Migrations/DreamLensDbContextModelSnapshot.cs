@@ -15,6 +15,57 @@ public sealed class DreamLensDbContextModelSnapshot : ModelSnapshot
             .HasAnnotation("ProductVersion", "9.0.12")
             .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
+        modelBuilder.Entity("DreamLens.Api.Infrastructure.Persistence.DreamRecord", entity =>
+        {
+            entity.Property<Guid>("Id")
+                .HasColumnType("uuid");
+
+            entity.Property<DateTimeOffset>("CreatedAt")
+                .HasColumnType("timestamp with time zone");
+
+            entity.Property<string>("ErrorMessage")
+                .HasColumnType("text");
+
+            entity.Property<string>("Mood")
+                .HasMaxLength(64)
+                .HasColumnType("character varying(64)");
+
+            entity.Property<string>("OccurredAt")
+                .HasMaxLength(32)
+                .HasColumnType("character varying(32)");
+
+            entity.Property<string>("ResultJson")
+                .HasColumnType("text");
+
+            entity.Property<int?>("SleepQuality")
+                .HasColumnType("integer");
+
+            entity.Property<string>("Status")
+                .IsRequired()
+                .HasMaxLength(32)
+                .HasColumnType("character varying(32)");
+
+            entity.Property<string>("TagsJson")
+                .IsRequired()
+                .HasColumnType("text");
+
+            entity.Property<string>("Text")
+                .IsRequired()
+                .HasMaxLength(4000)
+                .HasColumnType("character varying(4000)");
+
+            entity.Property<string>("UserSubject")
+                .IsRequired()
+                .HasMaxLength(256)
+                .HasColumnType("character varying(256)");
+
+            entity.HasKey("Id");
+
+            entity.HasIndex("UserSubject", "CreatedAt");
+
+            entity.ToTable("Dreams");
+        });
+
         modelBuilder.Entity("DreamLens.Api.Infrastructure.Persistence.SchemaMarker", entity =>
         {
             entity.Property<Guid>("Id")

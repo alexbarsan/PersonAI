@@ -8,6 +8,8 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
 
     public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
 
+    public DbSet<DreamRecord> Dreams => Set<DreamRecord>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<SchemaMarker>(entity =>
@@ -46,6 +48,31 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
             entity.Property(profile => profile.CreatedAt)
                 .IsRequired();
             entity.Property(profile => profile.UpdatedAt)
+                .IsRequired();
+        });
+
+        modelBuilder.Entity<DreamRecord>(entity =>
+        {
+            entity.ToTable("Dreams");
+            entity.HasKey(dream => dream.Id);
+            entity.HasIndex(dream => new { dream.UserSubject, dream.CreatedAt });
+
+            entity.Property(dream => dream.UserSubject)
+                .HasMaxLength(256)
+                .IsRequired();
+            entity.Property(dream => dream.Text)
+                .HasMaxLength(4000)
+                .IsRequired();
+            entity.Property(dream => dream.Mood)
+                .HasMaxLength(64);
+            entity.Property(dream => dream.TagsJson)
+                .IsRequired();
+            entity.Property(dream => dream.OccurredAt)
+                .HasMaxLength(32);
+            entity.Property(dream => dream.Status)
+                .HasMaxLength(32)
+                .IsRequired();
+            entity.Property(dream => dream.CreatedAt)
                 .IsRequired();
         });
     }
