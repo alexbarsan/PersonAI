@@ -4,6 +4,8 @@ Thumbs.db
 Desktop.ini
 .idea/
 .vscode/
+.vs/
+**/.vs/
 *.swp
 *.swo
 
