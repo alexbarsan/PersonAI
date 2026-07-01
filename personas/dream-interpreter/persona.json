@@ -1,0 +1,8 @@
+{
+  "id": "dream-interpreter",
+  "version": "1.0.0",
+  "displayName": "DreamLens",
+  "promptTemplate": "prompt.scriban",
+  "outputSchema": "output.schema.json",
+  "sectionMap": "section-map.json"
+}

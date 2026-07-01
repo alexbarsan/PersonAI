@@ -1,0 +1,36 @@
+{
+  "summary": "$.summary",
+  "sections": [
+    {
+      "kind": "symbols",
+      "title": "Symbols",
+      "source": "$.symbols",
+      "titleField": "symbol",
+      "bodyFields": ["meaning", "personalRelevance"]
+    },
+    {
+      "kind": "emotions",
+      "title": "Emotions",
+      "source": "$.emotions",
+      "titleField": "name",
+      "bodyField": "evidence",
+      "valueField": "intensity"
+    },
+    {
+      "kind": "list",
+      "title": "Themes",
+      "source": "$.themes"
+    },
+    {
+      "kind": "text",
+      "title": "Interpretation",
+      "source": "$.interpretation"
+    },
+    {
+      "kind": "text",
+      "title": "Guidance",
+      "source": "$.guidance"
+    }
+  ],
+  "followUpQuestions": "$.followUpQuestions"
+}
