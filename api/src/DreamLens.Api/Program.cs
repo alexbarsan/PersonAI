@@ -4,6 +4,7 @@ using DreamLens.Api.Features.Profile;
 using DreamLens.Api.Infrastructure.Identity;
 using DreamLens.Api.Infrastructure.Persistence;
 using DreamLens.Api.Infrastructure.Security;
+using PersonaKit.Providers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +12,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddDreamLensAuthentication(builder.Configuration, builder.Environment);
 builder.Services.AddDreamLensPersistence(builder.Configuration);
 builder.Services.AddDreamLensSecurity(builder.Configuration);
+builder.Services.AddPersonaKitDeepSeekChatClient(builder.Configuration);
 builder.Services.AddScoped<GetMeHandler>();
 
 var profileEndpointsEnabled = ProfileEndpointsEnabled(builder.Configuration);
