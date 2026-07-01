@@ -67,6 +67,11 @@ export function HomeScreen() {
             >
               <Text style={[styles.buttonText, { color: theme.colors.primaryText }]}>Save draft</Text>
             </Pressable>
+            <Link href="/dreams/capture" asChild>
+              <Pressable accessibilityRole="button" style={styles.secondaryButton}>
+                <Text style={[styles.secondaryButtonText, { color: theme.colors.primary }]}>Interpret dream</Text>
+              </Pressable>
+            </Link>
             <Link href="/profile" asChild>
               <Pressable accessibilityRole="button" style={styles.secondaryButton}>
                 <Text style={[styles.secondaryButtonText, { color: theme.colors.primary }]}>Profile</Text>

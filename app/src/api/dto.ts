@@ -55,12 +55,18 @@ export type DreamResultResponse = {
   summary: string;
   sections: DreamSectionResponse[];
   followUpQuestions: string[];
+  safety?: DreamSafetyResponse | null;
 };
 
 export type DreamSectionResponse = {
   kind: string;
   title: string;
   content: unknown;
+};
+
+export type DreamSafetyResponse = {
+  selfHarmRisk: "none" | "elevated";
+  notes: string;
 };
 
 export type DreamJournalResponse = {

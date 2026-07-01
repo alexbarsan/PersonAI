@@ -47,9 +47,23 @@ export const mockDream: DreamResponse = {
         kind: "list",
         title: "Themes",
         content: ["transition", "loss of control"]
+      },
+      {
+        kind: "text",
+        title: "Guidance",
+        content: "Try writing one concrete detail you remember before interpreting the whole dream."
+      },
+      {
+        kind: "emotions",
+        title: "Emotions",
+        content: [{ name: "curiosity", intensity: 0.6, evidence: "The dream stays reflective rather than urgent." }]
       }
     ],
-    followUpQuestions: ["What changed near the water?"]
+    followUpQuestions: ["What changed near the water?"],
+    safety: {
+      selfHarmRisk: "none",
+      notes: ""
+    }
   },
   errorMessage: null
 };
