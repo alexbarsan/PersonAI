@@ -20,3 +20,13 @@ public sealed record DreamResultResponse(
     string[] FollowUpQuestions);
 
 public sealed record DreamSectionResponse(string Kind, string Title, object? Content);
+
+public sealed record DreamJournalResponse(DreamJournalItemResponse[] Items);
+
+public sealed record DreamJournalItemResponse(
+    Guid Id,
+    DateTimeOffset CreatedAt,
+    string Status,
+    string? Summary,
+    string? Mood,
+    string? OccurredAt);

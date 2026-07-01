@@ -10,6 +10,13 @@ public static class DreamEndpoints
             .RequireAuthorization()
             .WithTags("Dreams");
 
+        group.MapGet("", async (
+            [FromServices] ListDreamsHandler handler,
+            CancellationToken cancellationToken) =>
+            Results.Ok(await handler.HandleAsync(cancellationToken)))
+            .WithName("ListDreams")
+            .WithSummary("Lists dreams for the current user.");
+
         group.MapPost("", async (
             SubmitDreamRequest request,
             [FromServices] SubmitDreamHandler handler,
@@ -38,6 +45,17 @@ public static class DreamEndpoints
         })
             .WithName("GetDream")
             .WithSummary("Returns one dream for the current user.");
+
+        group.MapDelete("{id:guid}", async (
+            Guid id,
+            [FromServices] DeleteDreamHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var deleted = await handler.HandleAsync(id, cancellationToken);
+            return deleted ? Results.NoContent() : Results.NotFound();
+        })
+            .WithName("DeleteDream")
+            .WithSummary("Deletes one dream for the current user.");
 
         return app;
     }

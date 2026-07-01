@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using DreamLens.Api.Features.Dreams;
+using DreamLens.Api.Features.Insights;
 using DreamLens.Api.Features.Profile;
 using DreamLens.Api.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
@@ -110,6 +111,76 @@ public sealed class DreamEndpointTests
         Assert.Equal("The interpretation service could not produce a valid result. Please try again.", dream.ErrorMessage);
     }
 
+    [Fact]
+    public async Task DreamJournalListsCurrentUsersDreams()
+    {
+        using var app = CreateDreamApp(new StaticDreamChatClient(CanonicalAiOutput));
+        using var userA = app.CreateAuthenticatedClient("subject-a");
+        using var userB = app.CreateAuthenticatedClient("subject-b");
+        await PutProfileAsync(userA);
+        await PutProfileAsync(userB);
+        var first = await (await userA.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest() with { OccurredAt = "2026-06-12" }))
+            .Content.ReadFromJsonAsync<DreamResponse>();
+        var second = await (await userA.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest() with { OccurredAt = "2026-06-13" }))
+            .Content.ReadFromJsonAsync<DreamResponse>();
+        await userB.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest() with { OccurredAt = "2026-06-14" });
+
+        var response = await userA.GetAsync("/v1/dreams");
+        var journal = await response.Content.ReadFromJsonAsync<DreamJournalResponse>();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.NotNull(journal);
+        Assert.Equal(2, journal.Items.Length);
+        Assert.Equal(second!.Id, journal.Items[0].Id);
+        Assert.Equal(first!.Id, journal.Items[1].Id);
+        Assert.All(journal.Items, item => Assert.Equal("completed", item.Status));
+    }
+
+    [Fact]
+    public async Task DeleteDreamRemovesOwnDreamAndCannotDeleteAnotherUsersDream()
+    {
+        using var app = CreateDreamApp(new StaticDreamChatClient(CanonicalAiOutput));
+        using var userA = app.CreateAuthenticatedClient("subject-a");
+        using var userB = app.CreateAuthenticatedClient("subject-b");
+        await PutProfileAsync(userA);
+        await PutProfileAsync(userB);
+        var own = await (await userA.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest()))
+            .Content.ReadFromJsonAsync<DreamResponse>();
+        var other = await (await userB.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest()))
+            .Content.ReadFromJsonAsync<DreamResponse>();
+
+        var otherDelete = await userA.DeleteAsync($"/v1/dreams/{other!.Id}");
+        var ownDelete = await userA.DeleteAsync($"/v1/dreams/{own!.Id}");
+        var fetchDeleted = await userA.GetAsync($"/v1/dreams/{own.Id}");
+
+        Assert.Equal(HttpStatusCode.NotFound, otherDelete.StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, ownDelete.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, fetchDeleted.StatusCode);
+    }
+
+    [Fact]
+    public async Task InsightsReturnRecurringThemesAndStreaksForCurrentUser()
+    {
+        using var app = CreateDreamApp(new StaticDreamChatClient(CanonicalAiOutput));
+        using var userA = app.CreateAuthenticatedClient("subject-a");
+        using var userB = app.CreateAuthenticatedClient("subject-b");
+        await PutProfileAsync(userA);
+        await PutProfileAsync(userB);
+        await userA.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest() with { OccurredAt = "2026-06-12" });
+        await userA.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest() with { OccurredAt = "2026-06-13" });
+        await userB.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest() with { OccurredAt = "2026-06-14" });
+
+        var response = await userA.GetAsync("/v1/insights");
+        var insights = await response.Content.ReadFromJsonAsync<InsightsResponse>();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.NotNull(insights);
+        Assert.Equal(2, insights.TotalDreams);
+        Assert.Equal(2, insights.CurrentStreakDays);
+        Assert.Contains(insights.RecurringThemes, theme => theme.Name == "loss of control" && theme.Count == 2);
+        Assert.Contains(insights.RecurringThemes, theme => theme.Name == "transition" && theme.Count == 2);
+    }
+
     private static DreamTestApp CreateDreamApp(IChatClient chatClient)
     {
         var databaseName = $"dream-tests-{Guid.NewGuid():N}";
@@ -139,6 +210,9 @@ public sealed class DreamEndpointTests
                     services.AddScoped<UpdateProfileHandler>();
                     services.AddScoped<SubmitDreamHandler>();
                     services.AddScoped<GetDreamHandler>();
+                    services.AddScoped<ListDreamsHandler>();
+                    services.AddScoped<DeleteDreamHandler>();
+                    services.AddScoped<GetInsightsHandler>();
                 });
             });
 
@@ -262,6 +336,20 @@ public sealed class DreamEndpointTests
         string[] RecentLifeEvents);
 
     private sealed record ConsentRequest(bool AiProcessing, bool SensitiveTraits, bool HistoryUse);
+
+    private sealed record DreamJournalResponse(DreamJournalItemResponse[] Items);
+
+    private sealed record DreamJournalItemResponse(
+        Guid Id,
+        DateTimeOffset CreatedAt,
+        string Status,
+        string? Summary,
+        string? Mood,
+        string? OccurredAt);
+
+    private sealed record InsightsResponse(int TotalDreams, int CurrentStreakDays, ThemeInsightResponse[] RecurringThemes);
+
+    private sealed record ThemeInsightResponse(string Name, int Count);
 
     private const string CanonicalAiOutput = """
     {

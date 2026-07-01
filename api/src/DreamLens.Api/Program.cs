@@ -1,4 +1,5 @@
 using DreamLens.Api.Features.Health;
+using DreamLens.Api.Features.Insights;
 using DreamLens.Api.Features.Me.GetMe;
 using DreamLens.Api.Features.Profile;
 using DreamLens.Api.Features.Dreams;
@@ -32,6 +33,9 @@ if (dreamEndpointsEnabled)
 {
     builder.Services.AddScoped<SubmitDreamHandler>();
     builder.Services.AddScoped<GetDreamHandler>();
+    builder.Services.AddScoped<ListDreamsHandler>();
+    builder.Services.AddScoped<DeleteDreamHandler>();
+    builder.Services.AddScoped<GetInsightsHandler>();
 }
 
 var app = builder.Build();
@@ -48,6 +52,7 @@ app.MapHealthEndpoints();
 app.MapMeEndpoints();
 app.MapProfileEndpoints();
 app.MapDreamEndpoints();
+app.MapInsightsEndpoints();
 
 app.Run();
 
