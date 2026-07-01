@@ -1,0 +1,19 @@
+aws_region        = "us-east-1"
+github_repository = "OWNER/DreamCatcherAI"
+availability_zones = [
+  "us-east-1a",
+  "us-east-1b"
+]
+
+container_image = "public.ecr.aws/docker/library/nginx:stable-alpine"
+
+callback_urls = [
+  "http://localhost:8081",
+  "exp://127.0.0.1:8081"
+]
+
+logout_urls = [
+  "http://localhost:8081"
+]
+
+alert_email = null

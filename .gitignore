@@ -60,10 +60,11 @@ ios/
 
 # Terraform
 .terraform/
-.terraform.lock.hcl
 terraform.tfstate
 terraform.tfstate.*
 *.tfplan
+*.tfvars
+!*.tfvars.example
 crash.log
 crash.*.log
 override.tf

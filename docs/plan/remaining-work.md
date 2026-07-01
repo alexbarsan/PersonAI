@@ -1,10 +1,9 @@
 # Remaining Work
 
-Last updated after S16 on 2026-07-01.
+Last updated after S17 on 2026-07-02.
 
 ## Planned Slices
 
-- S17: Terraform AWS infrastructure.
 - S18: CI/CD pipelines for API, web, mobile, and infra.
 - S19: observability, hardening, and k6 load tests.
 - S20: prove PersonaKit reuse with Astra configuration.
@@ -18,5 +17,8 @@ Last updated after S16 on 2026-07-01.
 - `npm install` reports moderate third-party audit findings; no forced audit fix has been applied.
 - Production Cognito OAuth is scaffolded but not fully wired to hosted Cognito configuration or secure token persistence.
 - Maestro mobile flow exists, but local verification is blocked until Maestro is installed.
+- Terraform infrastructure is scaffolded, but local `terraform fmt`/`terraform validate`/`terraform plan` verification is blocked until Terraform is installed and AWS backend/account values exist.
+- Terraform backend files are placeholders; S18 should wire CI around account-specific remote state, GitHub OIDC role outputs, and protected apply environments.
+- Production DNS names, ACM certificates, CloudFront-scoped WAF ARN, and final Cognito hosted-domain settings still need real account/domain decisions.
 - Dream result detail uses an in-memory submitted-result cache before falling back to `GET /v1/dreams/{id}`; Playwright covers the submit/result path, and S17+ should not depend on this cache behavior.
 - Profile form uses simple text inputs for comma-separated traits; richer controls can be added after the core flows are complete.
