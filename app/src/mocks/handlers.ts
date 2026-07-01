@@ -10,5 +10,6 @@ export const handlers = [
   rest.post("http://localhost/v1/dreams", (_, response, context) => response(context.json(mockDream))),
   rest.get("http://localhost/v1/dreams", (_, response, context) => response(context.json(mockJournal))),
   rest.get("http://localhost/v1/dreams/:id", (_, response, context) => response(context.json(mockDream))),
+  rest.delete("http://localhost/v1/dreams/:id", (_, response, context) => response(context.status(204))),
   rest.get("http://localhost/v1/insights", (_, response, context) => response(context.json(mockInsights)))
 ];

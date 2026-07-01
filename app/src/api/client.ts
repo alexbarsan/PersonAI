@@ -23,6 +23,7 @@ export type ApiClient = {
   submitDream: (request: SubmitDreamRequest) => Promise<DreamResponse>;
   listDreams: () => Promise<DreamJournalResponse>;
   getDream: (id: string) => Promise<DreamResponse>;
+  deleteDream: (id: string) => Promise<void>;
   getInsights: () => Promise<InsightsResponse>;
 };
 
@@ -81,9 +82,13 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
       request<DreamResponse>("/v1/dreams", {
         method: "POST",
         body: JSON.stringify(body)
-      }),
+    }),
     listDreams: () => request<DreamJournalResponse>("/v1/dreams"),
     getDream: (id) => request<DreamResponse>(`/v1/dreams/${id}`),
+    deleteDream: (id) =>
+      request<void>(`/v1/dreams/${id}`, {
+        method: "DELETE"
+      }),
     getInsights: () => request<InsightsResponse>("/v1/insights")
   };
 }

@@ -72,6 +72,16 @@ export function HomeScreen() {
                 <Text style={[styles.secondaryButtonText, { color: theme.colors.primary }]}>Interpret dream</Text>
               </Pressable>
             </Link>
+            <Link href="/journal" asChild>
+              <Pressable accessibilityRole="button" style={styles.secondaryButton}>
+                <Text style={[styles.secondaryButtonText, { color: theme.colors.primary }]}>Journal</Text>
+              </Pressable>
+            </Link>
+            <Link href="/insights" asChild>
+              <Pressable accessibilityRole="button" style={styles.secondaryButton}>
+                <Text style={[styles.secondaryButtonText, { color: theme.colors.primary }]}>Insights</Text>
+              </Pressable>
+            </Link>
             <Link href="/profile" asChild>
               <Pressable accessibilityRole="button" style={styles.secondaryButton}>
                 <Text style={[styles.secondaryButtonText, { color: theme.colors.primary }]}>Profile</Text>

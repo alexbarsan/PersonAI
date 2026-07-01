@@ -57,4 +57,14 @@ describe("api client", () => {
     expect(saved.age).toBe(33);
     expect(saved.traits.fears).toEqual(["heights"]);
   });
+
+  it("deletes dreams through the API", async () => {
+    const client = createApiClient({
+      baseUrl: "http://localhost",
+      getAccessToken: () => "test-token",
+      mockMode: false
+    });
+
+    await expect(client.deleteDream("dream_mock_1")).resolves.toBeNull();
+  });
 });

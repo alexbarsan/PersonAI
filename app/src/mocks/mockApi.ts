@@ -8,5 +8,6 @@ export const mockApiClient: ApiClient = {
   submitDream: async () => mockDream,
   listDreams: async () => mockJournal,
   getDream: async () => mockDream,
+  deleteDream: async () => undefined,
   getInsights: async () => mockInsights
 };
