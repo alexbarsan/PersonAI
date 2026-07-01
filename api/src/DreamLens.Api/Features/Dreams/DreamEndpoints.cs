@@ -25,7 +25,7 @@ public static class DreamEndpoints
             var result = await handler.HandleAsync(request, cancellationToken);
             if (!result.IsValid)
             {
-                return Results.BadRequest(result.Errors);
+                return Results.Json(result.Errors, statusCode: result.ErrorStatusCode);
             }
 
             return result.IsCompleted

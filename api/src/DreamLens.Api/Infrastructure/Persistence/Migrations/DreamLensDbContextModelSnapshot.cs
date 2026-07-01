@@ -15,6 +15,74 @@ public sealed class DreamLensDbContextModelSnapshot : ModelSnapshot
             .HasAnnotation("ProductVersion", "9.0.12")
             .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
+        modelBuilder.Entity("DreamLens.Api.Infrastructure.Persistence.AiCostLedgerRecord", entity =>
+        {
+            entity.Property<Guid>("Id")
+                .HasColumnType("uuid");
+
+            entity.Property<int>("AttemptCount")
+                .HasColumnType("integer");
+
+            entity.Property<DateTimeOffset>("CreatedAt")
+                .HasColumnType("timestamp with time zone");
+
+            entity.Property<Guid?>("DreamId")
+                .HasColumnType("uuid");
+
+            entity.Property<decimal>("EstimatedCostUsd")
+                .HasPrecision(18, 9)
+                .HasColumnType("numeric(18,9)");
+
+            entity.Property<string>("FailureKind")
+                .HasMaxLength(64)
+                .HasColumnType("character varying(64)");
+
+            entity.Property<int?>("InputTokens")
+                .HasColumnType("integer");
+
+            entity.Property<long>("LatencyMilliseconds")
+                .HasColumnType("bigint");
+
+            entity.Property<string>("Model")
+                .IsRequired()
+                .HasMaxLength(128)
+                .HasColumnType("character varying(128)");
+
+            entity.Property<int?>("OutputTokens")
+                .HasColumnType("integer");
+
+            entity.Property<string>("PersonaId")
+                .IsRequired()
+                .HasMaxLength(128)
+                .HasColumnType("character varying(128)");
+
+            entity.Property<string>("Provider")
+                .IsRequired()
+                .HasMaxLength(64)
+                .HasColumnType("character varying(64)");
+
+            entity.Property<string>("Status")
+                .IsRequired()
+                .HasMaxLength(32)
+                .HasColumnType("character varying(32)");
+
+            entity.Property<int?>("TotalTokens")
+                .HasColumnType("integer");
+
+            entity.Property<string>("UserSubject")
+                .IsRequired()
+                .HasMaxLength(256)
+                .HasColumnType("character varying(256)");
+
+            entity.HasKey("Id");
+
+            entity.HasIndex("DreamId");
+
+            entity.HasIndex("UserSubject", "CreatedAt");
+
+            entity.ToTable("AiCostLedger");
+        });
+
         modelBuilder.Entity("DreamLens.Api.Infrastructure.Persistence.DreamRecord", entity =>
         {
             entity.Property<Guid>("Id")

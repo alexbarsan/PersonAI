@@ -5,6 +5,8 @@ using DreamLens.Api.Features.Profile;
 using DreamLens.Api.Features.Dreams;
 using DreamLens.Api.Infrastructure.Identity;
 using DreamLens.Api.Infrastructure.Persistence;
+using DreamLens.Api.Infrastructure.Quotas;
+using DreamLens.Api.Infrastructure.RateLimiting;
 using DreamLens.Api.Infrastructure.Security;
 using PersonaKit.Context;
 using PersonaKit.Personas;
@@ -15,10 +17,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 builder.Services.AddDreamLensAuthentication(builder.Configuration, builder.Environment);
+builder.Services.AddDreamLensRateLimiting(builder.Configuration);
 builder.Services.AddDreamLensPersistence(builder.Configuration);
 builder.Services.AddDreamLensSecurity(builder.Configuration);
 builder.Services.AddPersonaKitDeepSeekChatClient(builder.Configuration);
 AddDreamLensPersonaKitCore(builder.Services, builder.Configuration, builder.Environment);
+builder.Services.Configure<DreamQuotaOptions>(builder.Configuration.GetSection("DreamQuotas"));
 builder.Services.AddScoped<GetMeHandler>();
 
 var profileEndpointsEnabled = ProfileEndpointsEnabled(builder.Configuration);
@@ -31,6 +35,7 @@ if (profileEndpointsEnabled)
 var dreamEndpointsEnabled = DreamEndpointsEnabled(builder.Configuration);
 if (dreamEndpointsEnabled)
 {
+    builder.Services.AddScoped<IDreamQuotaService, EfDreamQuotaService>();
     builder.Services.AddScoped<SubmitDreamHandler>();
     builder.Services.AddScoped<GetDreamHandler>();
     builder.Services.AddScoped<ListDreamsHandler>();
@@ -46,6 +51,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseAuthentication();
+app.UseRateLimiter();
 app.UseAuthorization();
 
 app.MapHealthEndpoints();

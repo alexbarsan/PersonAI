@@ -34,8 +34,8 @@ public sealed class InterpretationPipeline(
         var moderation = await moderationPrecheck.CheckAsync(request, cancellationToken);
         if (!moderation.IsAllowed)
         {
-            await RecordRunAsync(runId, persona.Id, AiRunStatus.Failed, 0, AiRunFailureKind.Moderation, null, cancellationToken);
-            return new InterpretationResponse(interpretationId, InterpretationStatus.Failed, null, moderation.FailureMessage);
+            var run = await RecordRunAsync(runId, persona.Id, AiRunStatus.Failed, 0, AiRunFailureKind.Moderation, null, cancellationToken);
+            return new InterpretationResponse(interpretationId, InterpretationStatus.Failed, null, moderation.FailureMessage, run);
         }
 
         var contextJson = await contextBuilder.BuildAsync(request.ContextRequest, cancellationToken);
@@ -61,8 +61,8 @@ public sealed class InterpretationPipeline(
         }
         catch (Exception)
         {
-            await RecordRunAsync(runId, persona.Id, AiRunStatus.Failed, attempts, AiRunFailureKind.Provider, null, cancellationToken);
-            return new InterpretationResponse(interpretationId, InterpretationStatus.Failed, null, FriendlyProviderFailure);
+            var run = await RecordRunAsync(runId, persona.Id, AiRunStatus.Failed, attempts, AiRunFailureKind.Provider, null, cancellationToken);
+            return new InterpretationResponse(interpretationId, InterpretationStatus.Failed, null, FriendlyProviderFailure, run);
         }
 
         var outputJson = response.Text;
@@ -84,24 +84,24 @@ public sealed class InterpretationPipeline(
             }
             catch (Exception)
             {
-                await RecordRunAsync(runId, persona.Id, AiRunStatus.Failed, attempts, AiRunFailureKind.Provider, null, cancellationToken);
-                return new InterpretationResponse(interpretationId, InterpretationStatus.Failed, null, FriendlyProviderFailure);
+                var run = await RecordRunAsync(runId, persona.Id, AiRunStatus.Failed, attempts, AiRunFailureKind.Provider, null, cancellationToken);
+                return new InterpretationResponse(interpretationId, InterpretationStatus.Failed, null, FriendlyProviderFailure, run);
             }
         }
 
         if (!validation.IsValid)
         {
-            await RecordRunAsync(runId, persona.Id, AiRunStatus.Failed, attempts, AiRunFailureKind.Validation, response, cancellationToken);
-            return new InterpretationResponse(interpretationId, InterpretationStatus.Failed, null, FriendlyValidationFailure);
+            var run = await RecordRunAsync(runId, persona.Id, AiRunStatus.Failed, attempts, AiRunFailureKind.Validation, response, cancellationToken);
+            return new InterpretationResponse(interpretationId, InterpretationStatus.Failed, null, FriendlyValidationFailure, run);
         }
 
         var result = await resultSectionMapper.MapAsync(persona, outputJson, cancellationToken);
         await interpretationStore.SaveAsync(
             new InterpretationRecord(interpretationId, persona.Id, result.Summary, outputJson, DateTimeOffset.UtcNow),
             cancellationToken);
-        await RecordRunAsync(runId, persona.Id, AiRunStatus.Succeeded, attempts, null, response, cancellationToken);
+        var successfulRun = await RecordRunAsync(runId, persona.Id, AiRunStatus.Succeeded, attempts, null, response, cancellationToken);
 
-        return new InterpretationResponse(interpretationId, InterpretationStatus.Completed, result, null);
+        return new InterpretationResponse(interpretationId, InterpretationStatus.Completed, result, null, successfulRun);
     }
 
     private static string BuildRepairPrompt(string invalidOutput, string schemaJson)
@@ -117,7 +117,7 @@ public sealed class InterpretationPipeline(
             """;
     }
 
-    private async Task RecordRunAsync(
+    private async Task<AiRunRecord> RecordRunAsync(
         string runId,
         string personaId,
         AiRunStatus status,
@@ -126,17 +126,18 @@ public sealed class InterpretationPipeline(
         ChatResponse? response,
         CancellationToken cancellationToken)
     {
-        await aiRunStore.RecordAsync(
-            new AiRunRecord(
-                runId,
-                personaId,
-                status,
-                attempts,
-                failureKind,
-                ToInt(response?.Usage?.InputTokenCount),
-                ToInt(response?.Usage?.OutputTokenCount),
-                DateTimeOffset.UtcNow),
-            cancellationToken);
+        var run = new AiRunRecord(
+            runId,
+            personaId,
+            status,
+            attempts,
+            failureKind,
+            ToInt(response?.Usage?.InputTokenCount),
+            ToInt(response?.Usage?.OutputTokenCount),
+            DateTimeOffset.UtcNow);
+
+        await aiRunStore.RecordAsync(run, cancellationToken);
+        return run;
     }
 
     private static int? ToInt(long? value)

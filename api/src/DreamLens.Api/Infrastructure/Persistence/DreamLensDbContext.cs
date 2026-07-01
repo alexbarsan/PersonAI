@@ -10,6 +10,8 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
 
     public DbSet<DreamRecord> Dreams => Set<DreamRecord>();
 
+    public DbSet<AiCostLedgerRecord> AiCostLedger => Set<AiCostLedgerRecord>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<SchemaMarker>(entity =>
@@ -73,6 +75,36 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
                 .HasMaxLength(32)
                 .IsRequired();
             entity.Property(dream => dream.CreatedAt)
+                .IsRequired();
+        });
+
+        modelBuilder.Entity<AiCostLedgerRecord>(entity =>
+        {
+            entity.ToTable("AiCostLedger");
+            entity.HasKey(row => row.Id);
+            entity.HasIndex(row => new { row.UserSubject, row.CreatedAt });
+            entity.HasIndex(row => row.DreamId);
+
+            entity.Property(row => row.UserSubject)
+                .HasMaxLength(256)
+                .IsRequired();
+            entity.Property(row => row.Provider)
+                .HasMaxLength(64)
+                .IsRequired();
+            entity.Property(row => row.Model)
+                .HasMaxLength(128)
+                .IsRequired();
+            entity.Property(row => row.PersonaId)
+                .HasMaxLength(128)
+                .IsRequired();
+            entity.Property(row => row.Status)
+                .HasMaxLength(32)
+                .IsRequired();
+            entity.Property(row => row.FailureKind)
+                .HasMaxLength(64);
+            entity.Property(row => row.EstimatedCostUsd)
+                .HasPrecision(18, 9);
+            entity.Property(row => row.CreatedAt)
                 .IsRequired();
         });
     }

@@ -1,11 +1,16 @@
+using System.Diagnostics;
 using System.Text.Json;
 using DreamLens.Api.Features.Profile;
 using DreamLens.Api.Infrastructure.Identity;
 using DreamLens.Api.Infrastructure.Persistence;
+using DreamLens.Api.Infrastructure.Quotas;
 using DreamLens.Api.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using PersonaKit.Context;
 using PersonaKit.Pipeline;
+using PersonaKit.Providers.DeepSeek;
+using PersonaKit.Providers.Usage;
 
 namespace DreamLens.Api.Features.Dreams;
 
@@ -13,7 +18,10 @@ public sealed class SubmitDreamHandler(
     DreamLensDbContext dbContext,
     ICurrentUser currentUser,
     IStringEncryptor encryptor,
-    IInterpretationPipeline interpretationPipeline)
+    IInterpretationPipeline interpretationPipeline,
+    IDreamQuotaService quotaService,
+    IOptions<DeepSeekOptions> deepSeekOptions,
+    IOptions<UsageCostOptions> usageCostOptions)
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -47,9 +55,15 @@ public sealed class SubmitDreamHandler(
             });
         }
 
+        if (!await quotaService.CanSubmitDreamAsync(currentUser.Subject, cancellationToken))
+        {
+            return SubmitDreamResult.QuotaExceeded();
+        }
+
         var traits = JsonSerializer.Deserialize<ProfileTraitsDto>(encryptor.Decrypt(profile.EncryptedTraitsJson), JsonOptions)
             ?? ProfileTraitsDto.Empty;
         var dreamText = request.Text!.Trim();
+        var started = Stopwatch.GetTimestamp();
         var interpretation = await interpretationPipeline.InterpretAsync(
             new InterpretationRequest(
                 "dream-interpreter",
@@ -88,6 +102,7 @@ public sealed class SubmitDreamHandler(
                         NormalizeArray(request.Tags),
                         Normalize(request.OccurredAt)))),
             cancellationToken);
+        var latency = Stopwatch.GetElapsedTime(started);
 
         var result = interpretation.Result is null ? null : MapResult(interpretation.Result);
         var record = new DreamRecord
@@ -104,6 +119,7 @@ public sealed class SubmitDreamHandler(
         };
 
         dbContext.Dreams.Add(record);
+        dbContext.AiCostLedger.Add(CreateLedgerRecord(record, interpretation, latency));
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return SubmitDreamResult.Valid(DreamMapper.Map(record, result));
@@ -115,6 +131,10 @@ public sealed class SubmitDreamHandler(
         if (string.IsNullOrWhiteSpace(request.Text) || request.Text.Trim().Length < 10)
         {
             errors["text"] = ["Dream text must be at least 10 characters."];
+        }
+        else if (request.Text.Trim().Length > 4000)
+        {
+            errors["text"] = ["Dream text must be 4000 characters or fewer."];
         }
 
         if (request.SleepQuality is < 1 or > 5)
@@ -131,6 +151,41 @@ public sealed class SubmitDreamHandler(
             result.Summary,
             result.Sections.Select(section => new DreamSectionResponse(section.Kind, section.Title, section.Content)).ToArray(),
             result.FollowUpQuestions);
+    }
+
+    private AiCostLedgerRecord CreateLedgerRecord(
+        DreamRecord dream,
+        InterpretationResponse interpretation,
+        TimeSpan latency)
+    {
+        var run = interpretation.Run;
+        var inputTokens = run?.InputTokens;
+        var outputTokens = run?.OutputTokens;
+
+        return new AiCostLedgerRecord
+        {
+            UserSubject = currentUser.Subject,
+            DreamId = dream.Id,
+            Provider = "DeepSeek",
+            Model = deepSeekOptions.Value.Model,
+            PersonaId = run?.PersonaId ?? "dream-interpreter",
+            Status = interpretation.Status == InterpretationStatus.Completed ? "completed" : "failed",
+            FailureKind = run?.FailureKind?.ToString(),
+            AttemptCount = run?.AttemptCount ?? 0,
+            InputTokens = inputTokens,
+            OutputTokens = outputTokens,
+            TotalTokens = inputTokens + outputTokens,
+            LatencyMilliseconds = Math.Max(0, (long)latency.TotalMilliseconds),
+            EstimatedCostUsd = EstimateCost(inputTokens, outputTokens)
+        };
+    }
+
+    private decimal EstimateCost(int? inputTokens, int? outputTokens)
+    {
+        var options = usageCostOptions.Value;
+        var input = (inputTokens ?? 0) * options.InputCostPerMillionTokens / 1_000_000m;
+        var output = (outputTokens ?? 0) * options.OutputCostPerMillionTokens / 1_000_000m;
+        return input + output;
     }
 
     private static string NormalizeLocale(string language)

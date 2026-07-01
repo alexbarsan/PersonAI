@@ -4,7 +4,8 @@ public sealed record InterpretationResponse(
     string Id,
     InterpretationStatus Status,
     InterpretationResult? Result,
-    string? ErrorMessage);
+    string? ErrorMessage,
+    AiRunRecord? Run = null);
 
 public enum InterpretationStatus
 {

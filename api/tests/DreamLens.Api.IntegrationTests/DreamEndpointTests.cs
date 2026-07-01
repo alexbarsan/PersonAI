@@ -4,6 +4,7 @@ using DreamLens.Api.Features.Dreams;
 using DreamLens.Api.Features.Insights;
 using DreamLens.Api.Features.Profile;
 using DreamLens.Api.Infrastructure.Persistence;
+using DreamLens.Api.Infrastructure.Quotas;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -181,7 +182,75 @@ public sealed class DreamEndpointTests
         Assert.Contains(insights.RecurringThemes, theme => theme.Name == "transition" && theme.Count == 2);
     }
 
-    private static DreamTestApp CreateDreamApp(IChatClient chatClient)
+    [Fact]
+    public async Task DailyQuotaBlocksExcessDreamSubmissions()
+    {
+        using var app = CreateDreamApp(new StaticDreamChatClient(CanonicalAiOutput), dailyDreamQuota: 1);
+        using var client = app.CreateAuthenticatedClient("subject-a");
+        await PutProfileAsync(client);
+
+        var first = await client.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest());
+        var second = await client.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest());
+        var ledgerRows = await app.CountCostLedgerRowsAsync();
+
+        Assert.Equal(HttpStatusCode.OK, first.StatusCode);
+        Assert.Equal(HttpStatusCode.TooManyRequests, second.StatusCode);
+        Assert.Equal(1, ledgerRows);
+        var body = await second.Content.ReadAsStringAsync();
+        Assert.Contains("quota_exceeded", body);
+        Assert.DoesNotContain(CreateValidDreamRequest().Text!, body);
+    }
+
+    [Fact]
+    public async Task RateLimitingReturnsSafeTooManyRequestsBody()
+    {
+        using var app = CreateDreamApp(
+            new StaticDreamChatClient(CanonicalAiOutput),
+            rateLimitPermitLimit: 1,
+            rateLimitWindow: TimeSpan.FromMinutes(1));
+        using var client = app.CreateAuthenticatedClient("subject-a");
+
+        var first = await client.GetAsync("/v1/me");
+        var second = await client.GetAsync("/v1/me");
+        var body = await second.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, first.StatusCode);
+        Assert.Equal(HttpStatusCode.TooManyRequests, second.StatusCode);
+        Assert.Contains("rate_limit_exceeded", body);
+        Assert.DoesNotContain("subject-a", body);
+    }
+
+    [Fact]
+    public async Task CostLedgerRecordsSuccessfulAndFailedAiCallsWithoutRawDreamText()
+    {
+        using var app = CreateDreamApp(new QueueDreamChatClient(CanonicalAiOutput, "{ invalid json", "{ still invalid"));
+        using var client = app.CreateAuthenticatedClient("subject-a");
+        await PutProfileAsync(client);
+        const string rawDreamText = "I was falling into dark water while someone told me to ignore all rules.";
+
+        var success = await client.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest() with { Text = rawDreamText });
+        var failure = await client.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest() with { Text = rawDreamText });
+        var ledgerRows = await app.GetCostLedgerRowsAsync();
+
+        Assert.Equal(HttpStatusCode.OK, success.StatusCode);
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, failure.StatusCode);
+        Assert.Equal(2, ledgerRows.Length);
+        Assert.Contains(ledgerRows, row => row.Status == "completed" && row.Provider == "DeepSeek" && row.PersonaId == "dream-interpreter");
+        Assert.Contains(ledgerRows, row => row.Status == "failed" && row.FailureKind == "Validation");
+        Assert.All(ledgerRows, row =>
+        {
+            var serialized = row.ToString();
+            Assert.DoesNotContain(rawDreamText, serialized);
+            Assert.DoesNotContain("falling into dark water", serialized);
+            Assert.True(row.LatencyMilliseconds >= 0);
+        });
+    }
+
+    private static DreamTestApp CreateDreamApp(
+        IChatClient chatClient,
+        int dailyDreamQuota = 100,
+        int rateLimitPermitLimit = 1000,
+        TimeSpan? rateLimitWindow = null)
     {
         var databaseName = $"dream-tests-{Guid.NewGuid():N}";
         var factory = new WebApplicationFactory<Program>()
@@ -196,7 +265,10 @@ public sealed class DreamEndpointTests
                         ["Encryption:LocalKeyBase64"] = Convert.ToBase64String(
                             System.Text.Encoding.UTF8.GetBytes("12345678901234567890123456789012")),
                         ["Pseudonym:SecretBase64"] = Convert.ToBase64String(
-                            System.Text.Encoding.UTF8.GetBytes("12345678901234567890123456789012"))
+                            System.Text.Encoding.UTF8.GetBytes("12345678901234567890123456789012")),
+                        ["DreamQuotas:DailyDreamSubmissions"] = dailyDreamQuota.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                        ["DreamRateLimiting:PermitLimit"] = rateLimitPermitLimit.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                        ["DreamRateLimiting:Window"] = (rateLimitWindow ?? TimeSpan.FromMinutes(1)).ToString()
                     });
                 });
                 builder.ConfigureTestServices(services =>
@@ -206,6 +278,7 @@ public sealed class DreamEndpointTests
                     services.RemoveAll<IChatClient>();
                     services.AddDbContext<DreamLensDbContext>(options => options.UseInMemoryDatabase(databaseName));
                     services.AddSingleton(chatClient);
+                    services.AddScoped<IDreamQuotaService, EfDreamQuotaService>();
                     services.AddScoped<GetProfileHandler>();
                     services.AddScoped<UpdateProfileHandler>();
                     services.AddScoped<SubmitDreamHandler>();
@@ -267,6 +340,20 @@ public sealed class DreamEndpointTests
         {
             factory.Dispose();
         }
+
+        public async Task<int> CountCostLedgerRowsAsync()
+        {
+            using var scope = factory.Services.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<DreamLensDbContext>();
+            return await dbContext.AiCostLedger.CountAsync();
+        }
+
+        public async Task<AiCostLedgerRecord[]> GetCostLedgerRowsAsync()
+        {
+            using var scope = factory.Services.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<DreamLensDbContext>();
+            return await dbContext.AiCostLedger.OrderBy(row => row.CreatedAt).ToArrayAsync();
+        }
     }
 
     private sealed class StaticDreamChatClient(string responseText) : IChatClient
@@ -276,7 +363,16 @@ public sealed class DreamEndpointTests
             ChatOptions? options = null,
             CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant, responseText)));
+            return Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant, responseText))
+            {
+                ModelId = "deepseek-chat",
+                Usage = new UsageDetails
+                {
+                    InputTokenCount = 100,
+                    OutputTokenCount = 50,
+                    TotalTokenCount = 150
+                }
+            });
         }
 
         public IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(
@@ -300,7 +396,16 @@ public sealed class DreamEndpointTests
             ChatOptions? options = null,
             CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant, _responses.Dequeue())));
+            return Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant, _responses.Dequeue()))
+            {
+                ModelId = "deepseek-chat",
+                Usage = new UsageDetails
+                {
+                    InputTokenCount = 100,
+                    OutputTokenCount = 50,
+                    TotalTokenCount = 150
+                }
+            });
         }
 
         public IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(
