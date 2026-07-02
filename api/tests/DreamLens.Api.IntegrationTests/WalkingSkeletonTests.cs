@@ -40,6 +40,20 @@ public sealed class WalkingSkeletonTests
         Assert.Contains("\"/health/ready\"", body);
     }
 
+    [Fact]
+    public async Task SwaggerUiIsExposedInDevelopment()
+    {
+        using var client = CreateDevelopmentClient();
+
+        var response = await client.GetAsync("/swagger");
+        var body = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("DreamLens API Swagger", body);
+        Assert.Contains("/openapi/v1.json", body);
+        Assert.Contains("swagger-ui", body);
+    }
+
     private static HttpClient CreateDevelopmentClient()
     {
         var factory = new WebApplicationFactory<Program>()

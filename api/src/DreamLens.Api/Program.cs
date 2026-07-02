@@ -5,6 +5,7 @@ using DreamLens.Api.Features.Profile;
 using DreamLens.Api.Features.Dreams;
 using DreamLens.Api.Infrastructure.Identity;
 using DreamLens.Api.Infrastructure.Observability;
+using DreamLens.Api.Infrastructure.OpenApi;
 using DreamLens.Api.Infrastructure.Persistence;
 using DreamLens.Api.Infrastructure.Quotas;
 using DreamLens.Api.Infrastructure.RateLimiting;
@@ -50,6 +51,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapDreamLensSwaggerUi();
 }
 
 app.UseDreamLensSecurityHeaders();
