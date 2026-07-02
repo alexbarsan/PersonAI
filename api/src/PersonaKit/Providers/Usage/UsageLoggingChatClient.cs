@@ -18,15 +18,23 @@ public sealed class UsageLoggingChatClient(
         var latency = Stopwatch.GetElapsedTime(started);
         var usage = response.Usage;
 
+        var model = response.ModelId ?? options?.ModelId ?? "unknown";
+        var estimatedCost = EstimateCost(usage);
         await sink.RecordAsync(
             new ChatUsageRecord(
-                response.ModelId ?? options?.ModelId ?? "unknown",
+                model,
                 latency,
                 usage?.InputTokenCount,
                 usage?.OutputTokenCount,
                 usage?.TotalTokenCount,
-                EstimateCost(usage)),
+                estimatedCost),
             cancellationToken);
+        PersonaKitMeters.AiEstimatedCostUsd.Record(
+            decimal.ToDouble(estimatedCost),
+            new KeyValuePair<string, object?>("model", model));
+        PersonaKitMeters.AiTokens.Record(
+            usage?.TotalTokenCount ?? 0,
+            new KeyValuePair<string, object?>("model", model));
 
         return response;
     }

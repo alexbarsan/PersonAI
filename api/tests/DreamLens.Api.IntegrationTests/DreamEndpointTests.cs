@@ -13,6 +13,7 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 
 namespace DreamLens.Api.IntegrationTests;
 
@@ -221,6 +222,21 @@ public sealed class DreamEndpointTests
     }
 
     [Fact]
+    public async Task ResponsesIncludeSecurityHeaders()
+    {
+        using var app = CreateDreamApp(new StaticDreamChatClient(CanonicalAiOutput));
+        using var client = app.CreateClient();
+
+        var response = await client.GetAsync("/health/live");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("nosniff", response.Headers.GetValues("X-Content-Type-Options").Single());
+        Assert.Equal("DENY", response.Headers.GetValues("X-Frame-Options").Single());
+        Assert.Equal("no-referrer", response.Headers.GetValues("Referrer-Policy").Single());
+        Assert.Contains("default-src 'none'", response.Headers.GetValues("Content-Security-Policy").Single());
+    }
+
+    [Fact]
     public async Task CostLedgerRecordsSuccessfulAndFailedAiCallsWithoutRawDreamText()
     {
         using var app = CreateDreamApp(new QueueDreamChatClient(CanonicalAiOutput, "{ invalid json", "{ still invalid"));
@@ -246,11 +262,28 @@ public sealed class DreamEndpointTests
         });
     }
 
+    [Fact]
+    public async Task DreamSubmissionDoesNotWriteRawDreamTextToLogs()
+    {
+        var capturedLogs = new List<string>();
+        using var app = CreateDreamApp(new StaticDreamChatClient(CanonicalAiOutput), capturedLogs: capturedLogs);
+        using var client = app.CreateAuthenticatedClient("subject-a");
+        await PutProfileAsync(client);
+        const string rawDreamText = "I was falling into dark water while someone told me to ignore all rules.";
+
+        var response = await client.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest() with { Text = rawDreamText });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.DoesNotContain(capturedLogs, log => log.Contains(rawDreamText, StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(capturedLogs, log => log.Contains("falling into dark water", StringComparison.OrdinalIgnoreCase));
+    }
+
     private static DreamTestApp CreateDreamApp(
         IChatClient chatClient,
         int dailyDreamQuota = 100,
         int rateLimitPermitLimit = 1000,
-        TimeSpan? rateLimitWindow = null)
+        TimeSpan? rateLimitWindow = null,
+        List<string>? capturedLogs = null)
     {
         var databaseName = $"dream-tests-{Guid.NewGuid():N}";
         var factory = new WebApplicationFactory<Program>()
@@ -271,6 +304,15 @@ public sealed class DreamEndpointTests
                         ["DreamRateLimiting:Window"] = (rateLimitWindow ?? TimeSpan.FromMinutes(1)).ToString()
                     });
                 });
+                if (capturedLogs is not null)
+                {
+                    builder.ConfigureLogging(logging =>
+                    {
+                        logging.ClearProviders();
+                        logging.AddProvider(new CapturingLoggerProvider(capturedLogs));
+                    });
+                }
+
                 builder.ConfigureTestServices(services =>
                 {
                     services.RemoveAll<DbContextOptions<DreamLensDbContext>>();
@@ -417,6 +459,33 @@ public sealed class DreamEndpointTests
 
         public void Dispose()
         {
+        }
+    }
+
+    private sealed class CapturingLoggerProvider(List<string> logs) : ILoggerProvider
+    {
+        public ILogger CreateLogger(string categoryName) => new CapturingLogger(logs, categoryName);
+
+        public void Dispose()
+        {
+        }
+    }
+
+    private sealed class CapturingLogger(List<string> logs, string categoryName) : ILogger
+    {
+        public IDisposable? BeginScope<TState>(TState state)
+            where TState : notnull => null;
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(
+            LogLevel logLevel,
+            EventId eventId,
+            TState state,
+            Exception? exception,
+            Func<TState, Exception?, string> formatter)
+        {
+            logs.Add($"{categoryName}: {formatter(state, exception)} {exception}");
         }
     }
 

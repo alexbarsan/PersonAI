@@ -9,6 +9,18 @@ variable "alert_email" {
   default     = null
 }
 
+variable "error_rate_alarm_threshold" {
+  type        = number
+  description = "API 5xx alarm threshold over the evaluation window."
+  default     = 5
+}
+
+variable "ai_cost_alarm_threshold_usd" {
+  type        = number
+  description = "Estimated AI cost alarm threshold in USD over the evaluation window."
+  default     = 10
+}
+
 variable "tags" {
   type        = map(string)
   description = "Tags applied to observability resources."

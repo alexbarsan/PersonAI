@@ -7,3 +7,8 @@ output "adot_log_group_name" {
   value       = aws_cloudwatch_log_group.adot.name
   description = "ADOT collector log group name."
 }
+
+output "dashboard_name" {
+  value       = aws_cloudwatch_dashboard.operations.dashboard_name
+  description = "Operations dashboard name."
+}

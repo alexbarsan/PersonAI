@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text.Json;
 using DreamLens.Api.Features.Profile;
 using DreamLens.Api.Infrastructure.Identity;
+using DreamLens.Api.Infrastructure.Observability;
 using DreamLens.Api.Infrastructure.Persistence;
 using DreamLens.Api.Infrastructure.Quotas;
 using DreamLens.Api.Infrastructure.Security;
@@ -57,6 +58,7 @@ public sealed class SubmitDreamHandler(
 
         if (!await quotaService.CanSubmitDreamAsync(currentUser.Subject, cancellationToken))
         {
+            DreamLensMeters.QuotaRejections.Add(1);
             return SubmitDreamResult.QuotaExceeded();
         }
 
@@ -120,6 +122,11 @@ public sealed class SubmitDreamHandler(
 
         dbContext.Dreams.Add(record);
         dbContext.AiCostLedger.Add(CreateLedgerRecord(record, interpretation, latency));
+        if (record.Status == "failed")
+        {
+            DreamLensMeters.ProviderFailures.Add(1, new KeyValuePair<string, object?>("provider", "DeepSeek"));
+        }
+
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return SubmitDreamResult.Valid(DreamMapper.Map(record, result));

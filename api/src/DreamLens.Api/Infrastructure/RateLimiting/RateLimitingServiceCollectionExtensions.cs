@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Threading.RateLimiting;
+using DreamLens.Api.Infrastructure.Observability;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
 
@@ -32,6 +33,7 @@ public static class RateLimitingServiceCollectionExtensions
 
             options.OnRejected = async (context, cancellationToken) =>
             {
+                DreamLensMeters.RateLimitRejections.Add(1);
                 context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
                 await context.HttpContext.Response.WriteAsJsonAsync(
                     new

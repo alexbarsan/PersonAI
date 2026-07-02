@@ -4,6 +4,7 @@ using DreamLens.Api.Features.Me.GetMe;
 using DreamLens.Api.Features.Profile;
 using DreamLens.Api.Features.Dreams;
 using DreamLens.Api.Infrastructure.Identity;
+using DreamLens.Api.Infrastructure.Observability;
 using DreamLens.Api.Infrastructure.Persistence;
 using DreamLens.Api.Infrastructure.Quotas;
 using DreamLens.Api.Infrastructure.RateLimiting;
@@ -16,6 +17,7 @@ using PersonaKit.Providers;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
+builder.Services.AddDreamLensObservability();
 builder.Services.AddDreamLensAuthentication(builder.Configuration, builder.Environment);
 builder.Services.AddDreamLensRateLimiting(builder.Configuration);
 builder.Services.AddDreamLensPersistence(builder.Configuration);
@@ -50,6 +52,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.UseDreamLensSecurityHeaders();
 app.UseAuthentication();
 app.UseRateLimiter();
 app.UseAuthorization();

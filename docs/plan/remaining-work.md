@@ -1,10 +1,9 @@
 # Remaining Work
 
-Last updated after S18 on 2026-07-02.
+Last updated after S19 on 2026-07-02.
 
 ## Planned Slices
 
-- S19: observability, hardening, and k6 load tests.
 - S20: prove PersonaKit reuse with Astra configuration.
 - S21: optional monetization decision and implementation if approved.
 
@@ -20,6 +19,8 @@ Last updated after S18 on 2026-07-02.
 - Terraform backend files are placeholders; real remote state bootstrap and GitHub environment variables are still needed before first cloud apply.
 - Deployment workflows are scaffolded, but real cloud deployment requires AWS account values, GitHub environment setup, ECR/ECS/S3/CloudFront outputs, EAS project setup, and protected `prod` approvals.
 - Local API image build verification remains blocked until Docker Desktop or another Docker daemon is running.
+- k6 smoke test script exists, but local execution is blocked until k6 is installed and a local or deployed API endpoint is available.
+- ADOT, CloudWatch alarms, and dashboard resources are scaffolded, but live telemetry still needs a real deployed task definition/collector sidecar configuration and AWS account validation.
 - Production DNS names, ACM certificates, CloudFront-scoped WAF ARN, and final Cognito hosted-domain settings still need real account/domain decisions.
 - Dream result detail uses an in-memory submitted-result cache before falling back to `GET /v1/dreams/{id}`; Playwright covers the submit/result path, and S17+ should not depend on this cache behavior.
 - Profile form uses simple text inputs for comma-separated traits; richer controls can be added after the core flows are complete.
