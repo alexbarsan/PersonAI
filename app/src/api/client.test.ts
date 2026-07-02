@@ -67,4 +67,17 @@ describe("api client", () => {
 
     await expect(client.deleteDream("dream_mock_1")).resolves.toBeNull();
   });
+
+  it("reads entitlement state from the API", async () => {
+    const client = createApiClient({
+      baseUrl: "http://localhost",
+      getAccessToken: () => "test-token",
+      mockMode: false
+    });
+
+    const entitlement = await client.getEntitlements();
+
+    expect(entitlement.tier).toBe("free");
+    expect(entitlement.dailyDreamLimit).toBe(3);
+  });
 });

@@ -1,10 +1,10 @@
 # Remaining Work
 
-Last updated after S20 on 2026-07-02.
+Last updated after S21 on 2026-07-02.
 
 ## Planned Slices
 
-- S21: optional monetization decision and implementation if approved.
+All planned slices S0-S21 are implemented.
 
 ## Known Gaps
 
@@ -21,6 +21,7 @@ Last updated after S20 on 2026-07-02.
 - k6 smoke test script exists, but local execution is blocked until k6 is installed and a local or deployed API endpoint is available.
 - ADOT, CloudWatch alarms, and dashboard resources are scaffolded, but live telemetry still needs a real deployed task definition/collector sidecar configuration and AWS account validation.
 - Astra config proves PersonaKit backend reuse and app brand switching, but there is not yet a separate Astra distribution, app icon/splash set, store metadata, or dedicated UI flow beyond the shared generic renderer.
+- Monetization is mock-first: entitlement tiers, quota behavior, and paywall UI exist, but real RevenueCat/App Store/Google Play subscriptions, webhook validation, receipt verification, and store product IDs are not connected.
 - Production DNS names, ACM certificates, CloudFront-scoped WAF ARN, and final Cognito hosted-domain settings still need real account/domain decisions.
 - Dream result detail uses an in-memory submitted-result cache before falling back to `GET /v1/dreams/{id}`; Playwright covers the submit/result path, and S17+ should not depend on this cache behavior.
 - Profile form uses simple text inputs for comma-separated traits; richer controls can be added after the core flows are complete.

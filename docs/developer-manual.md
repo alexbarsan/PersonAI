@@ -118,6 +118,14 @@ See `docs/deployment.md`. Deployment uses GitHub Actions OIDC, Terraform, ECS Fa
 
 S21 can start without subscribing to third-party payment services if the work is limited to local entitlement models, mock paywall UI, quota behavior by tier, and provider abstractions.
 
+The current implementation follows that mock-first approach:
+
+- API endpoint: `GET /v1/entitlements`.
+- Free tier: lower daily dream quota.
+- Premium tier: higher daily dream quota and deep-analysis entitlement flag.
+- App route: `/paywall`.
+- Purchase button: intentionally disabled until a real provider is connected.
+
 Real purchase verification and store-ready flows require third-party setup before final validation:
 
 - RevenueCat account/project, if RevenueCat is selected.

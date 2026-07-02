@@ -32,6 +32,7 @@ describe("HomeScreen", () => {
     fireEvent.press(screen.getByText("Use mock account"));
 
     await waitFor(() => expect(screen.getByText("Today's dream")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("Free: 3 dreams/day")).toBeTruthy());
 
     fireEvent.changeText(screen.getByLabelText("Dream text"), "I was walking through a quiet station.");
     fireEvent.changeText(screen.getByLabelText("Mood"), "calm");

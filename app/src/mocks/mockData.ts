@@ -1,4 +1,11 @@
-import { DreamJournalResponse, DreamResponse, InsightsResponse, MeResponse, ProfileResponse } from "@/api/dto";
+import {
+  DreamJournalResponse,
+  DreamResponse,
+  EntitlementResponse,
+  InsightsResponse,
+  MeResponse,
+  ProfileResponse
+} from "@/api/dto";
 
 export const mockMe: MeResponse = {
   subject: "mock-user",
@@ -90,4 +97,10 @@ export const mockInsights: InsightsResponse = {
       count: 1
     }
   ]
+};
+
+export const mockEntitlement: EntitlementResponse = {
+  tier: "free",
+  dailyDreamLimit: 3,
+  deepAnalysisEnabled: false
 };

@@ -25,6 +25,11 @@ export function HomeScreen() {
     queryFn: () => api.getMe(),
     enabled: Boolean(user)
   });
+  const entitlements = useQuery({
+    queryKey: ["entitlements", user?.subject],
+    queryFn: () => api.getEntitlements(),
+    enabled: Boolean(user)
+  });
 
   return (
     <View style={[styles.screen, { backgroundColor: theme.colors.background }]}>
@@ -60,6 +65,11 @@ export function HomeScreen() {
             <Text testID="auth-state" style={[styles.body, { color: theme.colors.text }]}>
               {savedAt ? "Draft saved" : "Signed in"}
             </Text>
+            <Text testID="entitlement-state" style={[styles.body, { color: theme.colors.mutedText }]}>
+              {entitlements.data?.tier === "premium"
+                ? `Premium: ${entitlements.data.dailyDreamLimit} dreams/day`
+                : `Free: ${entitlements.data?.dailyDreamLimit ?? 3} dreams/day`}
+            </Text>
             <Pressable
               accessibilityRole="button"
               onPress={saveDraft}
@@ -85,6 +95,11 @@ export function HomeScreen() {
             <Link href="/profile" asChild>
               <Pressable accessibilityRole="button" style={styles.secondaryButton} testID="go-profile">
                 <Text style={[styles.secondaryButtonText, { color: theme.colors.primary }]}>Profile</Text>
+              </Pressable>
+            </Link>
+            <Link href="/paywall" asChild>
+              <Pressable accessibilityRole="button" style={styles.secondaryButton} testID="go-paywall">
+                <Text style={[styles.secondaryButtonText, { color: theme.colors.primary }]}>Premium</Text>
               </Pressable>
             </Link>
             <Pressable accessibilityRole="button" onPress={signOut} style={styles.secondaryButton}>

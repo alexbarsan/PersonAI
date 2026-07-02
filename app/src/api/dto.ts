@@ -92,3 +92,9 @@ export type ThemeInsightResponse = {
   name: string;
   count: number;
 };
+
+export type EntitlementResponse = {
+  tier: "free" | "premium";
+  dailyDreamLimit: number;
+  deepAnalysisEnabled: boolean;
+};

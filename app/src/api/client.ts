@@ -1,6 +1,7 @@
 import {
   DreamJournalResponse,
   DreamResponse,
+  EntitlementResponse,
   InsightsResponse,
   MeResponse,
   ProfileUpdateRequest,
@@ -26,6 +27,7 @@ export type ApiClient = {
   getDream: (id: string) => Promise<DreamResponse>;
   deleteDream: (id: string) => Promise<void>;
   getInsights: () => Promise<InsightsResponse>;
+  getEntitlements: () => Promise<EntitlementResponse>;
 };
 
 export { ApiError };
@@ -82,7 +84,8 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
       request<void>(`/v1/dreams/${id}`, {
         method: "DELETE"
       }),
-    getInsights: () => request<InsightsResponse>("/v1/insights")
+    getInsights: () => request<InsightsResponse>("/v1/insights"),
+    getEntitlements: () => request<EntitlementResponse>("/v1/entitlements")
   };
 }
 

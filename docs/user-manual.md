@@ -21,6 +21,10 @@ The journal lists previous dream submissions for the signed-in user. You can ope
 
 Insights summarize recurring themes and current dream streaks from your journal.
 
+## Premium
+
+The Premium screen shows planned paid-tier benefits. In the current local build, purchases are not connected yet. Free users have a lower daily dream limit, and Premium entitlement support is available for testing through mock/configured state.
+
 ## Privacy Notes
 
 DreamLens sends a pseudonymized context snapshot to the AI provider. It does not send your name, email, device id, IP address, or Cognito subject. Sensitive traits are included only when consent allows it.

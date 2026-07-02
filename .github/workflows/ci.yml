@@ -34,6 +34,10 @@ jobs:
         shell: pwsh
         run: ./scripts/check-s20-astra.ps1
 
+      - name: Check S21 monetization foundation
+        shell: pwsh
+        run: ./scripts/check-s21-monetization.ps1
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:

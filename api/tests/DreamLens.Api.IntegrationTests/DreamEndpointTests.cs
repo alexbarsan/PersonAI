@@ -203,6 +203,47 @@ public sealed class DreamEndpointTests
     }
 
     [Fact]
+    public async Task PremiumEntitlementAllowsHigherDailyQuota()
+    {
+        using var app = CreateDreamApp(
+            new StaticDreamChatClient(CanonicalAiOutput),
+            dailyDreamQuota: 1,
+            premiumDailyDreamQuota: 2,
+            premiumSubjects: ["subject-a"]);
+        using var client = app.CreateAuthenticatedClient("subject-a");
+        await PutProfileAsync(client);
+
+        var first = await client.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest());
+        var second = await client.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest());
+        var third = await client.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest());
+
+        Assert.Equal(HttpStatusCode.OK, first.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, second.StatusCode);
+        Assert.Equal(HttpStatusCode.TooManyRequests, third.StatusCode);
+    }
+
+    [Fact]
+    public async Task EntitlementsEndpointReflectsCurrentTier()
+    {
+        using var app = CreateDreamApp(
+            new StaticDreamChatClient(CanonicalAiOutput),
+            premiumSubjects: ["subject-a"]);
+        using var freeClient = app.CreateAuthenticatedClient("subject-free");
+        using var premiumClient = app.CreateAuthenticatedClient("subject-a");
+
+        var free = await freeClient.GetFromJsonAsync<EntitlementResponse>("/v1/entitlements");
+        var premium = await premiumClient.GetFromJsonAsync<EntitlementResponse>("/v1/entitlements");
+
+        Assert.NotNull(free);
+        Assert.NotNull(premium);
+        Assert.Equal("free", free.Tier);
+        Assert.Equal("premium", premium.Tier);
+        Assert.False(free.DeepAnalysisEnabled);
+        Assert.True(premium.DeepAnalysisEnabled);
+        Assert.True(premium.DailyDreamLimit > free.DailyDreamLimit);
+    }
+
+    [Fact]
     public async Task RateLimitingReturnsSafeTooManyRequestsBody()
     {
         using var app = CreateDreamApp(
@@ -281,6 +322,8 @@ public sealed class DreamEndpointTests
     private static DreamTestApp CreateDreamApp(
         IChatClient chatClient,
         int dailyDreamQuota = 100,
+        int premiumDailyDreamQuota = 250,
+        string[]? premiumSubjects = null,
         int rateLimitPermitLimit = 1000,
         TimeSpan? rateLimitWindow = null,
         List<string>? capturedLogs = null)
@@ -299,10 +342,21 @@ public sealed class DreamEndpointTests
                             System.Text.Encoding.UTF8.GetBytes("12345678901234567890123456789012")),
                         ["Pseudonym:SecretBase64"] = Convert.ToBase64String(
                             System.Text.Encoding.UTF8.GetBytes("12345678901234567890123456789012")),
-                        ["DreamQuotas:DailyDreamSubmissions"] = dailyDreamQuota.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                        ["Monetization:FreeDailyDreamSubmissions"] = dailyDreamQuota.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                        ["Monetization:PremiumDailyDreamSubmissions"] = premiumDailyDreamQuota.ToString(System.Globalization.CultureInfo.InvariantCulture),
                         ["DreamRateLimiting:PermitLimit"] = rateLimitPermitLimit.ToString(System.Globalization.CultureInfo.InvariantCulture),
                         ["DreamRateLimiting:Window"] = (rateLimitWindow ?? TimeSpan.FromMinutes(1)).ToString()
                     });
+                    if (premiumSubjects is not null)
+                    {
+                        for (var index = 0; index < premiumSubjects.Length; index++)
+                        {
+                            configuration.AddInMemoryCollection(new Dictionary<string, string?>
+                            {
+                                [$"Monetization:PremiumSubjects:{index}"] = premiumSubjects[index]
+                            });
+                        }
+                    }
                 });
                 if (capturedLogs is not null)
                 {
@@ -524,6 +578,8 @@ public sealed class DreamEndpointTests
     private sealed record InsightsResponse(int TotalDreams, int CurrentStreakDays, ThemeInsightResponse[] RecurringThemes);
 
     private sealed record ThemeInsightResponse(string Name, int Count);
+
+    private sealed record EntitlementResponse(string Tier, int DailyDreamLimit, bool DeepAnalysisEnabled);
 
     private const string CanonicalAiOutput = """
     {

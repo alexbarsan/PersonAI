@@ -1,6 +1,6 @@
 import { rest } from "msw";
 
-import { mockDream, mockInsights, mockJournal, mockMe, mockProfile } from "@/mocks/mockData";
+import { mockDream, mockEntitlement, mockInsights, mockJournal, mockMe, mockProfile } from "@/mocks/mockData";
 
 export const handlers = [
   rest.get("http://localhost/v1/me", (_, response, context) => response(context.json(mockMe))),
@@ -11,5 +11,6 @@ export const handlers = [
   rest.get("http://localhost/v1/dreams", (_, response, context) => response(context.json(mockJournal))),
   rest.get("http://localhost/v1/dreams/:id", (_, response, context) => response(context.json(mockDream))),
   rest.delete("http://localhost/v1/dreams/:id", (_, response, context) => response(context.status(204))),
-  rest.get("http://localhost/v1/insights", (_, response, context) => response(context.json(mockInsights)))
+  rest.get("http://localhost/v1/insights", (_, response, context) => response(context.json(mockInsights))),
+  rest.get("http://localhost/v1/entitlements", (_, response, context) => response(context.json(mockEntitlement)))
 ];

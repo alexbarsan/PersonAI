@@ -1,16 +1,16 @@
 using DreamLens.Api.Infrastructure.Persistence;
+using DreamLens.Api.Infrastructure.Monetization;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 
 namespace DreamLens.Api.Infrastructure.Quotas;
 
 public sealed class EfDreamQuotaService(
     DreamLensDbContext dbContext,
-    IOptions<DreamQuotaOptions> options) : IDreamQuotaService
+    IEntitlementService entitlementService) : IDreamQuotaService
 {
     public async Task<bool> CanSubmitDreamAsync(string userSubject, CancellationToken cancellationToken)
     {
-        var limit = options.Value.DailyDreamSubmissions;
+        var limit = entitlementService.GetEntitlement(userSubject).DailyDreamLimit;
         if (limit <= 0)
         {
             return false;
