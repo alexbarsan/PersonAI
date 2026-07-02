@@ -1,0 +1,52 @@
+# Deployment
+
+DreamLens deployment uses GitHub Actions OIDC to assume AWS roles. Do not create or store long-lived AWS access keys in GitHub.
+
+## GitHub Environments
+
+Create these GitHub environments:
+
+- `dev`
+- `prod`
+- `mobile`
+
+Protect `prod` and Terraform `apply` usage with reviewers before enabling real deployments.
+
+## Required Variables
+
+Set these as GitHub environment variables for `dev` and `prod`:
+
+- `AWS_REGION`: AWS region, for example `us-east-1`.
+- `AWS_ROLE_TO_ASSUME`: deployment role ARN created by Terraform output `github_deploy_role_arn`.
+- `API_ECR_REPOSITORY`: ECR repository name for the API image.
+- `API_ECS_CLUSTER`: ECS cluster name.
+- `API_ECS_SERVICE`: ECS API service name.
+- `WEB_BUCKET`: S3 bucket that hosts the Expo web export.
+- `CLOUDFRONT_DISTRIBUTION_ID`: CloudFront distribution id for the web app.
+
+## Required Secrets
+
+Set these as GitHub secrets only where needed:
+
+- `EAS_TOKEN`: Expo account token used by the mobile EAS workflow.
+
+AWS application secrets belong in Secrets Manager through Terraform and deployment operations, not GitHub secrets.
+
+## Terraform State Bootstrap
+
+Before running the real Terraform backend, create per-environment state resources:
+
+- `TERRAFORM_STATE_BUCKET`
+- `TERRAFORM_LOCK_TABLE`
+
+Then copy `infra/envs/<env>/backend.tf.example` to `infra/envs/<env>/backend.tf` locally or provide backend config during CI. Do not commit account-specific backend files until the account and naming decision is explicit.
+
+## Workflows
+
+- `ci.yml`: foundation validation for pull requests and pushes.
+- `infra.yml`: Terraform static checks, `fmt`, `validate`, and manual plan/apply.
+- `api-deploy.yml`: test, container build, ECR push, and ECS service rollout.
+- `web-deploy.yml`: test, typecheck, Expo web export, S3 sync, and CloudFront invalidation.
+- `mobile-eas.yml`: manual EAS build placeholder for iOS/Android.
+
+S18 wires the deployment paths. Actual production rollout still requires real AWS account values, remote state bootstrap, GitHub environment variables, and app/domain decisions.

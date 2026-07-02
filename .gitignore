@@ -65,6 +65,7 @@ terraform.tfstate.*
 *.tfplan
 *.tfvars
 !*.tfvars.example
+infra/envs/*/backend.tf
 crash.log
 crash.*.log
 override.tf

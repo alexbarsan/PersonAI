@@ -18,6 +18,14 @@ jobs:
         shell: pwsh
         run: ./scripts/check-s0-structure.ps1
 
+      - name: Check S17 infrastructure structure
+        shell: pwsh
+        run: ./scripts/check-s17-infra.ps1
+
+      - name: Check S18 workflow structure
+        shell: pwsh
+        run: ./scripts/check-s18-workflows.ps1
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:

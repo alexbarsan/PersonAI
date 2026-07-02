@@ -1,0 +1,100 @@
+name: infra
+
+on:
+  pull_request:
+    paths:
+      - infra/**
+      - scripts/check-s17-infra.ps1
+      - scripts/check-s18-workflows.ps1
+      - .github/workflows/infra.yml
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Terraform environment.
+        required: true
+        default: dev
+        type: choice
+        options:
+          - dev
+          - prod
+      action:
+        description: Terraform action.
+        required: true
+        default: plan
+        type: choice
+        options:
+          - plan
+          - apply
+
+permissions:
+  contents: read
+  id-token: write
+  pull-requests: read
+
+jobs:
+  validate:
+    name: validate
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment:
+          - dev
+          - prod
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Static infra structure check
+        shell: pwsh
+        run: ./scripts/check-s17-infra.ps1
+
+      - name: Static workflow structure check
+        shell: pwsh
+        run: ./scripts/check-s18-workflows.ps1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+
+      - name: Terraform format check
+        run: terraform fmt -check -recursive infra
+
+      - name: Terraform init without backend
+        run: terraform -chdir=infra/envs/${{ matrix.environment }} init -backend=false
+
+      - name: Terraform validate
+        run: terraform -chdir=infra/envs/${{ matrix.environment }} validate
+
+  plan-apply:
+    name: ${{ inputs.action || 'plan' }} ${{ inputs.environment || 'dev' }}
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    needs: validate
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME }}
+
+      - name: Terraform init
+        run: terraform -chdir=infra/envs/${{ inputs.environment }} init
+
+      - name: Terraform plan
+        run: terraform -chdir=infra/envs/${{ inputs.environment }} plan -input=false -out=tfplan
+
+      - name: Terraform apply
+        if: inputs.action == 'apply'
+        run: terraform -chdir=infra/envs/${{ inputs.environment }} apply -input=false -auto-approve tfplan
