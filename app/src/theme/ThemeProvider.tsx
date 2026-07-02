@@ -1,14 +1,14 @@
 import { PropsWithChildren, createContext, useContext } from "react";
 import { View } from "react-native";
 
-import { DreamLensBrand, dreamLensBrand } from "@/theme/brand";
+import { DreamLensBrand, activeBrand } from "@/theme/brand";
 
-const ThemeContext = createContext<DreamLensBrand>(dreamLensBrand);
+const ThemeContext = createContext<DreamLensBrand>(activeBrand);
 
 export function ThemeProvider({ children }: PropsWithChildren) {
   return (
-    <ThemeContext.Provider value={dreamLensBrand}>
-      <View style={{ flex: 1, backgroundColor: dreamLensBrand.colors.background }}>{children}</View>
+    <ThemeContext.Provider value={activeBrand}>
+      <View style={{ flex: 1, backgroundColor: activeBrand.colors.background }}>{children}</View>
     </ThemeContext.Provider>
   );
 }

@@ -1,0 +1,8 @@
+{
+  "id": "astrologer",
+  "version": "1.0.0",
+  "displayName": "Astra",
+  "promptTemplate": "prompt.scriban",
+  "outputSchema": "output.schema.json",
+  "sectionMap": "section-map.json"
+}

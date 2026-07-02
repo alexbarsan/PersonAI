@@ -1,0 +1,21 @@
+{
+  "summary": "$.summary",
+  "sections": [
+    {
+      "kind": "text",
+      "title": "Cosmic Weather",
+      "source": "$.cosmicWeather"
+    },
+    {
+      "kind": "list",
+      "title": "Focus Areas",
+      "source": "$.focusAreas"
+    },
+    {
+      "kind": "text",
+      "title": "Guidance",
+      "source": "$.guidance"
+    }
+  ],
+  "followUpQuestions": "$.reflectionPrompts"
+}

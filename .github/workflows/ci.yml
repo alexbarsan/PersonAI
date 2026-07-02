@@ -30,6 +30,10 @@ jobs:
         shell: pwsh
         run: ./scripts/check-s19-observability.ps1
 
+      - name: Check S20 Astra reuse structure
+        shell: pwsh
+        run: ./scripts/check-s20-astra.ps1
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
