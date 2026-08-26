@@ -47,6 +47,18 @@ function Test-AwsCommand {
     }
 }
 
+function Invoke-AwsRequired {
+    param(
+        [scriptblock] $Command,
+        [string] $FailureMessage
+    )
+
+    & $Command
+    if ($LASTEXITCODE -ne 0) {
+        throw $FailureMessage
+    }
+}
+
 if (-not $AccountId) {
     $identity = & $aws.Source sts get-caller-identity --profile $ProfileName | ConvertFrom-Json
     $AccountId = $identity.Account
@@ -65,31 +77,45 @@ if (Test-AwsCommand { & $aws.Source s3api head-bucket --bucket $bucketName --pro
 else {
     Write-Host "Creating state bucket."
     if ($Region -eq "us-east-1") {
-        & $aws.Source s3api create-bucket --bucket $bucketName --region $Region --profile $ProfileName | Out-Null
+        Invoke-AwsRequired { & $aws.Source s3api create-bucket --bucket $bucketName --region $Region --profile $ProfileName | Out-Null } "Failed to create state bucket."
     }
     else {
-        & $aws.Source s3api create-bucket --bucket $bucketName --region $Region --create-bucket-configuration LocationConstraint=$Region --profile $ProfileName | Out-Null
+        Invoke-AwsRequired { & $aws.Source s3api create-bucket --bucket $bucketName --region $Region --create-bucket-configuration LocationConstraint=$Region --profile $ProfileName | Out-Null } "Failed to create state bucket."
     }
 }
 
-& $aws.Source s3api put-bucket-versioning --bucket $bucketName --versioning-configuration Status=Enabled --profile $ProfileName | Out-Null
-& $aws.Source s3api put-bucket-encryption --bucket $bucketName --server-side-encryption-configuration '{"Rules":[{"ApplyServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"}}]}' --profile $ProfileName | Out-Null
-& $aws.Source s3api put-public-access-block --bucket $bucketName --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true --profile $ProfileName | Out-Null
+Invoke-AwsRequired { & $aws.Source s3api put-bucket-versioning --bucket $bucketName --versioning-configuration Status=Enabled --profile $ProfileName | Out-Null } "Failed to enable bucket versioning."
+
+$encryptionConfigPath = Join-Path ([System.IO.Path]::GetTempPath()) "$bucketName-encryption.json"
+@"
+{
+  "Rules": [
+    {
+      "ApplyServerSideEncryptionByDefault": {
+        "SSEAlgorithm": "AES256"
+      }
+    }
+  ]
+}
+"@ | Set-Content -Path $encryptionConfigPath -Encoding ascii
+
+Invoke-AwsRequired { & $aws.Source s3api put-bucket-encryption --bucket $bucketName --server-side-encryption-configuration "file://$encryptionConfigPath" --profile $ProfileName | Out-Null } "Failed to enable bucket encryption."
+Invoke-AwsRequired { & $aws.Source s3api put-public-access-block --bucket $bucketName --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true --profile $ProfileName | Out-Null } "Failed to block public access on the state bucket."
 
 if (Test-AwsCommand { & $aws.Source dynamodb describe-table --table-name $lockTableName --region $Region --profile $ProfileName }) {
     Write-Host "Lock table already exists."
 }
 else {
     Write-Host "Creating lock table."
-    & $aws.Source dynamodb create-table `
+    Invoke-AwsRequired { & $aws.Source dynamodb create-table `
         --table-name $lockTableName `
         --attribute-definitions AttributeName=LockID,AttributeType=S `
         --key-schema AttributeName=LockID,KeyType=HASH `
         --billing-mode PAY_PER_REQUEST `
         --region $Region `
-        --profile $ProfileName | Out-Null
+        --profile $ProfileName | Out-Null } "Failed to create lock table."
 
-    & $aws.Source dynamodb wait table-exists --table-name $lockTableName --region $Region --profile $ProfileName
+    Invoke-AwsRequired { & $aws.Source dynamodb wait table-exists --table-name $lockTableName --region $Region --profile $ProfileName } "Timed out waiting for lock table."
 }
 
 if ($WriteBackendFile) {
