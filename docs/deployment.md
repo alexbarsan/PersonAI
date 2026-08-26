@@ -7,6 +7,7 @@ DreamLens deployment uses GitHub Actions OIDC to assume AWS roles. Do not create
 Create these GitHub environments:
 
 - `dev`
+- `qa`
 - `prod`
 - `mobile`
 
@@ -14,7 +15,7 @@ Protect `prod` and Terraform `apply` usage with reviewers before enabling real d
 
 ## Required Variables
 
-Set these as GitHub environment variables for `dev` and `prod`:
+Set these as GitHub environment variables for `dev`, `qa`, and `prod`:
 
 - `AWS_REGION`: AWS region, for example `us-east-1`.
 - `AWS_ROLE_TO_ASSUME`: deployment role ARN created by Terraform output `github_deploy_role_arn`.

@@ -11,4 +11,5 @@ Manuals:
 - [User manual](docs/user-manual.md)
 - [Developer manual](docs/developer-manual.md)
 - [Deployment manual](docs/deployment.md)
+- [AWS Agent Toolkit setup](docs/aws-agent-toolkit-setup.md)
 - [Observability manual](docs/observability.md)
