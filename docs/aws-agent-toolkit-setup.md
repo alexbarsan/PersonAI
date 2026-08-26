@@ -34,12 +34,20 @@ After installing tools on Windows, open a new terminal so PATH updates are visib
 
 ## Dev Login
 
-Use this profile unless you choose a different name:
+Use this profile unless you choose a different name.
+
+Preferred browser-based toolkit login:
 
 ```powershell
 aws configure set region us-east-1 --profile dreamlens-dev
 aws login --region us-east-1 --profile dreamlens-dev
 aws sts get-caller-identity --profile dreamlens-dev
+```
+
+If you use IAM user access keys, rotate any key that was pasted into chat, logs, tickets, or email. Then configure the profile locally with an interactive prompt:
+
+```powershell
+powershell.exe -ExecutionPolicy Bypass -File scripts\configure-aws-profile.ps1 -ProfileName dreamlens-dev -Region us-east-1
 ```
 
 Then configure the Agent Toolkit:
@@ -74,3 +82,11 @@ To add QA or production later, authenticate each profile and change the value to
 ```
 
 Restart the AI tool after changing MCP configuration.
+
+## Verification
+
+Run:
+
+```powershell
+powershell.exe -ExecutionPolicy Bypass -File scripts\check-aws-agent-toolkit.ps1 -ProfileName dreamlens-dev -Region us-east-1
+```

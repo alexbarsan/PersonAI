@@ -42,6 +42,15 @@ Before running the real Terraform backend, create per-environment state resource
 
 Then copy `infra/envs/<env>/backend.tf.example` to `infra/envs/<env>/backend.tf` locally or provide backend config during CI. Do not commit account-specific backend files until the account and naming decision is explicit.
 
+For `dev`, after the AWS profile is configured:
+
+```powershell
+powershell.exe -ExecutionPolicy Bypass -File scripts\bootstrap-terraform-state.ps1 -Environment dev -ProfileName dreamlens-dev -Region us-east-1 -WriteBackendFile
+powershell.exe -ExecutionPolicy Bypass -File scripts\terraform-plan-env.ps1 -Environment dev -ProfileName dreamlens-dev
+```
+
+The generated `backend.tf` and `terraform.tfvars` files are local account-specific files. Review them before applying infrastructure changes.
+
 ## Workflows
 
 - `ci.yml`: foundation validation for pull requests and pushes.
