@@ -22,6 +22,31 @@ if (-not $aws) {
     throw "AWS CLI was not found. Open a new terminal or reinstall AWS CLI v2."
 }
 
+function Test-AwsCommand {
+    param(
+        [scriptblock] $Command
+    )
+
+    $previousErrorActionPreference = $ErrorActionPreference
+    $previousNativeErrorPreference = $null
+    if (Get-Variable PSNativeCommandUseErrorActionPreference -Scope Global -ErrorAction SilentlyContinue) {
+        $previousNativeErrorPreference = $global:PSNativeCommandUseErrorActionPreference
+        $global:PSNativeCommandUseErrorActionPreference = $false
+    }
+
+    try {
+        $ErrorActionPreference = "Continue"
+        & $Command 2>$null | Out-Null
+        return $LASTEXITCODE -eq 0
+    }
+    finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+        if ($null -ne $previousNativeErrorPreference) {
+            $global:PSNativeCommandUseErrorActionPreference = $previousNativeErrorPreference
+        }
+    }
+}
+
 if (-not $AccountId) {
     $identity = & $aws.Source sts get-caller-identity --profile $ProfileName | ConvertFrom-Json
     $AccountId = $identity.Account
@@ -34,8 +59,11 @@ Write-Host "Bootstrapping Terraform state for '$Environment'."
 Write-Host "State bucket: $bucketName"
 Write-Host "Lock table:   $lockTableName"
 
-$existingBucket = & $aws.Source s3api head-bucket --bucket $bucketName --profile $ProfileName 2>$null
-if ($LASTEXITCODE -ne 0) {
+if (Test-AwsCommand { & $aws.Source s3api head-bucket --bucket $bucketName --profile $ProfileName }) {
+    Write-Host "State bucket already exists."
+}
+else {
+    Write-Host "Creating state bucket."
     if ($Region -eq "us-east-1") {
         & $aws.Source s3api create-bucket --bucket $bucketName --region $Region --profile $ProfileName | Out-Null
     }
@@ -48,8 +76,11 @@ if ($LASTEXITCODE -ne 0) {
 & $aws.Source s3api put-bucket-encryption --bucket $bucketName --server-side-encryption-configuration '{"Rules":[{"ApplyServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"}}]}' --profile $ProfileName | Out-Null
 & $aws.Source s3api put-public-access-block --bucket $bucketName --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true --profile $ProfileName | Out-Null
 
-$table = & $aws.Source dynamodb describe-table --table-name $lockTableName --region $Region --profile $ProfileName 2>$null
-if ($LASTEXITCODE -ne 0) {
+if (Test-AwsCommand { & $aws.Source dynamodb describe-table --table-name $lockTableName --region $Region --profile $ProfileName }) {
+    Write-Host "Lock table already exists."
+}
+else {
+    Write-Host "Creating lock table."
     & $aws.Source dynamodb create-table `
         --table-name $lockTableName `
         --attribute-definitions AttributeName=LockID,AttributeType=S `
