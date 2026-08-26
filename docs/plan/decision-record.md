@@ -243,6 +243,19 @@ Invariants: `pseudonymId` is an HMAC of the internal user id (never the Cognito 
 
 Full slice packs with TDD plans and copy-paste prompts: `07-slices-S0-S5.md`, `08-slices-S6-S11.md`, `09-slices-S12-S16.md`, `10-slices-S17-S21.md`.
 
+## 5.1 Post-S21 product backlog
+
+S0-S21 define the implemented baseline. The next feature wave is tracked in `13-post-s21-feature-backlog.md` and includes:
+
+- richer dream output schema fields: main interpretation, alternative interpretations, people, places, objects, lucidity score, and nightmare/intensity score
+- journal editing, search/filtering, and export
+- optional voice capture and transcription
+- opt-in dream image generation
+- PostgreSQL `pgvector` embeddings for semantic memory, similar dreams, Dream DNA, and Ask DreamLens
+- premium Deep Interpretation with stronger model routing and richer retrieved context
+- Cognito social sign-in providers for Google and Apple first, with Facebook optional
+- admin/business metrics for usage, conversion, revenue, AI cost, AWS cost, and gross margin
+
 ## 6. Design patterns & SOLID map
 
 | Pattern | Where | Why |

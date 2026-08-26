@@ -1,10 +1,25 @@
 # Remaining Work
 
-Last updated after S21 on 2026-07-02.
+Last updated after importing Catch Dreamer feature notes on 2026-08-27.
 
 ## Planned Slices
 
 All planned slices S0-S21 are implemented.
+
+## Post-S21 Product Backlog
+
+The imported Catch Dreamer feature notes add several capabilities that are not fully implemented yet. Track the detailed backlog in `13-post-s21-feature-backlog.md`.
+
+- Dream output schema v2: main and alternative interpretations, people, places, objects, lucidity score, and nightmare/intensity score.
+- Journal v2: edit dreams, search/filter history, and export user data from the app.
+- Voice capture and transcription with explicit retention controls.
+- Dream image generation with async jobs, S3 storage, signed access, and entitlement/cost limits.
+- Embeddings and semantic memory using PostgreSQL `pgvector`, not full-history prompts.
+- Similar-dream search, automatic clustering, and Dream DNA analytics across symbols, emotions, people, places, trends, and correlations.
+- Ask DreamLens: retrieval-backed questions over the user's own dream history.
+- Premium Deep Interpretation using a stronger model and richer retrieved context.
+- Cognito social sign-in provider setup for Google and Apple first; Facebook remains optional after product/privacy review.
+- Admin/business metrics view for MAU, conversion, revenue, AI cost, AWS cost, cost per user, and gross margin.
 
 ## Known Gaps
 

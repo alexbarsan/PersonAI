@@ -33,6 +33,7 @@ This folder is the complete, agent-executable development master plan for DreamL
 | 10-slices-S17-S21.md | Slice prompts S17–S21: Terraform AWS infra, CI/CD pipelines, observability + hardening + k6, astrologer persona + white-label Astra build, optional monetization/store readiness. |
 | 11-runtime-prompts.md | Runtime AI assets: persona system prompts (dream-interpreter and siblings), injection-firewall rules, output schemas, repair-retry prompt. |
 | 12-reuse-playbook.md | Step-by-step recipe for launching a new PersonaKit app (persona config + section map + brand config) without backend code changes. |
+| 13-post-s21-feature-backlog.md | Post-S21 feature backlog: richer dream outputs, journal v2, voice, images, embeddings, Dream DNA, similar dreams, Ask DreamLens, deep interpretation, social sign-in, and admin metrics. |
 | decision-record.md | **Single source of truth**: every decision, canonical names, repo layout, the three v1 schemas, slice map, workflow rules, privacy invariants. |
 
 ## The three load-bearing rules
