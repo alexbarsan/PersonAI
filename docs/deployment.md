@@ -61,4 +61,4 @@ The generated `backend.tf` and `terraform.tfvars` files are local account-specif
 
 S18 wires the deployment paths. Actual production rollout still requires real AWS account values, remote state bootstrap, GitHub environment variables, and app/domain decisions.
 
-Terraform owns the infrastructure and bootstrap task definition. GitHub Actions owns normal application image rollouts by registering a new ECS task-definition revision from the currently deployed definition. After applying Terraform changes that affect API runtime configuration, run `api-deploy.yml` again for the target environment so the service is on the current application image.
+Terraform owns the infrastructure and bootstrap task definition. GitHub Actions owns normal application image rollouts by registering a new ECS task-definition revision from the currently deployed definition. Terraform intentionally ignores the ECS service `task_definition` pointer so infrastructure applies do not roll the service back to the bootstrap image.
