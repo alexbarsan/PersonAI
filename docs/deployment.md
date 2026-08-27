@@ -70,6 +70,8 @@ Use lowercase DNS names for the production domain: `dreamdna.world`.
 
 Recommended public names for web-first launch:
 
+- Dev web: `dev.dreamdna.world`
+- Dev API: `api.dev.dreamdna.world`
 - Web: `dreamdna.world` and `www.dreamdna.world`
 - API: `api.dreamdna.world`
 - QA web: `qa.dreamdna.world`

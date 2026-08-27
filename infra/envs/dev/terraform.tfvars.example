@@ -8,18 +8,20 @@ availability_zones = [
 container_image = "public.ecr.aws/docker/library/nginx:stable-alpine"
 
 callback_urls = [
+  "https://dev.dreamdna.world",
   "http://localhost:8081",
   "exp://127.0.0.1:8081"
 ]
 
 logout_urls = [
+  "https://dev.dreamdna.world",
   "http://localhost:8081"
 ]
 
 alert_email = null
 
-web_domain_aliases      = []
+web_domain_aliases      = ["dev.dreamdna.world"]
 web_acm_certificate_arn = null
 api_acm_certificate_arn = null
 hosted_zone_id          = null
-api_domain_name         = null
+api_domain_name         = "api.dev.dreamdna.world"

@@ -3,5 +3,6 @@ domain_name = "dreamdna.world"
 
 subject_alternative_names = [
   "*.dreamdna.world",
+  "*.dev.dreamdna.world",
   "*.qa.dreamdna.world"
 ]
