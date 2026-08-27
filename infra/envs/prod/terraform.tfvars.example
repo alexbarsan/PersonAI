@@ -17,6 +17,8 @@ logout_urls = [
   "https://www.dreamdna.world"
 ]
 
+cognito_domain_prefix = "dreamlens-prod-<account-id>"
+
 alert_email = null
 
 web_domain_aliases = [

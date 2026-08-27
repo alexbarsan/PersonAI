@@ -1,6 +1,6 @@
 # Remaining Work
 
-Last updated after adding the post-S21 semantic memory, private asset storage, and async AI job plan on 2026-08-28.
+Last updated after wiring dev Cognito hosted login and real web/API deployment configuration on 2026-08-28.
 
 ## Planned Slices
 
@@ -27,11 +27,10 @@ The imported Catch Dreamer feature notes add several capabilities that are not f
 - The Expo app is on SDK 56 locally because SDK 57 produced a `jest-expo` / React Native peer conflict during install.
 - `npm test` uses `--forceExit` because the Expo/RN Jest environment leaves an open handle after tests complete.
 - `npm install` reports moderate third-party audit findings; no forced audit fix has been applied.
-- Production Cognito OAuth is scaffolded but not fully wired to hosted Cognito configuration or secure token persistence.
+- Dev Cognito OAuth is wired to a hosted UI domain and the deployed web app is configured for real API mode. Production/QA Cognito domains, social providers, branded managed login, exact mobile callback URLs, and secure refresh-token persistence are still pending.
 - Maestro mobile flow exists, but local verification is blocked until Maestro is installed.
-- Terraform infrastructure is scaffolded, but local `terraform fmt`/`terraform validate`/`terraform plan` verification is blocked until Terraform is installed and AWS backend/account values exist.
-- Terraform backend files are placeholders; real remote state bootstrap and GitHub environment variables are still needed before first cloud apply.
-- Deployment workflows are scaffolded, and dev custom domains are live. Real QA/prod deployment still requires environment-specific Terraform values, GitHub environment setup, ECR/ECS/S3/CloudFront outputs, EAS project setup, and protected `prod` approvals.
+- Terraform infrastructure is applied for dev. QA/prod still need remote state bootstrap, environment-specific Terraform values, GitHub environment variables, and protected `prod` approvals.
+- Deployment workflows are active for dev. Real QA/prod deployment still requires environment-specific ECR/ECS/S3/CloudFront outputs, EAS project setup, and final launch approvals.
 - `pgvector` is planned but not implemented in API migrations or Terraform RDS initialization yet.
 - Private S3 asset buckets for generated dream images, exports, and optional uploads are planned but not implemented yet.
 - SQS queues/workers for image jobs, embedding backfills, exports, and future batch AI work are planned but not implemented yet.

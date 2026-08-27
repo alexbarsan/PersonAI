@@ -1,6 +1,7 @@
 using System.Net;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
 
 namespace DreamLens.Api.IntegrationTests;
 
@@ -54,10 +55,34 @@ public sealed class WalkingSkeletonTests
         Assert.Contains("swagger-ui", body);
     }
 
-    private static HttpClient CreateDevelopmentClient()
+    [Fact]
+    public async Task CorsPreflightAllowsConfiguredOrigins()
+    {
+        using var client = CreateDevelopmentClient(new Dictionary<string, string?>
+        {
+            ["Cors:AllowedOrigins:0"] = "https://dev.dreamdna.world"
+        });
+        using var request = new HttpRequestMessage(HttpMethod.Options, "/v1/me");
+        request.Headers.Add("Origin", "https://dev.dreamdna.world");
+        request.Headers.Add("Access-Control-Request-Method", "GET");
+
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.Equal("https://dev.dreamdna.world", response.Headers.GetValues("Access-Control-Allow-Origin").Single());
+    }
+
+    private static HttpClient CreateDevelopmentClient(Dictionary<string, string?>? configurationValues = null)
     {
         var factory = new WebApplicationFactory<Program>()
-            .WithWebHostBuilder(builder => builder.UseEnvironment("Development"));
+            .WithWebHostBuilder(builder =>
+            {
+                builder.UseEnvironment("Development");
+                if (configurationValues is not null)
+                {
+                    builder.ConfigureAppConfiguration((_, configuration) => configuration.AddInMemoryCollection(configurationValues));
+                }
+            });
 
         return factory.CreateClient();
     }

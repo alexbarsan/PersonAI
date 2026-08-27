@@ -13,6 +13,12 @@ variable "logout_urls" {
   description = "Allowed OAuth logout URLs."
 }
 
+variable "domain_prefix" {
+  type        = string
+  description = "Optional Cognito hosted UI domain prefix. Use a globally unique lowercase prefix per region."
+  default     = null
+}
+
 variable "tags" {
   type        = map(string)
   description = "Tags applied to Cognito resources."

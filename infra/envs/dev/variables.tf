@@ -28,6 +28,12 @@ variable "logout_urls" {
   description = "Cognito OAuth logout URLs."
 }
 
+variable "cognito_domain_prefix" {
+  type        = string
+  description = "Optional Cognito hosted UI domain prefix."
+  default     = null
+}
+
 variable "alert_email" {
   type        = string
   description = "Optional alert email address."

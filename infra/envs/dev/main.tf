@@ -40,6 +40,7 @@ module "cognito" {
 
   name_prefix   = local.name_prefix
   callback_urls = var.callback_urls
+  domain_prefix = var.cognito_domain_prefix
   logout_urls   = var.logout_urls
   tags          = local.tags
 }
@@ -67,6 +68,7 @@ module "api" {
     Authentication__Cognito__UserPoolId = module.cognito.user_pool_id
     Authentication__Cognito__Audience   = module.cognito.user_pool_client_id
     Authentication__Cognito__ClientId   = module.cognito.user_pool_client_id
+    Cors__AllowedOrigins__0             = "https://dev.dreamdna.world"
   }
 
   secret_arns = {

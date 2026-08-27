@@ -4,7 +4,9 @@ import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Link } from "expo-router";
 
 import { useApiClient } from "@/api/apiContext";
+import { useCognitoSignIn } from "@/auth/cognitoAuth";
 import { useAuthStore } from "@/auth/authStore";
+import { appConfig } from "@/core/config";
 import { useDreamDraftStore } from "@/state/dreamDraftStore";
 import { useTheme } from "@/theme/ThemeProvider";
 
@@ -14,6 +16,7 @@ export function HomeScreen() {
   const user = useAuthStore((state) => state.user);
   const signInWithMockUser = useAuthStore((state) => state.signInWithMockUser);
   const signOut = useAuthStore((state) => state.signOut);
+  const cognitoSignIn = useCognitoSignIn();
   const draftText = useDreamDraftStore((state) => state.text);
   const mood = useDreamDraftStore((state) => state.mood);
   const savedAt = useDreamDraftStore((state) => state.savedAt);
@@ -112,14 +115,35 @@ export function HomeScreen() {
             <Text testID="auth-state" style={[styles.body, { color: theme.colors.text }]}>
               Signed out
             </Text>
-            <Pressable
-              accessibilityRole="button"
-              onPress={signInWithMockUser}
-              style={[styles.button, { backgroundColor: theme.colors.primary }]}
-              testID="mock-sign-in"
-            >
-              <Text style={[styles.buttonText, { color: theme.colors.primaryText }]}>Use mock account</Text>
-            </Pressable>
+            {appConfig.mockApi ? (
+              <Pressable
+                accessibilityRole="button"
+                onPress={signInWithMockUser}
+                style={[styles.button, { backgroundColor: theme.colors.primary }]}
+                testID="mock-sign-in"
+              >
+                <Text style={[styles.buttonText, { color: theme.colors.primaryText }]}>Use mock account</Text>
+              </Pressable>
+            ) : (
+              <>
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={cognitoSignIn.isSigningIn}
+                  onPress={cognitoSignIn.signIn}
+                  style={[styles.button, { backgroundColor: theme.colors.primary }]}
+                  testID="cognito-sign-in"
+                >
+                  <Text style={[styles.buttonText, { color: theme.colors.primaryText }]}>
+                    {cognitoSignIn.isSigningIn ? "Signing in..." : "Sign in"}
+                  </Text>
+                </Pressable>
+                {cognitoSignIn.error ? (
+                  <Text testID="auth-error" style={[styles.body, { color: theme.colors.warning }]}>
+                    {cognitoSignIn.error}
+                  </Text>
+                ) : null}
+              </>
+            )}
             <Link href="/onboarding" asChild>
               <Pressable accessibilityRole="button" style={styles.secondaryButton} testID="go-onboarding">
                 <Text style={[styles.secondaryButtonText, { color: theme.colors.primary }]}>Onboarding</Text>

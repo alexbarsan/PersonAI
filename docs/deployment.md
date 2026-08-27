@@ -29,6 +29,14 @@ Set these as GitHub environment variables for `dev`, `qa`, and `prod`:
 - `COGNITO_DOMAIN`: Cognito hosted-login domain, after it is configured.
 - `COGNITO_CLIENT_ID`: Cognito app client id.
 
+Current `dev` auth values:
+
+- `COGNITO_DOMAIN`: `https://dreamlens-dev-379959319368.auth.us-east-1.amazoncognito.com`
+- `COGNITO_CLIENT_ID`: `lbo45bf92ungifar7qab459gi`
+- `MOCK_API`: `false`
+
+The Expo web build reads these through direct `process.env.EXPO_PUBLIC_*` references in `app/src/core/config.ts`. Metro embeds them into the generated JavaScript bundle at build time. Do not rely on browser runtime `process.env` for deployed config.
+
 ## Required Secrets
 
 Set these as GitHub secrets only where needed:
@@ -101,6 +109,25 @@ Before assigning custom domains:
    - API alias to the API load balancer.
 
 The CloudFront certificate must be in `us-east-1`. The API ALB certificate must be in the API region; because the current environments also run in `us-east-1`, the same certificate ARN can be used for web and API.
+
+## Cognito Hosted Login
+
+Terraform creates a Cognito hosted UI prefix domain when `cognito_domain_prefix` is set in the environment `terraform.tfvars`.
+
+For `dev`, the prefix is:
+
+```hcl
+cognito_domain_prefix = "dreamlens-dev-379959319368"
+```
+
+The current Terraform provider manages the classic hosted UI domain (`managed_login_version = 1`). Before public launch, prefer upgrading QA/prod to a branded managed-login v2 or custom auth domain after confirming provider support for managed-login branding resources, or apply Cognito branding as a documented one-time operational step.
+
+Registered callback/logout URLs must match the app runtime URLs exactly. The web launch path is:
+
+- Dev callback/logout: `https://dev.dreamdna.world`
+- Local web callback/logout: `http://localhost:8081`
+
+Add exact native mobile callback URLs after the EAS/dev-client URL scheme is verified.
 
 ## Workflows
 

@@ -41,3 +41,11 @@ resource "aws_cognito_user_pool_client" "app" {
 
   generate_secret = false
 }
+
+resource "aws_cognito_user_pool_domain" "hosted_ui" {
+  count = var.domain_prefix == null ? 0 : 1
+
+  domain                = var.domain_prefix
+  managed_login_version = 1
+  user_pool_id          = aws_cognito_user_pool.this.id
+}

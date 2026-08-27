@@ -58,6 +58,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseDreamLensSecurityHeaders();
+app.UseCors(SecurityServiceCollectionExtensions.CorsPolicyName);
 app.UseAuthentication();
 app.UseRateLimiter();
 app.UseAuthorization();

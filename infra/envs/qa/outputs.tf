@@ -23,6 +23,11 @@ output "cognito_user_pool_client_id" {
   description = "Cognito user pool client id."
 }
 
+output "cognito_hosted_ui_domain" {
+  value       = module.cognito.hosted_ui_domain
+  description = "Cognito hosted UI base URL."
+}
+
 output "web_bucket_name" {
   value       = module.web.bucket_name
   description = "S3 web bucket name."

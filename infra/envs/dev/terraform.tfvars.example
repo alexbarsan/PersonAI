@@ -18,6 +18,8 @@ logout_urls = [
   "http://localhost:8081"
 ]
 
+cognito_domain_prefix = "dreamlens-dev-<account-id>"
+
 alert_email = null
 
 web_domain_aliases      = ["dev.dreamdna.world"]

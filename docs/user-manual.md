@@ -5,7 +5,7 @@ DreamLens is a wellness and entertainment app for reflective dream interpretatio
 ## Main Flow
 
 1. Open the app.
-2. Sign in. In local mock mode, use the mock sign-in button.
+2. Sign in. The deployed web app uses Cognito hosted login. In local mock mode, use the mock sign-in button.
 3. Complete onboarding and profile details.
 4. Review the consent flags. AI processing consent is required before submitting dreams.
 5. Open dream capture.

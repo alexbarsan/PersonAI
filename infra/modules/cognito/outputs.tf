@@ -13,4 +13,9 @@ output "issuer_url" {
   description = "JWT issuer URL."
 }
 
+output "hosted_ui_domain" {
+  value       = length(aws_cognito_user_pool_domain.hosted_ui) == 0 ? null : "https://${aws_cognito_user_pool_domain.hosted_ui[0].domain}.auth.${data.aws_region.current.name}.amazoncognito.com"
+  description = "Cognito hosted UI base URL."
+}
+
 data "aws_region" "current" {}
