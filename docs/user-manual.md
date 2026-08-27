@@ -19,7 +19,9 @@ The journal lists previous dream submissions for the signed-in user. You can ope
 
 ## Insights
 
-Insights summarize recurring themes and current dream streaks from your journal.
+Insights currently summarize recurring themes and current dream streaks from your journal.
+
+Future Dream DNA analytics will turn months of journal history into a personal map of recurring patterns: frequent symbols, emotions, people, places, scenarios, timing patterns, and correlations. Pattern examples include `water` in 3 dreams, `flying` in 11 dreams, anxiety at 15%, happiness at 55%, dreams about being late appearing more often during the work week, or a recurring person/location appearing across several dreams.
 
 ## Premium
 

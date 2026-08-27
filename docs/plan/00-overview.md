@@ -6,6 +6,8 @@
 
 DreamLens is a wellness and entertainment app for dream interpretation. A user describes a dream, optionally enriches their profile with traits and recent context, and receives a structured interpretation. The product must never present output as medical, psychological, diagnostic, or crisis advice.
 
+The long-term product goal is a personal map of the user's subconscious over time. After enough journal history exists, DreamLens should surface patterns such as frequent symbols, dominant emotions, recurring people and locations, repeated scenarios, weekday/weekend differences, and trend changes across months. Examples: `water` in 3 dreams, `flying` in 11 dreams, anxiety at 15%, happiness at 55%, dreams about being late occurring 3.3x more often during the work week, recurring person `Alex` appearing 5 times, or a recurring location increasing after a life event.
+
 PersonaKit is the reusable engine extracted from day one. It contains provider abstraction, persona configuration, prompt rendering, context building, AI output validation, response mapping, and pipeline orchestration. DreamLens is the first PersonaKit app; Astra, Coach, Sage, and future apps should reuse the same backend by changing persona and brand configuration.
 
 ## Primary User Flow
@@ -21,6 +23,8 @@ PersonaKit is the reusable engine extracted from day one. It contains provider a
 9. UI renders generic `sections[]` plus fixed disclaimers and safety handling.
 
 Post-S21 semantic features extend this flow with dream embeddings in PostgreSQL `pgvector`, private S3 storage for generated images/exports/assets, and SQS-backed jobs for image generation, embedding backfills, exports, and future batch AI work. Amazon Bedrock Titan Embeddings V2 is the default embedding provider, behind an app-owned abstraction.
+
+Dream DNA and insights require structured extraction, not only prose interpretation. Each dream should preserve queryable metadata for symbols, emotions, people, places, scenarios, scores, tags, dates, weekdays, and model versions so future analytics can be recomputed and audited.
 
 ## Request Flow
 
@@ -81,6 +85,7 @@ Until S0 moves these plan documents, they live at the repository root.
 - DeepSeek latency and cost can affect UX. The product needs quotas, usage logging, calm loading states, and friendly failure modes.
 - Async AI and image work can create hidden backlog and cost growth. SQS queue depth, DLQs, retries, idempotency, and per-operation ledger entries must be visible from the start.
 - Semantic retrieval can over-contextualize private journal history. Similar-dream and Ask DreamLens features must filter by user, consent, retention policy, and embedding version before ranking.
+- Pattern analytics can be misread as certainty. The UI must phrase Dream DNA as observed frequency and correlation, with clear sample sizes and date ranges.
 - Persona reuse can drift into special-case code. S20 must prove a config-only Astra build.
 
 ## Open Decisions

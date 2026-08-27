@@ -10,12 +10,12 @@ All planned slices S0-S21 are implemented.
 
 The imported Catch Dreamer feature notes add several capabilities that are not fully implemented yet. Track the detailed backlog in `13-post-s21-feature-backlog.md`.
 
-- Dream output schema v2: main and alternative interpretations, people, places, objects, lucidity score, and nightmare/intensity score.
+- Dream output schema v2: main and alternative interpretations, people, places, objects, repeated scenarios, lucidity score, nightmare/intensity score, and extraction confidence.
 - Journal v2: edit dreams, search/filter history, and export user data from the app.
 - Voice capture and transcription with explicit retention controls.
 - Dream image generation with SQS async jobs, private S3 storage, signed access, and entitlement/cost limits.
 - Embeddings and semantic memory using PostgreSQL `pgvector` and Amazon Bedrock Titan Embeddings V2 by default, not full-history prompts.
-- Similar-dream search, automatic clustering, and Dream DNA analytics across symbols, emotions, people, places, trends, and correlations.
+- Similar-dream search, automatic clustering, and Dream DNA analytics that turn months of journal history into a personal subconscious map across symbols, emotions, people, places, scenarios, trends, and correlations.
 - Ask DreamLens: retrieval-backed questions over the user's own dream history.
 - Premium Deep Interpretation using a stronger model and richer retrieved context.
 - Cognito social sign-in provider setup for Google and Apple first; Facebook remains optional after product/privacy review.
@@ -41,5 +41,6 @@ The imported Catch Dreamer feature notes add several capabilities that are not f
 - Astra config proves PersonaKit backend reuse and app brand switching, but there is not yet a separate Astra distribution, app icon/splash set, store metadata, or dedicated UI flow beyond the shared generic renderer.
 - Monetization is mock-first: entitlement tiers, quota behavior, and paywall UI exist, but real RevenueCat/App Store/Google Play subscriptions, webhook validation, receipt verification, and store product IDs are not connected.
 - Dev DNS aliases are live for `dev.dreamdna.world` and `api.dev.dreamdna.world`. Production DNS names, CloudFront-scoped WAF ARN, and final Cognito hosted-domain settings still need final launch confirmation.
+- The current AI cost ledger covers dream interpretation. Future AI operations still need consistent per-operation ledger rows for embeddings, repair retries, image generation, transcription, Ask DreamLens, and deep interpretation.
 - Dream result detail uses an in-memory submitted-result cache before falling back to `GET /v1/dreams/{id}`; Playwright covers the submit/result path, and S17+ should not depend on this cache behavior.
 - Profile form uses simple text inputs for comma-separated traits; richer controls can be added after the core flows are complete.

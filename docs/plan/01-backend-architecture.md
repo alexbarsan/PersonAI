@@ -75,7 +75,9 @@ Initial aggregate areas:
 - Dream submissions.
 - Interpretations and mapped result JSON.
 - AI run records: provider, model, persona version, token counts, latency, status, cost estimate.
+- AI operation ledger rows for every individual AI call: interpretation, repair retry, embedding, image generation, transcription, Ask DreamLens, and deep interpretation.
 - Dream embeddings stored with PostgreSQL `pgvector`.
+- Structured dream facts for longitudinal analytics: symbols, emotions, people, places, scenarios, scores, tags, occurred date, weekday/weekend classification, source model, schema version, and extraction confidence where available.
 - Generated image and export metadata pointing to private S3 objects.
 - Async job records for image generation, embedding generation/backfill, exports, and future batch AI work.
 - Journal and insight read models.
@@ -106,7 +108,7 @@ PersonaKit should expose narrow abstractions:
 
 AI providers are accessed through Microsoft.Extensions.AI `IChatClient`. The initial provider is DeepSeek through its OpenAI-compatible endpoint with model `deepseek-chat`. `deepseek-reasoner` is reserved for premium deep analysis.
 
-Embeddings use a separate abstraction, not `IChatClient`. Default launch provider is Amazon Bedrock Titan Embeddings V2. Keep provider/model/dimension/version on every embedding record so vectors can be regenerated safely.
+Embeddings use a separate abstraction, not `IChatClient`. Default launch provider is Amazon Bedrock Titan Embeddings V2. Keep provider/model/dimension/version on every embedding record so vectors can be regenerated safely. Embedding operations must also write AI operation ledger rows with response time, status, failure kind, and estimated cost.
 
 Cross-cutting provider behavior is composed through decorators:
 
@@ -163,7 +165,7 @@ Secrets must come from user secrets in local development and AWS Secrets Manager
 
 ## Logging And Telemetry
 
-Use structured logs and OpenTelemetry. Never log raw dream text, full context JSON, profile traits, tokens, secrets, auth headers, or provider request bodies. Log request ids, persona ids, model ids, status, latency, token counts, cost estimates, and sanitized error categories.
+Use structured logs and OpenTelemetry. Never log raw dream text, full context JSON, profile traits, tokens, secrets, auth headers, or provider request bodies. Log request ids, persona ids, model ids, operation types, status, latency, token counts where available, cost estimates, and sanitized error categories.
 
 ## Testing
 
