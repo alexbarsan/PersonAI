@@ -38,6 +38,11 @@ output "web_cloudfront_domain_name" {
   description = "CloudFront distribution domain name."
 }
 
+output "web_cloudfront_hosted_zone_id" {
+  value       = module.web.cloudfront_hosted_zone_id
+  description = "CloudFront hosted zone id for Route 53 alias records."
+}
+
 output "github_deploy_role_arn" {
   value       = module.security.github_deploy_role_arn
   description = "GitHub Actions OIDC deployment role ARN."

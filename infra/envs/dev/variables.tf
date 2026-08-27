@@ -57,3 +57,15 @@ variable "api_acm_certificate_arn" {
   description = "Optional regional ACM certificate ARN for the API ALB HTTPS listener."
   default     = null
 }
+
+variable "hosted_zone_id" {
+  type        = string
+  description = "Optional Route 53 hosted zone id used to create custom domain alias records."
+  default     = null
+}
+
+variable "api_domain_name" {
+  type        = string
+  description = "Optional custom API domain name."
+  default     = null
+}

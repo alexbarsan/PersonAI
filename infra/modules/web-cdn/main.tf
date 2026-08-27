@@ -24,6 +24,7 @@ resource "aws_cloudfront_origin_access_control" "web" {
 resource "aws_cloudfront_distribution" "web" {
   enabled             = true
   default_root_object = "index.html"
+  is_ipv6_enabled     = true
   web_acl_id          = var.cloudfront_web_acl_arn
   aliases             = var.domain_aliases
 

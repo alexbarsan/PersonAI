@@ -14,7 +14,9 @@ infra/
     ecs-api/
     web-cdn/
     observability/
+    domain/
   envs/
+    domain/
     dev/
     qa/
     prod/
@@ -26,6 +28,8 @@ Terraform is required for native validation:
 
 ```powershell
 terraform fmt -check -recursive infra
+terraform -chdir=infra/envs/domain init -backend=false
+terraform -chdir=infra/envs/domain validate
 terraform -chdir=infra/envs/dev init -backend=false
 terraform -chdir=infra/envs/dev validate
 terraform -chdir=infra/envs/qa init -backend=false

@@ -1,0 +1,7 @@
+aws_region  = "us-east-1"
+domain_name = "dreamdna.world"
+
+subject_alternative_names = [
+  "*.dreamdna.world",
+  "*.qa.dreamdna.world"
+]

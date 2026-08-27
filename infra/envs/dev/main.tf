@@ -113,6 +113,48 @@ module "observability" {
   tags        = local.tags
 }
 
+resource "aws_route53_record" "web_ipv4" {
+  for_each = toset(var.hosted_zone_id == null ? [] : var.web_domain_aliases)
+
+  name    = each.value
+  type    = "A"
+  zone_id = var.hosted_zone_id
+
+  alias {
+    name                   = module.web.cloudfront_domain_name
+    zone_id                = module.web.cloudfront_hosted_zone_id
+    evaluate_target_health = false
+  }
+}
+
+resource "aws_route53_record" "web_ipv6" {
+  for_each = toset(var.hosted_zone_id == null ? [] : var.web_domain_aliases)
+
+  name    = each.value
+  type    = "AAAA"
+  zone_id = var.hosted_zone_id
+
+  alias {
+    name                   = module.web.cloudfront_domain_name
+    zone_id                = module.web.cloudfront_hosted_zone_id
+    evaluate_target_health = false
+  }
+}
+
+resource "aws_route53_record" "api_ipv4" {
+  count = var.hosted_zone_id == null || var.api_domain_name == null ? 0 : 1
+
+  name    = var.api_domain_name
+  type    = "A"
+  zone_id = var.hosted_zone_id
+
+  alias {
+    name                   = module.api.load_balancer_dns_name
+    zone_id                = module.api.load_balancer_zone_id
+    evaluate_target_health = true
+  }
+}
+
 resource "aws_iam_role_policy" "github_deploy" {
   name = "${local.name_prefix}-app-deploy"
   role = module.security.github_deploy_role_name

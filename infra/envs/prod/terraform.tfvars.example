@@ -26,3 +26,5 @@ web_domain_aliases = [
 
 web_acm_certificate_arn = "arn:aws:acm:us-east-1:ACCOUNT_ID:certificate/WEB_CERTIFICATE_ID"
 api_acm_certificate_arn = "arn:aws:acm:us-east-1:ACCOUNT_ID:certificate/API_CERTIFICATE_ID"
+hosted_zone_id          = "REPLACE_WITH_ROUTE53_HOSTED_ZONE_ID"
+api_domain_name         = "api.dreamdna.world"

@@ -24,6 +24,17 @@ function Assert-Contains {
 }
 
 $requiredModules = @(
+    'domain',
+    'network',
+    'security',
+    'rds-postgres',
+    'cognito',
+    'ecs-api',
+    'web-cdn',
+    'observability'
+)
+
+$appEnvironmentModules = @(
     'network',
     'security',
     'rds-postgres',
@@ -41,6 +52,21 @@ foreach ($module in $requiredModules) {
     Assert-Path (Join-Path $modulePath 'outputs.tf')
 }
 
+foreach ($environment in @('domain')) {
+    $envPath = Join-Path $infra "envs\$environment"
+    Assert-Path $envPath
+    Assert-Path (Join-Path $envPath 'versions.tf')
+    Assert-Path (Join-Path $envPath 'main.tf')
+    Assert-Path (Join-Path $envPath 'variables.tf')
+    Assert-Path (Join-Path $envPath 'outputs.tf')
+    Assert-Path (Join-Path $envPath 'backend.tf.example')
+    Assert-Path (Join-Path $envPath 'terraform.tfvars.example')
+
+    Assert-Contains (Join-Path $envPath 'main.tf') 'module\s+"domain"'
+    Assert-Contains (Join-Path $envPath 'outputs.tf') 'hosted_zone_name_servers'
+    Assert-Contains (Join-Path $envPath 'outputs.tf') 'certificate_arn'
+}
+
 foreach ($environment in @('dev', 'qa', 'prod')) {
     $envPath = Join-Path $infra "envs\$environment"
     Assert-Path $envPath
@@ -52,7 +78,7 @@ foreach ($environment in @('dev', 'qa', 'prod')) {
     Assert-Path (Join-Path $envPath 'terraform.tfvars.example')
 
     $main = Join-Path $envPath 'main.tf'
-    foreach ($module in $requiredModules) {
+    foreach ($module in $appEnvironmentModules) {
         $moduleName = if ($module -eq 'rds-postgres') { 'database' } elseif ($module -eq 'ecs-api') { 'api' } elseif ($module -eq 'web-cdn') { 'web' } else { $module }
         Assert-Contains $main "module\s+`"$moduleName`""
     }
@@ -75,5 +101,7 @@ Assert-Contains (Join-Path $infra 'modules\security\main.tf') 'aws_wafv2_web_acl
 Assert-Contains (Join-Path $infra 'modules\security\main.tf') 'aws_iam_openid_connect_provider'
 Assert-Contains (Join-Path $infra 'modules\security\main.tf') 'aws_secretsmanager_secret'
 Assert-Contains (Join-Path $infra 'modules\observability\main.tf') 'aws_cloudwatch_dashboard'
+Assert-Contains (Join-Path $infra 'modules\domain\main.tf') 'aws_route53_zone'
+Assert-Contains (Join-Path $infra 'modules\domain\main.tf') 'aws_acm_certificate'
 
 Write-Host 'S17 Terraform infrastructure structure check passed.'

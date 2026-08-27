@@ -1,0 +1,9 @@
+terraform {
+  backend "s3" {
+    bucket         = "REPLACE_WITH_DOMAIN_TERRAFORM_STATE_BUCKET"
+    key            = "dreamlens/domain/terraform.tfstate"
+    region         = "REPLACE_WITH_AWS_REGION"
+    dynamodb_table = "REPLACE_WITH_DOMAIN_TERRAFORM_LOCK_TABLE"
+    encrypt        = true
+  }
+}

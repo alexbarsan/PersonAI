@@ -1,5 +1,5 @@
 param(
-    [ValidateSet("dev", "qa", "prod")]
+    [ValidateSet("domain", "dev", "qa", "prod")]
     [string] $Environment = "dev",
     [string] $ProfileName = "dreamlens-dev"
 )
