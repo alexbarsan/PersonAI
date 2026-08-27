@@ -24,6 +24,10 @@ Set these as GitHub environment variables for `dev`, `qa`, and `prod`:
 - `API_ECS_SERVICE`: ECS API service name.
 - `WEB_BUCKET`: S3 bucket that hosts the Expo web export.
 - `CLOUDFRONT_DISTRIBUTION_ID`: CloudFront distribution id for the web app.
+- `API_BASE_URL`: public API base URL used by the Expo web build, for example `https://api.dev.dreamdna.world`.
+- `MOCK_API`: `false` for deployed environments.
+- `COGNITO_DOMAIN`: Cognito hosted-login domain, after it is configured.
+- `COGNITO_CLIENT_ID`: Cognito app client id.
 
 ## Required Secrets
 

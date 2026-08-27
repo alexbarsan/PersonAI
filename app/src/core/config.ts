@@ -10,18 +10,28 @@ export type AppConfig = {
 const extra = Constants.expoConfig?.extra ?? {};
 
 export const appConfig: AppConfig = {
-  apiBaseUrl: readString("apiBaseUrl", "http://localhost:5000"),
-  mockApi: readBoolean("mockApi", true),
-  cognitoDomain: readString("cognitoDomain", ""),
-  cognitoClientId: readString("cognitoClientId", "")
+  apiBaseUrl: readString("EXPO_PUBLIC_API_BASE_URL", "apiBaseUrl", "http://localhost:5000"),
+  mockApi: readBoolean("EXPO_PUBLIC_MOCK_API", "mockApi", true),
+  cognitoDomain: readString("EXPO_PUBLIC_COGNITO_DOMAIN", "cognitoDomain", ""),
+  cognitoClientId: readString("EXPO_PUBLIC_COGNITO_CLIENT_ID", "cognitoClientId", "")
 };
 
-function readString(key: string, fallback: string) {
-  const value = extra[key];
-  return typeof value === "string" && value.trim().length > 0 ? value : fallback;
+function readString(envKey: string, extraKey: string, fallback: string) {
+  const envValue = process.env[envKey];
+  if (typeof envValue === "string" && envValue.trim().length > 0) {
+    return envValue;
+  }
+
+  const extraValue = extra[extraKey];
+  return typeof extraValue === "string" && extraValue.trim().length > 0 ? extraValue : fallback;
 }
 
-function readBoolean(key: string, fallback: boolean) {
-  const value = extra[key];
-  return typeof value === "boolean" ? value : fallback;
+function readBoolean(envKey: string, extraKey: string, fallback: boolean) {
+  const envValue = process.env[envKey];
+  if (typeof envValue === "string" && envValue.trim().length > 0) {
+    return envValue.trim().toLowerCase() === "true";
+  }
+
+  const extraValue = extra[extraKey];
+  return typeof extraValue === "boolean" ? extraValue : fallback;
 }
