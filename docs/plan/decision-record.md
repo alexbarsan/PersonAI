@@ -32,6 +32,15 @@ Status: accepted · Date: 2026-06-12 · Applies to: all docs in this folder and 
 | D14 | Privacy           | The context JSON **always carries the full profile snapshot** but **pseudonymized** (no name, email, or device identifiers — `pseudonymId` only); sensitive traits included only with recorded consent; sensitive columns encrypted at rest (AES-GCM, KMS envelope in prod) | Honors the "JSON always contains all user data" requirement without leaking identity to a third-party AI       |
 | D15 | Multi-usage       | Two meanings, both in scope: (a) **multi-user scale** — stateless API, horizontal autoscaling, per-user rate limits + daily quotas; (b) **multi-app reuse** — PersonaKit persona configs + white-label UI brand config                                                      | Keeps DreamLens production-ready while proving PersonaKit can launch sibling apps without backend rewrites      |
 
+## 2.1 Post-S21 semantic, asset, and async decisions
+
+These decisions extend D3, D5, and D9 for the next feature wave:
+
+- **Semantic memory**: store dream embeddings in PostgreSQL `pgvector`; retrieve only the most relevant consent-allowed dreams for similar-dream search, Dream DNA, Ask DreamLens, and richer deep interpretation. Start with pgvector instead of a separate vector database or S3 Vectors because it fits the current RDS/EF baseline and keeps authorization, consent filtering, and erasure in one store.
+- **Embedding provider**: use a separate embedding-provider abstraction rather than `IChatClient`. Amazon Bedrock Titan Embeddings V2 is the default AWS-hosted provider. Record provider, model id, dimensions, and embedding version with every vector so provider changes can be backfilled safely.
+- **Private asset storage**: store generated dream images, exports, and optional user-provided assets in private S3 buckets with KMS encryption, lifecycle policies, least-privilege IAM, and signed access. Do not mix user assets with the public web hosting bucket.
+- **Async AI jobs**: use SQS-backed job queues for long-running or non-critical work: dream image generation, embedding backfill, exports, and future batch analysis. Synchronous dream interpretation remains v1 behavior until deliberately changed.
+
 # 3. Canonical names & repo layout
 
 ```text
@@ -251,7 +260,9 @@ S0-S21 define the implemented baseline. The next feature wave is tracked in `13-
 - journal editing, search/filtering, and export
 - optional voice capture and transcription
 - opt-in dream image generation
-- PostgreSQL `pgvector` embeddings for semantic memory, similar dreams, Dream DNA, and Ask DreamLens
+- PostgreSQL `pgvector` embeddings with Bedrock Titan Embeddings V2 by default for semantic memory, similar dreams, Dream DNA, and Ask DreamLens
+- private S3 asset storage for generated dream images, exports, and optional assets
+- SQS-backed async jobs for image generation, embedding backfills, exports, and future batch AI work
 - premium Deep Interpretation with stronger model routing and richer retrieved context
 - Cognito social sign-in providers for Google and Apple first, with Facebook optional
 - admin/business metrics for usage, conversion, revenue, AI cost, AWS cost, and gross margin

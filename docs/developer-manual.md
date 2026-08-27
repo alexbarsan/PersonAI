@@ -112,7 +112,7 @@ The reusable pipeline should not need backend code changes for a new persona whe
 
 ## Deployment
 
-See `docs/deployment.md`. Deployment uses GitHub Actions OIDC, Terraform, ECS Fargate, RDS PostgreSQL, Cognito, S3/CloudFront, and EAS placeholders for mobile.
+See `docs/deployment.md`. Deployment uses GitHub Actions OIDC, Terraform, ECS Fargate, RDS PostgreSQL, Cognito, S3/CloudFront, and EAS placeholders for mobile. Planned post-S21 infrastructure adds PostgreSQL `pgvector`, private S3 asset buckets, SQS worker queues, and Amazon Bedrock embedding permissions.
 
 ## Monetization / S21
 

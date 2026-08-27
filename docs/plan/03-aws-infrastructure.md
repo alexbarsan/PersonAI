@@ -7,6 +7,7 @@
 Target environments:
 
 - `dev`: low-cost, safe for experimentation, minimal scale.
+- `qa`: production-like validation with controlled scale.
 - `prod`: production-grade, protected by review and CI/CD gates.
 
 Terraform layout:
@@ -14,15 +15,20 @@ Terraform layout:
 ```text
 infra/
   modules/
+    domain/
     network/
     ecs-api/
     rds-postgres/
     cognito/
     web-cdn/
+    asset-storage/
+    async-jobs/
     observability/
     security/
   envs/
+    domain/
     dev/
+    qa/
     prod/
 ```
 
@@ -32,8 +38,12 @@ infra/
 - Application Load Balancer in front of the API.
 - AWS WAF attached to the ALB and CloudFront.
 - RDS PostgreSQL for relational data.
+- RDS PostgreSQL `pgvector` for dream embeddings and semantic retrieval.
 - Cognito user pool for auth.
 - S3 and CloudFront for Expo web build hosting.
+- Private S3 buckets for generated dream images, exports, and optional assets.
+- SQS queues for async image generation, embedding generation/backfill, exports, and future batch AI jobs.
+- Amazon Bedrock Titan Embeddings V2 as the default embedding provider, called through an application abstraction.
 - Secrets Manager for provider keys, encryption settings, and app secrets.
 - CloudWatch and X-Ray through OpenTelemetry and ADOT.
 - GitHub Actions OIDC for deployments without long-lived AWS keys.
@@ -55,7 +65,42 @@ Autoscaling is based on CPU, memory, and request pressure. Initial minimum capac
 
 RDS PostgreSQL stores app data. Production must enable encryption at rest, automated backups, and deletion protection unless intentionally disabled for a temporary environment.
 
+Enable the PostgreSQL `pgvector` extension before adding embedding columns/tables. Store embedding provider, model id, dimensions, version, creation status, and timestamps alongside the vector data. Retrieval queries must filter by user ownership and consent before ranking similar dreams.
+
 Migrations are applied by CI/CD or a controlled deployment job, not manually from a developer machine.
+
+## Asset Storage
+
+Use private S3 buckets for user-owned generated and exportable assets:
+
+- generated dream images
+- user data exports
+- optional future upload assets
+
+These buckets are distinct from the public Expo web hosting bucket. They must use Block Public Access, encryption at rest, least-privilege IAM, lifecycle rules, and signed access. CloudFront can be added for optimized image delivery only when access control is preserved.
+
+## Async Jobs
+
+Use SQS for durable async work:
+
+- image generation jobs
+- embedding generation and backfill jobs
+- export jobs
+- future batch AI analysis
+
+Each production queue should have long polling, encryption, a DLQ, alarms on age/depth/failures, and least-privilege send/receive/delete permissions. Workers can start as ECS Fargate services to share the .NET codebase and runtime with the API; Lambda remains an option for short, bursty jobs after timeout and dependency size are validated.
+
+## Embedding Provider
+
+Default to Amazon Bedrock Titan Embeddings V2 for dream vectors because it stays inside AWS IAM, billing, and observability boundaries. Keep the embedding provider abstract so Cohere Embed, OpenAI embeddings, or another provider can replace it if quality, language coverage, cost, or regional availability requires a change.
+
+Before implementation, verify current Bedrock model availability in the target region with:
+
+```powershell
+aws bedrock list-foundation-models --by-output-modality EMBEDDING --region us-east-1
+```
+
+Embedding model dimensions must match the pgvector index dimensions.
 
 ## Secrets And Keys
 
@@ -96,6 +141,9 @@ OpenTelemetry traces and metrics flow through ADOT to CloudWatch and X-Ray. Dash
 - quota rejections
 - circuit breaker state
 - database health
+- SQS queue depth, oldest message age, DLQ message count
+- asset bucket request errors and storage growth
+- embedding generation latency, failures, and backlog
 
 ## Security Controls
 
@@ -103,6 +151,9 @@ OpenTelemetry traces and metrics flow through ADOT to CloudWatch and X-Ray. Dash
 - HTTPS only.
 - No long-lived AWS keys in GitHub.
 - RDS private access only.
+- Private S3 buckets for user assets with Block Public Access.
+- SQS resource policies scoped with source account/resource conditions where service principals are used.
+- Bedrock permissions scoped to required embedding models.
 - Secrets not printed in logs.
 - Least-privilege IAM per service.
 - Environment separation between dev and prod.
@@ -111,10 +162,13 @@ OpenTelemetry traces and metrics flow through ADOT to CloudWatch and X-Ray. Dash
 
 Dev infrastructure should be small by default. AI cost alarms and quota metrics are product requirements, not optional observability extras.
 
+Generated images are expected to be more expensive than embeddings and should be opt-in, quota-gated, and cached in S3. Embeddings should be generated once per dream version and reused for similar-dream retrieval instead of sending full journal history to a chat model.
+
 ## Open Infrastructure Decisions
 
-- AWS region.
-- Domain names.
 - Backup retention period.
 - Exact ECS task sizes.
 - Whether dev RDS can be single-AZ while prod is multi-AZ.
+- Whether async workers launch as ECS Fargate services or Lambda functions.
+- Whether CloudFront is needed in front of private generated-image delivery at launch.
+- Final Bedrock embedding model id and dimensions after checking current regional availability.

@@ -56,6 +56,15 @@ Versioned routes:
 
 Use typed results where practical. Public errors should be ProblemDetails-compatible and should not leak provider payloads, prompt text, stack traces, secrets, PII, or full context JSON.
 
+Future post-S21 routes should stay versioned and feature-sliced:
+
+- `POST /v1/dreams/{id}/image-jobs`
+- `GET /v1/dreams/{id}/image-jobs/{jobId}`
+- `GET /v1/dreams/{id}/similar`
+- `POST /v1/dreams/ask`
+- `POST /v1/exports`
+- `GET /v1/exports/{jobId}`
+
 ## Persistence
 
 Use PostgreSQL through EF Core 9. Handlers use `DreamLensDbContext` directly. Do not add repositories over EF.
@@ -66,10 +75,17 @@ Initial aggregate areas:
 - Dream submissions.
 - Interpretations and mapped result JSON.
 - AI run records: provider, model, persona version, token counts, latency, status, cost estimate.
+- Dream embeddings stored with PostgreSQL `pgvector`.
+- Generated image and export metadata pointing to private S3 objects.
+- Async job records for image generation, embedding generation/backfill, exports, and future batch AI work.
 - Journal and insight read models.
 - Quota counters.
 
 Sensitive columns are encrypted at rest. In development use a local key from configuration or user secrets. In AWS use KMS envelope keys. Encryption must happen below feature handlers so slices cannot accidentally persist plaintext sensitive fields.
+
+`pgvector` is the launch vector store. Keep embedding rows tied to internal dream/user ids so authorization, consent filtering, erasure, and relational filters remain in one transactional store. Revisit S3 Vectors or a dedicated vector database only if pgvector becomes a measured bottleneck.
+
+Embedding dimensions must be stored in configuration and must match the pgvector index. Changing embedding provider or dimension requires a backfill plan and a versioned embedding column/table.
 
 ## Auth
 
@@ -90,12 +106,26 @@ PersonaKit should expose narrow abstractions:
 
 AI providers are accessed through Microsoft.Extensions.AI `IChatClient`. The initial provider is DeepSeek through its OpenAI-compatible endpoint with model `deepseek-chat`. `deepseek-reasoner` is reserved for premium deep analysis.
 
+Embeddings use a separate abstraction, not `IChatClient`. Default launch provider is Amazon Bedrock Titan Embeddings V2. Keep provider/model/dimension/version on every embedding record so vectors can be regenerated safely.
+
 Cross-cutting provider behavior is composed through decorators:
 
 - timeout: 60 seconds
 - retry: two retries with jitter for 429 and 5xx
 - circuit breaker
 - usage logging: tokens, latency, estimated cost
+
+Async AI work is queued through SQS-backed job handlers. Image generation, embedding backfills, exports, and future batch analysis should not run inside the interactive request unless a slice explicitly decides that latency is acceptable.
+
+## Asset Storage
+
+Private user assets live in S3, separate from the public web build bucket:
+
+- generated dream images
+- user exports
+- optional uploaded source assets, such as future voice/image inputs
+
+Store only S3 bucket/key/version metadata in PostgreSQL. Return signed URLs or proxied download endpoints, not public object URLs. Buckets must use Block Public Access, encryption at rest, lifecycle policies, and CloudTrail/S3 monitoring for sensitive operations.
 
 ## Context Builder
 
@@ -120,6 +150,9 @@ DeepSeek output must validate against the persona output schema. Invalid JSON or
 Use options classes with validation on startup:
 
 - `DeepSeekOptions`
+- `EmbeddingOptions`
+- `AssetStorageOptions`
+- `AsyncJobOptions`
 - `QuotaOptions`
 - `EncryptionOptions`
 - `PersonaOptions`

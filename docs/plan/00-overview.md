@@ -20,6 +20,8 @@ PersonaKit is the reusable engine extracted from day one. It contains provider a
 8. API persists the dream, interpretation, run metadata, and AI cost ledger entry.
 9. UI renders generic `sections[]` plus fixed disclaimers and safety handling.
 
+Post-S21 semantic features extend this flow with dream embeddings in PostgreSQL `pgvector`, private S3 storage for generated images/exports/assets, and SQS-backed jobs for image generation, embedding backfills, exports, and future batch AI work. Amazon Bedrock Titan Embeddings V2 is the default embedding provider, behind an app-owned abstraction.
+
 ## Request Flow
 
 ```text
@@ -36,6 +38,7 @@ Expo app
   -> repair retry once if invalid
   -> result-section mapper
   -> PostgreSQL persistence
+  -> pgvector embedding creation or SQS embedding job
   -> UI Response DTO v1
 ```
 
@@ -76,6 +79,8 @@ Until S0 moves these plan documents, they live at the repository root.
 - AI output can sound more authoritative than intended. The disclaimer must be visible at onboarding and every result.
 - Context contains sensitive information even after pseudonymization. Consent, encryption, redaction, and logging discipline are first-class requirements.
 - DeepSeek latency and cost can affect UX. The product needs quotas, usage logging, calm loading states, and friendly failure modes.
+- Async AI and image work can create hidden backlog and cost growth. SQS queue depth, DLQs, retries, idempotency, and per-operation ledger entries must be visible from the start.
+- Semantic retrieval can over-contextualize private journal history. Similar-dream and Ask DreamLens features must filter by user, consent, retention policy, and embedding version before ranking.
 - Persona reuse can drift into special-case code. S20 must prove a config-only Astra build.
 
 ## Open Decisions
@@ -84,3 +89,4 @@ Until S0 moves these plan documents, they live at the repository root.
 - Whether cost ledger rows are anonymized, aggregated, or retained under a separate audit basis after erasure.
 - Subscription tiers and quota numbers.
 - Whether DreamLens launches with account-free guest mode. Current plan assumes authenticated users.
+- Whether new-dream embeddings run synchronously after interpretation or through SQS. Backfills should use SQS either way.
