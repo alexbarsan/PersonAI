@@ -4,6 +4,7 @@ WORKDIR /app
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 COPY ["src/DreamLens.Api/DreamLens.Api.csproj", "src/DreamLens.Api/"]
+COPY ["src/PersonaKit/PersonaKit.csproj", "src/PersonaKit/"]
 RUN dotnet restore "src/DreamLens.Api/DreamLens.Api.csproj"
 COPY . .
 WORKDIR "/src/src/DreamLens.Api"
