@@ -49,7 +49,45 @@ powershell.exe -ExecutionPolicy Bypass -File scripts\bootstrap-terraform-state.p
 powershell.exe -ExecutionPolicy Bypass -File scripts\terraform-plan-env.ps1 -Environment dev -ProfileName dreamlens-dev
 ```
 
+Repeat the same pattern for `qa` and `prod` after deciding which AWS profile can deploy each environment:
+
+```powershell
+powershell.exe -ExecutionPolicy Bypass -File scripts\bootstrap-terraform-state.ps1 -Environment qa -ProfileName dreamlens-dev -Region us-east-1 -WriteBackendFile
+powershell.exe -ExecutionPolicy Bypass -File scripts\terraform-plan-env.ps1 -Environment qa -ProfileName dreamlens-dev
+
+powershell.exe -ExecutionPolicy Bypass -File scripts\bootstrap-terraform-state.ps1 -Environment prod -ProfileName dreamlens-dev -Region us-east-1 -WriteBackendFile
+powershell.exe -ExecutionPolicy Bypass -File scripts\terraform-plan-env.ps1 -Environment prod -ProfileName dreamlens-dev
+```
+
 The generated `backend.tf` and `terraform.tfvars` files are local account-specific files. Review them before applying infrastructure changes.
+
+## Custom Domains
+
+Use lowercase DNS names for the production domain: `dreamdna.world`.
+
+Recommended public names for web-first launch:
+
+- Web: `dreamdna.world` and `www.dreamdna.world`
+- API: `api.dreamdna.world`
+- QA web: `qa.dreamdna.world`
+- QA API: `api.qa.dreamdna.world`
+
+Before assigning custom domains:
+
+1. Create or connect a Route 53 hosted zone for `dreamdna.world`.
+2. If the domain was bought outside Route 53, update the registrar nameservers to the hosted-zone nameservers.
+3. Request ACM certificates with DNS validation:
+   - CloudFront certificate must be in `us-east-1`.
+   - API ALB certificate must be in the same region as the API environment. For the current plan that is also `us-east-1`.
+4. Add the validated certificate ARNs to `terraform.tfvars`:
+   - `web_acm_certificate_arn`
+   - `api_acm_certificate_arn`
+5. Set `web_domain_aliases` for the CloudFront distribution.
+6. After Terraform apply, create DNS alias records:
+   - `dreamdna.world` and `www.dreamdna.world` to the CloudFront distribution.
+   - `api.dreamdna.world` to the API load balancer.
+
+The Terraform modules already support the certificate ARNs and CloudFront aliases. DNS records are still manual until the Route 53 hosted-zone decision is finalized.
 
 ## Workflows
 

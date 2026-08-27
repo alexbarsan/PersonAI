@@ -10,6 +10,7 @@ on:
         type: choice
         options:
           - dev
+          - qa
           - prod
       image_tag:
         description: Optional image tag. Defaults to the commit SHA.

@@ -1,5 +1,5 @@
 locals {
-  environment = "prod"
+  environment = "qa"
   project     = "dreamlens"
   name_prefix = "${local.project}-${local.environment}"
 
@@ -14,11 +14,11 @@ module "network" {
   source = "../../modules/network"
 
   name_prefix           = local.name_prefix
-  vpc_cidr              = "10.30.0.0/16"
+  vpc_cidr              = "10.25.0.0/16"
   availability_zones    = var.availability_zones
-  public_subnet_cidrs   = ["10.30.0.0/24", "10.30.1.0/24"]
-  private_subnet_cidrs  = ["10.30.10.0/24", "10.30.11.0/24"]
-  database_subnet_cidrs = ["10.30.20.0/24", "10.30.21.0/24"]
+  public_subnet_cidrs   = ["10.25.0.0/24", "10.25.1.0/24"]
+  private_subnet_cidrs  = ["10.25.10.0/24", "10.25.11.0/24"]
+  database_subnet_cidrs = ["10.25.20.0/24", "10.25.21.0/24"]
   tags                  = local.tags
 }
 
@@ -52,9 +52,9 @@ module "api" {
   public_subnet_ids    = module.network.public_subnet_ids
   private_subnet_ids   = module.network.private_subnet_ids
   container_image      = var.container_image
-  task_cpu             = 1024
-  task_memory          = 2048
-  desired_count        = 2
+  task_cpu             = 512
+  task_memory          = 1024
+  desired_count        = 1
   secret_kms_key_arn   = module.security.kms_key_arn
   regional_waf_acl_arn = module.security.regional_waf_acl_arn
   certificate_arn      = var.api_acm_certificate_arn
@@ -86,11 +86,11 @@ module "database" {
   vpc_id                = module.network.vpc_id
   database_subnet_ids   = module.network.database_subnet_ids
   allowed_cidr_blocks   = [module.network.vpc_cidr_block]
-  instance_class        = "db.t4g.small"
-  allocated_storage_gb  = 100
-  backup_retention_days = 14
-  multi_az              = true
-  deletion_protection   = true
+  instance_class        = "db.t4g.micro"
+  allocated_storage_gb  = 50
+  backup_retention_days = 7
+  multi_az              = false
+  deletion_protection   = false
   kms_key_arn           = module.security.kms_key_arn
   tags                  = local.tags
 }

@@ -10,6 +10,7 @@ on:
         type: choice
         options:
           - dev
+          - qa
           - prod
   push:
     branches:

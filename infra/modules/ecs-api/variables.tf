@@ -67,6 +67,12 @@ variable "regional_waf_acl_arn" {
   description = "Regional WAF ACL ARN to attach to the API ALB."
 }
 
+variable "certificate_arn" {
+  type        = string
+  description = "Optional ACM certificate ARN for API HTTPS on the ALB."
+  default     = null
+}
+
 variable "tags" {
   type        = map(string)
   description = "Tags applied to API resources."

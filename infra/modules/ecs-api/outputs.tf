@@ -23,6 +23,11 @@ output "load_balancer_dns_name" {
   description = "API ALB DNS name."
 }
 
+output "load_balancer_zone_id" {
+  value       = aws_lb.api.zone_id
+  description = "API ALB hosted zone id for Route 53 alias records."
+}
+
 output "task_definition_family" {
   value       = aws_ecs_task_definition.api.family
   description = "API ECS task definition family."

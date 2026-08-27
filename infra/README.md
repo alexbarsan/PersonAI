@@ -16,6 +16,7 @@ infra/
     observability/
   envs/
     dev/
+    qa/
     prod/
 ```
 
@@ -27,6 +28,8 @@ Terraform is required for native validation:
 terraform fmt -check -recursive infra
 terraform -chdir=infra/envs/dev init -backend=false
 terraform -chdir=infra/envs/dev validate
+terraform -chdir=infra/envs/qa init -backend=false
+terraform -chdir=infra/envs/qa validate
 terraform -chdir=infra/envs/prod init -backend=false
 terraform -chdir=infra/envs/prod validate
 ```

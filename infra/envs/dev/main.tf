@@ -57,6 +57,7 @@ module "api" {
   desired_count        = 1
   secret_kms_key_arn   = module.security.kms_key_arn
   regional_waf_acl_arn = module.security.regional_waf_acl_arn
+  certificate_arn      = var.api_acm_certificate_arn
 
   environment_variables = {
     ASPNETCORE_ENVIRONMENT              = "Production"
@@ -99,6 +100,8 @@ module "web" {
 
   name_prefix            = local.name_prefix
   cloudfront_web_acl_arn = var.cloudfront_web_acl_arn
+  domain_aliases         = var.web_domain_aliases
+  certificate_arn        = var.web_acm_certificate_arn
   tags                   = local.tags
 }
 

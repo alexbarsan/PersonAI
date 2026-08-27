@@ -17,3 +17,7 @@ logout_urls = [
 ]
 
 alert_email = null
+
+web_domain_aliases      = []
+web_acm_certificate_arn = null
+api_acm_certificate_arn = null

@@ -39,3 +39,21 @@ variable "cloudfront_web_acl_arn" {
   description = "Optional CloudFront-scoped WAF ACL ARN."
   default     = null
 }
+
+variable "web_domain_aliases" {
+  type        = list(string)
+  description = "Optional custom domain aliases for the web CloudFront distribution."
+  default     = []
+}
+
+variable "web_acm_certificate_arn" {
+  type        = string
+  description = "Optional us-east-1 ACM certificate ARN for the web CloudFront distribution."
+  default     = null
+}
+
+variable "api_acm_certificate_arn" {
+  type        = string
+  description = "Optional regional ACM certificate ARN for the API ALB HTTPS listener."
+  default     = null
+}

@@ -25,6 +25,7 @@ resource "aws_cloudfront_distribution" "web" {
   enabled             = true
   default_root_object = "index.html"
   web_acl_id          = var.cloudfront_web_acl_arn
+  aliases             = var.domain_aliases
 
   origin {
     domain_name              = aws_s3_bucket.web.bucket_regional_domain_name
@@ -67,7 +68,10 @@ resource "aws_cloudfront_distribution" "web" {
   }
 
   viewer_certificate {
-    cloudfront_default_certificate = true
+    cloudfront_default_certificate = var.certificate_arn == null
+    acm_certificate_arn            = var.certificate_arn
+    ssl_support_method             = var.certificate_arn == null ? null : "sni-only"
+    minimum_protocol_version       = var.certificate_arn == null ? null : "TLSv1.2_2021"
   }
 
   tags = var.tags

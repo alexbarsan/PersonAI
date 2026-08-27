@@ -41,7 +41,7 @@ foreach ($module in $requiredModules) {
     Assert-Path (Join-Path $modulePath 'outputs.tf')
 }
 
-foreach ($environment in @('dev', 'prod')) {
+foreach ($environment in @('dev', 'qa', 'prod')) {
     $envPath = Join-Path $infra "envs\$environment"
     Assert-Path $envPath
     Assert-Path (Join-Path $envPath 'versions.tf')

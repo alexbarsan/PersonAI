@@ -8,20 +8,17 @@ availability_zones = [
 container_image = "public.ecr.aws/docker/library/nginx:stable-alpine"
 
 callback_urls = [
-  "https://dreamdna.world",
-  "https://www.dreamdna.world"
+  "https://qa.dreamdna.world"
 ]
 
 logout_urls = [
-  "https://dreamdna.world",
-  "https://www.dreamdna.world"
+  "https://qa.dreamdna.world"
 ]
 
 alert_email = null
 
 web_domain_aliases = [
-  "dreamdna.world",
-  "www.dreamdna.world"
+  "qa.dreamdna.world"
 ]
 
 web_acm_certificate_arn = "arn:aws:acm:us-east-1:ACCOUNT_ID:certificate/WEB_CERTIFICATE_ID"
