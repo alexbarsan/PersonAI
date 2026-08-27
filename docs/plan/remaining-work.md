@@ -31,7 +31,7 @@ The imported Catch Dreamer feature notes add several capabilities that are not f
 - Maestro mobile flow exists, but local verification is blocked until Maestro is installed.
 - Terraform infrastructure is scaffolded, but local `terraform fmt`/`terraform validate`/`terraform plan` verification is blocked until Terraform is installed and AWS backend/account values exist.
 - Terraform backend files are placeholders; real remote state bootstrap and GitHub environment variables are still needed before first cloud apply.
-- Deployment workflows are scaffolded, but real cloud deployment still requires completing custom-domain validation, GitHub environment setup, ECR/ECS/S3/CloudFront outputs, EAS project setup, and protected `prod` approvals.
+- Deployment workflows are scaffolded, and dev custom domains are live. Real QA/prod deployment still requires environment-specific Terraform values, GitHub environment setup, ECR/ECS/S3/CloudFront outputs, EAS project setup, and protected `prod` approvals.
 - `pgvector` is planned but not implemented in API migrations or Terraform RDS initialization yet.
 - Private S3 asset buckets for generated dream images, exports, and optional uploads are planned but not implemented yet.
 - SQS queues/workers for image jobs, embedding backfills, exports, and future batch AI work are planned but not implemented yet.
@@ -40,6 +40,6 @@ The imported Catch Dreamer feature notes add several capabilities that are not f
 - ADOT, CloudWatch alarms, and dashboard resources are scaffolded, but live telemetry still needs a real deployed task definition/collector sidecar configuration and AWS account validation.
 - Astra config proves PersonaKit backend reuse and app brand switching, but there is not yet a separate Astra distribution, app icon/splash set, store metadata, or dedicated UI flow beyond the shared generic renderer.
 - Monetization is mock-first: entitlement tiers, quota behavior, and paywall UI exist, but real RevenueCat/App Store/Google Play subscriptions, webhook validation, receipt verification, and store product IDs are not connected.
-- Production DNS names, ACM certificates, CloudFront-scoped WAF ARN, and final Cognito hosted-domain settings are partially defined for `dreamdna.world`; certificate validation and final production aliases must be confirmed before launch.
+- Dev DNS aliases are live for `dev.dreamdna.world` and `api.dev.dreamdna.world`. Production DNS names, CloudFront-scoped WAF ARN, and final Cognito hosted-domain settings still need final launch confirmation.
 - Dream result detail uses an in-memory submitted-result cache before falling back to `GET /v1/dreams/{id}`; Playwright covers the submit/result path, and S17+ should not depend on this cache behavior.
 - Profile form uses simple text inputs for comma-separated traits; richer controls can be added after the core flows are complete.

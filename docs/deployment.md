@@ -68,6 +68,11 @@ The generated `backend.tf` and `terraform.tfvars` files are local account-specif
 
 Use lowercase DNS names for the production domain: `dreamdna.world`.
 
+Current dev aliases are live:
+
+- Dev web: `https://dev.dreamdna.world`
+- Dev API: `https://api.dev.dreamdna.world`
+
 Recommended public names for web-first launch:
 
 - Dev web: `dev.dreamdna.world`
@@ -101,6 +106,6 @@ The CloudFront certificate must be in `us-east-1`. The API ALB certificate must 
 - `web-deploy.yml`: test, typecheck, Expo web export, S3 sync, and CloudFront invalidation.
 - `mobile-eas.yml`: manual EAS build placeholder for iOS/Android.
 
-S18 wires the deployment paths. Actual production rollout still requires real AWS account values, remote state bootstrap, GitHub environment variables, and app/domain decisions.
+S18 wires the deployment paths. Dev AWS infrastructure and custom domains are applied. Actual QA/prod rollout still requires environment-specific tfvars, remote state bootstrap, GitHub environment variables, protected approvals, and final app/domain decisions.
 
 Terraform owns the infrastructure and bootstrap task definition. GitHub Actions owns normal application image rollouts by registering a new ECS task-definition revision from the currently deployed definition. Terraform intentionally ignores the ECS service `task_definition` pointer so infrastructure applies do not roll the service back to the bootstrap image.
