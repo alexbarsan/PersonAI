@@ -7,7 +7,7 @@
     "start": "expo start",
     "web": "expo start --web",
     "build:web": "expo export --platform web",
-    "test": "node --no-webstorage ./node_modules/jest/bin/jest.js --runInBand --forceExit",
+    "test": "node ./scripts/run-jest.js",
     "typecheck": "tsc --noEmit",
     "e2e:web": "playwright test",
     "e2e:mobile": "maestro test ../e2e/maestro"
