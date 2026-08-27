@@ -53,7 +53,7 @@ resource "aws_cloudwatch_dashboard" "operations" {
         width  = 12
         height = 6
         properties = {
-          title = "Quota and provider guardrails"
+          title  = "Quota and provider guardrails"
           region = data.aws_region.current.name
           metrics = [
             ["DreamLens", "dreamlens.quota.rejections", { stat = "Sum" }],

@@ -84,5 +84,21 @@ jobs:
             ${{ steps.image.outputs.uri }}
             ${{ steps.image.outputs.latest_uri }}
 
-      - name: Force ECS service deployment
-        run: aws ecs update-service --cluster "$ECS_CLUSTER" --service "$ECS_SERVICE" --force-new-deployment
+      - name: Download current ECS task definition
+        run: aws ecs describe-task-definition --task-definition "$ECS_SERVICE" --query taskDefinition > task-definition.json
+
+      - name: Render ECS task definition
+        id: render-task-definition
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: api
+          image: ${{ steps.image.outputs.uri }}
+
+      - name: Deploy ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.render-task-definition.outputs.task-definition }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          service: ${{ env.ECS_SERVICE }}
+          wait-for-service-stability: true

@@ -13,6 +13,11 @@ output "github_deploy_role_arn" {
   description = "GitHub Actions OIDC deployment role ARN."
 }
 
+output "github_deploy_role_name" {
+  value       = aws_iam_role.github_deploy.name
+  description = "GitHub Actions OIDC deployment role name."
+}
+
 output "regional_waf_acl_arn" {
   value       = aws_wafv2_web_acl.regional.arn
   description = "Regional WAF ACL ARN for ALB association."

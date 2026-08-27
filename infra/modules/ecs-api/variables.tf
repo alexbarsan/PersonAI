@@ -56,6 +56,12 @@ variable "secret_arns" {
   default     = {}
 }
 
+variable "secret_kms_key_arn" {
+  type        = string
+  description = "Optional KMS key ARN used to decrypt injected secrets."
+  default     = null
+}
+
 variable "regional_waf_acl_arn" {
   type        = string
   description = "Regional WAF ACL ARN to attach to the API ALB."

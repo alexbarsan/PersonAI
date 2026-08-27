@@ -55,19 +55,25 @@ module "api" {
   task_cpu             = 1024
   task_memory          = 2048
   desired_count        = 2
+  secret_kms_key_arn   = module.security.kms_key_arn
   regional_waf_acl_arn = module.security.regional_waf_acl_arn
 
   environment_variables = {
-    ASPNETCORE_ENVIRONMENT     = "Production"
-    ConnectionStrings__Host    = module.database.endpoint
-    ConnectionStrings__Database = module.database.database_name
-    Authentication__Issuer     = module.cognito.issuer_url
-    Authentication__Audience   = module.cognito.user_pool_client_id
+    ASPNETCORE_ENVIRONMENT              = "Production"
+    ConnectionStrings__Host             = module.database.endpoint
+    ConnectionStrings__Database         = module.database.database_name
+    Authentication__Cognito__Region     = var.aws_region
+    Authentication__Cognito__UserPoolId = module.cognito.user_pool_id
+    Authentication__Cognito__Audience   = module.cognito.user_pool_client_id
+    Authentication__Cognito__ClientId   = module.cognito.user_pool_client_id
   }
 
-  secret_arns = merge(module.security.secret_arns, {
-    database-master-user = module.database.master_user_secret_arn
-  })
+  secret_arns = {
+    DeepSeek__ApiKey           = module.security.secret_arns["deepseek-api-key"]
+    Encryption__LocalKeyBase64 = module.security.secret_arns["app-encryption-key"]
+    Pseudonym__SecretBase64    = module.security.secret_arns["pseudonym-hmac-key"]
+    Database__MasterUserJson   = module.database.master_user_secret_arn
+  }
 
   tags = local.tags
 }
@@ -102,4 +108,94 @@ module "observability" {
   name_prefix = local.name_prefix
   alert_email = var.alert_email
   tags        = local.tags
+}
+
+resource "aws_iam_role_policy" "github_deploy" {
+  name = "${local.name_prefix}-app-deploy"
+  role = module.security.github_deploy_role_name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid      = "EcrAuth"
+        Effect   = "Allow"
+        Action   = ["ecr:GetAuthorizationToken"]
+        Resource = "*"
+      },
+      {
+        Sid    = "EcrPush"
+        Effect = "Allow"
+        Action = [
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:CompleteLayerUpload",
+          "ecr:DescribeImages",
+          "ecr:DescribeRepositories",
+          "ecr:InitiateLayerUpload",
+          "ecr:PutImage",
+          "ecr:UploadLayerPart"
+        ]
+        Resource = module.api.ecr_repository_arn
+      },
+      {
+        Sid    = "EcsServiceDeploy"
+        Effect = "Allow"
+        Action = [
+          "ecs:DescribeServices",
+          "ecs:UpdateService"
+        ]
+        Resource = module.api.service_arn
+      },
+      {
+        Sid    = "EcsTaskDefinitionDeploy"
+        Effect = "Allow"
+        Action = [
+          "ecs:DescribeTaskDefinition",
+          "ecs:RegisterTaskDefinition"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "PassEcsTaskRoles"
+        Effect = "Allow"
+        Action = [
+          "iam:PassRole"
+        ]
+        Resource = [
+          module.api.task_execution_role_arn,
+          module.api.task_role_arn
+        ]
+        Condition = {
+          StringEquals = {
+            "iam:PassedToService" = "ecs-tasks.amazonaws.com"
+          }
+        }
+      },
+      {
+        Sid      = "WebBucketList"
+        Effect   = "Allow"
+        Action   = ["s3:ListBucket"]
+        Resource = module.web.bucket_arn
+      },
+      {
+        Sid    = "WebBucketObjects"
+        Effect = "Allow"
+        Action = [
+          "s3:DeleteObject",
+          "s3:GetObject",
+          "s3:PutObject"
+        ]
+        Resource = "${module.web.bucket_arn}/*"
+      },
+      {
+        Sid    = "CloudFrontInvalidation"
+        Effect = "Allow"
+        Action = [
+          "cloudfront:CreateInvalidation",
+          "cloudfront:GetDistribution"
+        ]
+        Resource = module.web.cloudfront_distribution_arn
+      }
+    ]
+  })
 }

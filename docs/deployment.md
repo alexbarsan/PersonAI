@@ -55,8 +55,10 @@ The generated `backend.tf` and `terraform.tfvars` files are local account-specif
 
 - `ci.yml`: foundation validation for pull requests and pushes.
 - `infra.yml`: Terraform static checks, `fmt`, `validate`, and manual plan/apply.
-- `api-deploy.yml`: test, container build, ECR push, and ECS service rollout.
+- `api-deploy.yml`: test, container build, ECR push, ECS task-definition render, and ECS service rollout.
 - `web-deploy.yml`: test, typecheck, Expo web export, S3 sync, and CloudFront invalidation.
 - `mobile-eas.yml`: manual EAS build placeholder for iOS/Android.
 
 S18 wires the deployment paths. Actual production rollout still requires real AWS account values, remote state bootstrap, GitHub environment variables, and app/domain decisions.
+
+Terraform owns the infrastructure and bootstrap task definition. GitHub Actions owns normal application image rollouts by registering a new ECS task-definition revision from the currently deployed definition. After applying Terraform changes that affect API runtime configuration, run `api-deploy.yml` again for the target environment so the service is on the current application image.

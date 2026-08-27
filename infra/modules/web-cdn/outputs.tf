@@ -3,9 +3,19 @@ output "bucket_name" {
   description = "S3 web bucket name."
 }
 
+output "bucket_arn" {
+  value       = aws_s3_bucket.web.arn
+  description = "S3 web bucket ARN."
+}
+
 output "cloudfront_distribution_id" {
   value       = aws_cloudfront_distribution.web.id
   description = "CloudFront distribution id."
+}
+
+output "cloudfront_distribution_arn" {
+  value       = aws_cloudfront_distribution.web.arn
+  description = "CloudFront distribution ARN."
 }
 
 output "cloudfront_domain_name" {
