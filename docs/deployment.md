@@ -140,3 +140,17 @@ Add exact native mobile callback URLs after the EAS/dev-client URL scheme is ver
 S18 wires the deployment paths. Dev AWS infrastructure and custom domains are applied. Actual QA/prod rollout still requires environment-specific tfvars, remote state bootstrap, GitHub environment variables, protected approvals, and final app/domain decisions.
 
 Terraform owns the infrastructure and bootstrap task definition. GitHub Actions owns normal application image rollouts by registering a new ECS task-definition revision from the currently deployed definition. Terraform intentionally ignores the ECS service `task_definition` pointer so infrastructure applies do not roll the service back to the bootstrap image.
+
+## Embedding Backfill
+
+Historical dream embeddings are processed only through an explicit, bounded startup job. This prevents a normal deployment from unexpectedly creating Bedrock usage or processing historical user data.
+
+To run it for an environment, confirm that `Embedding__Enabled` and `Jobs__Worker__Enabled` are `true`, then temporarily set these task environment variables in the environment's Terraform configuration:
+
+```hcl
+Jobs__EmbeddingBackfill__Enabled    = "true"
+Jobs__EmbeddingBackfill__BatchSize  = "100"
+Jobs__EmbeddingBackfill__MaxJobsPerRun = "1000"
+```
+
+Deploy one task revision and monitor `dreamlens.async_jobs.*` metrics and task logs. The worker considers only completed dreams whose owners currently consent to AI processing and history use. It skips dreams already embedded or already queued for the configured embedding version. Reset `Jobs__EmbeddingBackfill__Enabled` to `false` after the run.

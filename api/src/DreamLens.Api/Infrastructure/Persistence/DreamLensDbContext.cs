@@ -148,6 +148,7 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
             entity.HasIndex(job => job.IdempotencyKey).IsUnique();
             entity.HasIndex(job => new { job.Status, job.AvailableAt });
             entity.HasIndex(job => new { job.UserSubject, job.CreatedAt });
+            entity.HasIndex(job => new { job.JobType, job.TargetId });
             entity.Property(job => job.IdempotencyKey).HasMaxLength(256).IsRequired();
             entity.Property(job => job.JobType).HasMaxLength(64).IsRequired();
             entity.Property(job => job.UserSubject).HasMaxLength(256).IsRequired();

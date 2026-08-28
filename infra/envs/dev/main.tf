@@ -74,6 +74,7 @@ module "api" {
     Embedding__Version                  = "1"
     Jobs__QueueUrl                      = module.async_jobs.queue_url
     Jobs__Worker__Enabled               = "true"
+    Jobs__EmbeddingBackfill__Enabled    = "false"
     Assets__BucketName                  = module.private_assets.bucket_name
     Authentication__Cognito__Region     = var.aws_region
     Authentication__Cognito__UserPoolId = module.cognito.user_pool_id

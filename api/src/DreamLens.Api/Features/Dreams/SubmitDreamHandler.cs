@@ -139,6 +139,7 @@ public sealed class SubmitDreamHandler(
                 $"{AsyncJobTypes.DreamEmbedding}:{record.Id}:{embeddingOptions.Value.Version}",
                 AsyncJobTypes.DreamEmbedding,
                 record.UserSubject,
+                record.Id,
                 new DreamEmbeddingJobHandler.DreamEmbeddingJobPayload(record.Id),
                 cancellationToken);
         }

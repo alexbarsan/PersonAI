@@ -10,6 +10,8 @@ public sealed class AsyncJobRecord
 
     public required string UserSubject { get; set; }
 
+    public Guid? TargetId { get; set; }
+
     public required string PayloadJson { get; set; }
 
     public string Status { get; set; } = AsyncJobStatuses.Pending;

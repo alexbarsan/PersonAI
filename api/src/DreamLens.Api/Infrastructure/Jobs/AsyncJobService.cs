@@ -12,6 +12,7 @@ public sealed class AsyncJobService(
         string idempotencyKey,
         string jobType,
         string userSubject,
+        Guid? targetId,
         object payload,
         CancellationToken cancellationToken)
     {
@@ -28,6 +29,7 @@ public sealed class AsyncJobService(
             IdempotencyKey = idempotencyKey,
             JobType = jobType,
             UserSubject = userSubject,
+            TargetId = targetId,
             PayloadJson = JsonSerializer.Serialize(payload)
         };
 

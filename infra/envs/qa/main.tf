@@ -73,6 +73,7 @@ module "api" {
     Cors__AllowedOrigins__0             = "https://qa.dreamdna.world"
     Jobs__QueueUrl                      = module.async_jobs.queue_url
     Jobs__Worker__Enabled               = "true"
+    Jobs__EmbeddingBackfill__Enabled    = "false"
     Assets__BucketName                  = module.private_assets.bucket_name
   }
 

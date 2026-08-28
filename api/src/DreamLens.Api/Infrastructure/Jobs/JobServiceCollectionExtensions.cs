@@ -12,6 +12,7 @@ public static class JobServiceCollectionExtensions
     {
         services.Configure<AsyncJobOptions>(configuration.GetSection("Jobs"));
         services.Configure<AsyncJobWorkerOptions>(configuration.GetSection("Jobs:Worker"));
+        services.Configure<EmbeddingBackfillOptions>(configuration.GetSection("Jobs:EmbeddingBackfill"));
         var region = configuration["AWS:Region"]
             ?? configuration["Authentication:Cognito:Region"]
             ?? Environment.GetEnvironmentVariable("AWS_REGION")
@@ -24,9 +25,11 @@ public static class JobServiceCollectionExtensions
         {
             services.AddScoped<AsyncJobService>();
             services.AddScoped<IAsyncJobHandler, DreamEmbeddingJobHandler>();
+            services.AddScoped<EmbeddingBackfillService>();
         }
 
         services.AddHostedService<AsyncJobWorker>();
+        services.AddHostedService<EmbeddingBackfillWorker>();
 
         return services;
     }
