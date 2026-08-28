@@ -72,6 +72,12 @@ API:
 dotnet test api/DreamLens.sln --configuration Release
 ```
 
+Build the API container from the repository root so the runtime persona files are included:
+
+```powershell
+docker build -f api/src/DreamLens.Api/Dockerfile .
+```
+
 App:
 
 ```powershell

@@ -78,7 +78,7 @@ jobs:
       - name: Build and push API image
         uses: docker/build-push-action@v6
         with:
-          context: api
+          context: .
           file: api/src/DreamLens.Api/Dockerfile
           push: true
           tags: |

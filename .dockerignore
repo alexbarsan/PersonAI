@@ -1,0 +1,10 @@
+**/bin/
+**/obj/
+**/TestResults/
+.git/
+.vs/
+.idea/
+.vscode/
+app/node_modules/
+app/.expo/
+infra/**/.terraform/
