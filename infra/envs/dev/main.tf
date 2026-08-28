@@ -72,6 +72,8 @@ module "api" {
     Embedding__Model                    = "amazon.titan-embed-text-v2:0"
     Embedding__Dimensions               = "1024"
     Embedding__Version                  = "1"
+    Jobs__QueueUrl                      = module.async_jobs.queue_url
+    Assets__BucketName                  = module.private_assets.bucket_name
     Authentication__Cognito__Region     = var.aws_region
     Authentication__Cognito__UserPoolId = module.cognito.user_pool_id
     Authentication__Cognito__Audience   = module.cognito.user_pool_client_id

@@ -256,6 +256,10 @@ resource "aws_iam_role_policy" "task_async_jobs" {
         Effect   = "Allow"
         Action   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
         Resource = "${var.asset_bucket_arn}/*"
+      }, {
+        Effect   = "Allow"
+        Action   = ["kms:Decrypt", "kms:Encrypt", "kms:GenerateDataKey"]
+        Resource = var.secret_kms_key_arn
       }]
     )
   })

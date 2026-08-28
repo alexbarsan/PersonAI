@@ -8,6 +8,8 @@
 
   <ItemGroup>
     <PackageReference Include="AWSSDK.BedrockRuntime" Version="4.0.101.4" />
+    <PackageReference Include="AWSSDK.S3" Version="4.0.102.4" />
+    <PackageReference Include="AWSSDK.SQS" Version="4.0.100.11" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.12" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.12" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.12">
