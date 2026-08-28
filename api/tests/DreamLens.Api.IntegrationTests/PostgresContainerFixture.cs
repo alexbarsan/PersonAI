@@ -4,7 +4,7 @@ namespace DreamLens.Api.IntegrationTests;
 
 public sealed class PostgresContainerFixture : IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:16-alpine")
+    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("pgvector/pgvector:pg16")
         .WithDatabase("dreamlens_tests")
         .WithUsername("dreamlens")
         .WithPassword("dreamlens")
