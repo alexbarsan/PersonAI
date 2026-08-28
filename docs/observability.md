@@ -11,6 +11,11 @@ Application metrics:
 - `dreamlens.rate_limit.rejections`: global rate limiter rejections.
 - `dreamlens.quota.rejections`: daily dream quota rejections.
 - `dreamlens.provider.failures`: failed or invalid AI provider results.
+- `dreamlens.async_jobs.completed`: completed SQS-backed jobs.
+- `dreamlens.async_jobs.retried`: jobs scheduled for another attempt.
+- `dreamlens.async_jobs.failed`: jobs that exhausted their retry budget.
+- `dreamlens.async_jobs.lease_skipped`: messages whose jobs could not be leased because another worker owns or completed them.
+- `dreamlens.async_jobs.processing.duration`: end-to-end worker processing latency, tagged only by job type and outcome.
 
 The ADOT collector config in `infra/adot/collector.yaml` receives OTLP telemetry and exports traces to X-Ray and metrics to CloudWatch EMF under the `DreamLens` namespace.
 

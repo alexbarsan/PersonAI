@@ -1,6 +1,8 @@
 using System.Text.Json;
+using System.Diagnostics;
 using Amazon.SQS;
 using Amazon.SQS.Model;
+using DreamLens.Api.Infrastructure.Observability;
 using DreamLens.Api.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -44,6 +46,7 @@ public sealed class AsyncJobWorker(
 
     private async Task ProcessMessageAsync(string queueUrl, Message message, CancellationToken cancellationToken)
     {
+        var started = Stopwatch.GetTimestamp();
         AsyncJobMessage? jobMessage;
         try
         {
@@ -57,6 +60,7 @@ public sealed class AsyncJobWorker(
         {
             logger.LogWarning(exception, "Deleting malformed async job message {MessageId}.", message.MessageId);
             await sqs.DeleteMessageAsync(queueUrl, message.ReceiptHandle, cancellationToken);
+            RecordDuration("malformed", "unknown", started);
             return;
         }
 
@@ -66,6 +70,8 @@ public sealed class AsyncJobWorker(
         if (job is null)
         {
             await sqs.DeleteMessageAsync(queueUrl, message.ReceiptHandle, cancellationToken);
+            DreamLensMeters.AsyncJobsLeaseSkipped.Add(1, JobTypeTag(jobMessage.JobType));
+            RecordDuration("lease_skipped", jobMessage.JobType, started);
             return;
         }
 
@@ -78,6 +84,8 @@ public sealed class AsyncJobWorker(
             job.UpdatedAt = DateTimeOffset.UtcNow;
             await db.SaveChangesAsync(cancellationToken);
             await sqs.DeleteMessageAsync(queueUrl, message.ReceiptHandle, cancellationToken);
+            DreamLensMeters.AsyncJobsCompleted.Add(1, JobTypeTag(job.JobType));
+            RecordDuration("completed", job.JobType, started);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
@@ -93,7 +101,14 @@ public sealed class AsyncJobWorker(
             logger.LogError(exception, "Async job {JobId} failed on attempt {Attempt}.", job.Id, job.AttemptCount);
             if (job.Status == AsyncJobStatuses.Failed)
             {
+                DreamLensMeters.AsyncJobsFailed.Add(1, JobTypeTag(job.JobType));
                 await sqs.DeleteMessageAsync(queueUrl, message.ReceiptHandle, cancellationToken);
+                RecordDuration("failed", job.JobType, started);
+            }
+            else
+            {
+                DreamLensMeters.AsyncJobsRetried.Add(1, JobTypeTag(job.JobType));
+                RecordDuration("retry", job.JobType, started);
             }
         }
     }
@@ -117,5 +132,15 @@ public sealed class AsyncJobWorker(
         return updated == 0
             ? null
             : await db.AsyncJobs.SingleAsync(job => job.Id == jobId, cancellationToken);
+    }
+
+    private static KeyValuePair<string, object?> JobTypeTag(string jobType) => new("job.type", jobType);
+
+    private static void RecordDuration(string outcome, string jobType, long started)
+    {
+        DreamLensMeters.AsyncJobProcessingDuration.Record(
+            Stopwatch.GetElapsedTime(started).TotalMilliseconds,
+            new KeyValuePair<string, object?>("job.outcome", outcome),
+            JobTypeTag(jobType));
     }
 }
