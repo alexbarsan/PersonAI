@@ -72,6 +72,7 @@ module "api" {
     Authentication__Cognito__ClientId   = module.cognito.user_pool_client_id
     Cors__AllowedOrigins__0             = "https://qa.dreamdna.world"
     Jobs__QueueUrl                      = module.async_jobs.queue_url
+    Jobs__Worker__Enabled               = "true"
     Assets__BucketName                  = module.private_assets.bucket_name
   }
 

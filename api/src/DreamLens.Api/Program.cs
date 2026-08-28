@@ -1,5 +1,6 @@
 using DreamLens.Api.Features.Health;
 using DreamLens.Api.Features.Insights;
+using DreamLens.Api.Features.Jobs;
 using DreamLens.Api.Features.Me.GetMe;
 using DreamLens.Api.Features.Entitlements;
 using DreamLens.Api.Features.Profile;
@@ -37,6 +38,11 @@ builder.Services.AddPersonaKitDeepSeekChatClient(builder.Configuration);
 AddDreamLensPersonaKitCore(builder.Services, builder.Configuration, builder.Environment);
 builder.Services.AddScoped<GetMeHandler>();
 builder.Services.AddScoped<GetEntitlementHandler>();
+
+if (!string.IsNullOrWhiteSpace(PersistenceServiceCollectionExtensions.ResolveConnectionString(builder.Configuration)))
+{
+    builder.Services.AddScoped<GetJobHandler>();
+}
 
 var profileEndpointsEnabled = ProfileEndpointsEnabled(builder.Configuration);
 if (profileEndpointsEnabled)
@@ -82,6 +88,7 @@ app.MapEntitlementEndpoints();
 app.MapProfileEndpoints();
 app.MapDreamEndpoints();
 app.MapInsightsEndpoints();
+app.MapJobEndpoints();
 
 app.Run();
 

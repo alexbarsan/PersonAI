@@ -11,6 +11,7 @@ public static class JobServiceCollectionExtensions
         IConfiguration configuration)
     {
         services.Configure<AsyncJobOptions>(configuration.GetSection("Jobs"));
+        services.Configure<AsyncJobWorkerOptions>(configuration.GetSection("Jobs:Worker"));
         var region = configuration["AWS:Region"]
             ?? configuration["Authentication:Cognito:Region"]
             ?? Environment.GetEnvironmentVariable("AWS_REGION")
@@ -22,7 +23,10 @@ public static class JobServiceCollectionExtensions
         if (!string.IsNullOrWhiteSpace(PersistenceServiceCollectionExtensions.ResolveConnectionString(configuration)))
         {
             services.AddScoped<AsyncJobService>();
+            services.AddScoped<IAsyncJobHandler, DreamEmbeddingJobHandler>();
         }
+
+        services.AddHostedService<AsyncJobWorker>();
 
         return services;
     }
