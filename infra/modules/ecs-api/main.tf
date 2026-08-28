@@ -234,6 +234,20 @@ resource "aws_iam_role" "task" {
   tags = var.tags
 }
 
+resource "aws_iam_role_policy" "task_bedrock_embeddings" {
+  name = "${var.name_prefix}-bedrock-embeddings"
+  role = aws_iam_role.task.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["bedrock:InvokeModel"]
+      Resource = "arn:aws:bedrock:${data.aws_region.current.name}::foundation-model/amazon.titan-embed-text-v2:0"
+    }]
+  })
+}
+
 resource "aws_ecs_task_definition" "api" {
   family                   = "${var.name_prefix}-api"
   requires_compatibilities = ["FARGATE"]

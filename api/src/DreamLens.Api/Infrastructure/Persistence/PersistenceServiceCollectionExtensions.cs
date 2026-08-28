@@ -15,7 +15,7 @@ public static class PersistenceServiceCollectionExtensions
 
         if (!string.IsNullOrWhiteSpace(connectionString))
         {
-            services.AddDbContext<DreamLensDbContext>(options => options.UseNpgsql(connectionString));
+        services.AddDbContext<DreamLensDbContext>(options => options.UseNpgsql(connectionString, npgsql => npgsql.UseVector()));
         }
 
         return services;

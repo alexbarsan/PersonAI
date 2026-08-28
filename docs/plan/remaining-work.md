@@ -31,7 +31,7 @@ The imported Catch Dreamer feature notes add several capabilities that are not f
 - Maestro mobile flow exists, but local verification is blocked until Maestro is installed.
 - Terraform infrastructure is applied for dev. QA/prod still need remote state bootstrap, environment-specific Terraform values, GitHub environment variables, and protected `prod` approvals.
 - Deployment workflows are active for dev. Real QA/prod deployment still requires environment-specific ECR/ECS/S3/CloudFront outputs, EAS project setup, and final launch approvals.
-- `pgvector` is planned but not implemented in API migrations or Terraform RDS initialization yet.
+- `pgvector` foundation is implemented in the API migration and EF model. Embedding generation and retrieval are ready behind the provider/service abstraction; asynchronous job wiring and user-facing similar-dream features remain.
 - Private S3 asset buckets for generated dream images, exports, and optional uploads are planned but not implemented yet.
 - SQS queues/workers for image jobs, embedding backfills, exports, and future batch AI work are planned but not implemented yet.
 - Local API image build verification remains blocked until Docker Desktop or another Docker daemon is running.

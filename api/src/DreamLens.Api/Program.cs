@@ -5,6 +5,7 @@ using DreamLens.Api.Features.Entitlements;
 using DreamLens.Api.Features.Profile;
 using DreamLens.Api.Features.Dreams;
 using DreamLens.Api.Infrastructure.Identity;
+using DreamLens.Api.Infrastructure.Embeddings;
 using DreamLens.Api.Infrastructure.Monetization;
 using DreamLens.Api.Infrastructure.Observability;
 using DreamLens.Api.Infrastructure.OpenApi;
@@ -25,6 +26,7 @@ builder.Services.AddDreamLensObservability();
 builder.Services.AddDreamLensAuthentication(builder.Configuration, builder.Environment);
 builder.Services.AddDreamLensRateLimiting(builder.Configuration);
 builder.Services.AddDreamLensPersistence(builder.Configuration);
+builder.Services.AddDreamLensEmbeddings(builder.Configuration);
 builder.Services.AddDreamLensSecurity(builder.Configuration);
 builder.Services.AddDreamLensMonetization(builder.Configuration);
 builder.Services.AddPersonaKitDeepSeekChatClient(builder.Configuration);
@@ -48,6 +50,7 @@ if (dreamEndpointsEnabled)
     builder.Services.AddScoped<ListDreamsHandler>();
     builder.Services.AddScoped<DeleteDreamHandler>();
     builder.Services.AddScoped<GetInsightsHandler>();
+    builder.Services.AddScoped<SemanticMemoryService>();
 }
 
 var app = builder.Build();

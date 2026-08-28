@@ -1,5 +1,6 @@
 using DreamLens.Api.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Pgvector.EntityFrameworkCore;
 
 namespace DreamLens.Api.IntegrationTests;
 
@@ -9,7 +10,9 @@ public sealed class DatabaseSchemaTests
     public void DbContextExposesInitialCreateMigration()
     {
         var options = new DbContextOptionsBuilder<DreamLensDbContext>()
-            .UseNpgsql("Host=localhost;Database=dreamlens;Username=postgres;Password=postgres")
+            .UseNpgsql(
+                "Host=localhost;Database=dreamlens;Username=postgres;Password=postgres",
+                npgsql => npgsql.UseVector())
             .Options;
 
         using var db = new DreamLensDbContext(options);
@@ -24,7 +27,7 @@ public sealed class DatabaseSchemaTests
         await postgres.InitializeAsync();
 
         var options = new DbContextOptionsBuilder<DreamLensDbContext>()
-            .UseNpgsql(postgres.ConnectionString)
+            .UseNpgsql(postgres.ConnectionString, npgsql => npgsql.UseVector())
             .Options;
 
         await using var db = new DreamLensDbContext(options);

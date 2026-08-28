@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Pgvector.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace DreamLens.Api.Infrastructure.Persistence;
 
@@ -12,8 +14,12 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
 
     public DbSet<AiCostLedgerRecord> AiCostLedger => Set<AiCostLedgerRecord>();
 
+    public DbSet<DreamEmbedding> DreamEmbeddings => Set<DreamEmbedding>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.HasPostgresExtension("vector");
+
         modelBuilder.Entity<SchemaMarker>(entity =>
         {
             entity.ToTable("SchemaMarkers");
@@ -107,5 +113,39 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
             entity.Property(row => row.CreatedAt)
                 .IsRequired();
         });
+
+        modelBuilder.Entity<DreamEmbedding>(entity =>
+        {
+            entity.ToTable("DreamEmbeddings");
+            entity.HasKey(embedding => embedding.Id);
+            entity.HasIndex(embedding => embedding.DreamId).IsUnique();
+            entity.HasIndex(embedding => new { embedding.UserSubject, embedding.CreatedAt });
+            entity.Property(embedding => embedding.UserSubject).HasMaxLength(256).IsRequired();
+            var embeddingProperty = entity.Property(embedding => embedding.Embedding).IsRequired();
+            if (Database.IsNpgsql())
+            {
+                embeddingProperty.HasColumnType("vector(1024)");
+            }
+            else
+            {
+                embeddingProperty.HasConversion(
+                    value => SerializeVector(value),
+                    value => DeserializeVector(value));
+            }
+            entity.Property(embedding => embedding.Provider).HasMaxLength(64).IsRequired();
+            entity.Property(embedding => embedding.Model).HasMaxLength(128).IsRequired();
+            entity.Property(embedding => embedding.Version).HasMaxLength(32).IsRequired();
+            entity.Property(embedding => embedding.CreatedAt).IsRequired();
+        });
+    }
+
+    private static string SerializeVector(Pgvector.Vector value)
+    {
+        return JsonSerializer.Serialize(value.ToArray(), new JsonSerializerOptions());
+    }
+
+    private static Pgvector.Vector DeserializeVector(string value)
+    {
+        return new Pgvector.Vector(JsonSerializer.Deserialize<float[]>(value, new JsonSerializerOptions()) ?? Array.Empty<float>());
     }
 }

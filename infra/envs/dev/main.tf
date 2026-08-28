@@ -65,6 +65,11 @@ module "api" {
     ConnectionStrings__Host             = module.database.endpoint
     ConnectionStrings__Database         = module.database.database_name
     Database__ApplyMigrations           = "true"
+    Embedding__Enabled                  = "true"
+    Embedding__Provider                 = "bedrock-titan"
+    Embedding__Model                    = "amazon.titan-embed-text-v2:0"
+    Embedding__Dimensions               = "1024"
+    Embedding__Version                  = "1"
     Authentication__Cognito__Region     = var.aws_region
     Authentication__Cognito__UserPoolId = module.cognito.user_pool_id
     Authentication__Cognito__Audience   = module.cognito.user_pool_client_id
