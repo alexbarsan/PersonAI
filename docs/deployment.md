@@ -153,4 +153,4 @@ Jobs__EmbeddingBackfill__BatchSize  = "100"
 Jobs__EmbeddingBackfill__MaxJobsPerRun = "1000"
 ```
 
-Deploy one task revision and monitor `dreamlens.async_jobs.*` metrics and task logs. The worker considers only completed dreams whose owners currently consent to AI processing and history use. It skips dreams already embedded or already queued for the configured embedding version. Reset `Jobs__EmbeddingBackfill__Enabled` to `false` after the run.
+Deploy one task revision and monitor `dreamlens.async_jobs.*` metrics and task logs. The worker considers only completed dreams whose owners currently consent to AI processing and history use. It skips dreams already embedded or already queued for embedding. Reset `Jobs__EmbeddingBackfill__Enabled` to `false` after the run.
