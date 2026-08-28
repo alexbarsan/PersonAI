@@ -2,7 +2,9 @@ using System.Diagnostics;
 using System.Text.Json;
 using DreamLens.Api.Features.Profile;
 using DreamLens.Api.Infrastructure.Identity;
+using DreamLens.Api.Infrastructure.Embeddings;
 using DreamLens.Api.Infrastructure.Observability;
+using DreamLens.Api.Infrastructure.Jobs;
 using DreamLens.Api.Infrastructure.Persistence;
 using DreamLens.Api.Infrastructure.Quotas;
 using DreamLens.Api.Infrastructure.Security;
@@ -21,8 +23,10 @@ public sealed class SubmitDreamHandler(
     IStringEncryptor encryptor,
     IInterpretationPipeline interpretationPipeline,
     IDreamQuotaService quotaService,
+    IOptions<EmbeddingOptions> embeddingOptions,
     IOptions<DeepSeekOptions> deepSeekOptions,
-    IOptions<UsageCostOptions> usageCostOptions)
+    IOptions<UsageCostOptions> usageCostOptions,
+    AsyncJobService? asyncJobService = null)
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -128,6 +132,16 @@ public sealed class SubmitDreamHandler(
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        if (profile.ConsentHistoryUse && embeddingOptions.Value.Enabled && asyncJobService is not null)
+        {
+            await asyncJobService.EnqueueAsync(
+                $"{AsyncJobTypes.DreamEmbedding}:{record.Id}:{embeddingOptions.Value.Version}",
+                AsyncJobTypes.DreamEmbedding,
+                record.UserSubject,
+                new DreamEmbeddingJobHandler.DreamEmbeddingJobPayload(record.Id),
+                cancellationToken);
+        }
 
         return SubmitDreamResult.Valid(DreamMapper.Map(record, result));
     }
