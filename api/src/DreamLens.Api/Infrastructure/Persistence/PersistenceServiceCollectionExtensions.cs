@@ -9,9 +9,7 @@ public static class PersistenceServiceCollectionExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var connectionString = FirstNonEmpty(
-            configuration.GetConnectionString("DreamLensDb"),
-            RdsMasterUserSecretConnectionStringFactory.Create(configuration));
+        var connectionString = ResolveConnectionString(configuration);
 
         services.AddSingleton<IDatabaseReadinessProbe, PostgresDatabaseReadinessProbe>();
 
@@ -21,6 +19,13 @@ public static class PersistenceServiceCollectionExtensions
         }
 
         return services;
+    }
+
+    public static string? ResolveConnectionString(IConfiguration configuration)
+    {
+        return FirstNonEmpty(
+            configuration.GetConnectionString("DreamLensDb"),
+            RdsMasterUserSecretConnectionStringFactory.Create(configuration));
     }
 
     private static string? FirstNonEmpty(params string?[] values)

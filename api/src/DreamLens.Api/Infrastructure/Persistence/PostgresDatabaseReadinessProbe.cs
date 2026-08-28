@@ -7,7 +7,7 @@ public sealed class PostgresDatabaseReadinessProbe(IConfiguration configuration)
 {
     public async Task<bool> IsReadyAsync(CancellationToken cancellationToken)
     {
-        var connectionString = configuration.GetConnectionString("DreamLensDb");
+        var connectionString = PersistenceServiceCollectionExtensions.ResolveConnectionString(configuration);
 
         if (string.IsNullOrWhiteSpace(connectionString))
         {

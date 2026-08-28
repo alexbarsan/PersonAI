@@ -12,6 +12,7 @@ using DreamLens.Api.Infrastructure.Persistence;
 using DreamLens.Api.Infrastructure.Quotas;
 using DreamLens.Api.Infrastructure.RateLimiting;
 using DreamLens.Api.Infrastructure.Security;
+using Microsoft.EntityFrameworkCore;
 using PersonaKit.Context;
 using PersonaKit.Personas;
 using PersonaKit.Pipeline;
@@ -51,6 +52,11 @@ if (dreamEndpointsEnabled)
 
 var app = builder.Build();
 
+if (app.Configuration.GetValue<bool>("Database:ApplyMigrations"))
+{
+    await ApplyDatabaseMigrationsAsync(app);
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -72,9 +78,16 @@ app.MapInsightsEndpoints();
 
 app.Run();
 
+static async Task ApplyDatabaseMigrationsAsync(WebApplication app)
+{
+    await using var scope = app.Services.CreateAsyncScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<DreamLensDbContext>();
+    await dbContext.Database.MigrateAsync();
+}
+
 static bool ProfileEndpointsEnabled(IConfiguration configuration)
 {
-    return !string.IsNullOrWhiteSpace(configuration.GetConnectionString("DreamLensDb"))
+    return !string.IsNullOrWhiteSpace(PersistenceServiceCollectionExtensions.ResolveConnectionString(configuration))
         && !string.IsNullOrWhiteSpace(configuration["Encryption:LocalKeyBase64"]);
 }
 

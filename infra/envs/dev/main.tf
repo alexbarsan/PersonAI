@@ -64,6 +64,7 @@ module "api" {
     ASPNETCORE_ENVIRONMENT              = "Production"
     ConnectionStrings__Host             = module.database.endpoint
     ConnectionStrings__Database         = module.database.database_name
+    Database__ApplyMigrations           = "true"
     Authentication__Cognito__Region     = var.aws_region
     Authentication__Cognito__UserPoolId = module.cognito.user_pool_id
     Authentication__Cognito__Audience   = module.cognito.user_pool_client_id
