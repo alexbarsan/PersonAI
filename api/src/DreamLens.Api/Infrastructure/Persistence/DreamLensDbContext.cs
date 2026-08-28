@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Pgvector.EntityFrameworkCore;
 using System.Text.Json;
+using DreamLens.Api.Infrastructure.Jobs;
 
 namespace DreamLens.Api.Infrastructure.Persistence;
 
@@ -15,6 +16,8 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
     public DbSet<AiCostLedgerRecord> AiCostLedger => Set<AiCostLedgerRecord>();
 
     public DbSet<DreamEmbedding> DreamEmbeddings => Set<DreamEmbedding>();
+
+    public DbSet<AsyncJobRecord> AsyncJobs => Set<AsyncJobRecord>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -136,6 +139,23 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
             entity.Property(embedding => embedding.Model).HasMaxLength(128).IsRequired();
             entity.Property(embedding => embedding.Version).HasMaxLength(32).IsRequired();
             entity.Property(embedding => embedding.CreatedAt).IsRequired();
+        });
+
+        modelBuilder.Entity<AsyncJobRecord>(entity =>
+        {
+            entity.ToTable("AsyncJobs");
+            entity.HasKey(job => job.Id);
+            entity.HasIndex(job => job.IdempotencyKey).IsUnique();
+            entity.HasIndex(job => new { job.Status, job.AvailableAt });
+            entity.HasIndex(job => new { job.UserSubject, job.CreatedAt });
+            entity.Property(job => job.IdempotencyKey).HasMaxLength(256).IsRequired();
+            entity.Property(job => job.JobType).HasMaxLength(64).IsRequired();
+            entity.Property(job => job.UserSubject).HasMaxLength(256).IsRequired();
+            entity.Property(job => job.PayloadJson).IsRequired();
+            entity.Property(job => job.Status).HasMaxLength(32).IsRequired();
+            entity.Property(job => job.LastError).HasMaxLength(2000);
+            entity.Property(job => job.CreatedAt).IsRequired();
+            entity.Property(job => job.UpdatedAt).IsRequired();
         });
     }
 

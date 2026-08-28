@@ -59,6 +59,8 @@ module "api" {
   secret_kms_key_arn   = module.security.kms_key_arn
   regional_waf_acl_arn = module.security.regional_waf_acl_arn
   certificate_arn      = var.api_acm_certificate_arn
+  async_queue_arns     = [module.async_jobs.queue_arn]
+  asset_bucket_arn     = module.private_assets.bucket_arn
 
   environment_variables = {
     ASPNETCORE_ENVIRONMENT              = "Production"
@@ -95,6 +97,22 @@ module "database" {
   deletion_protection   = false
   kms_key_arn           = module.security.kms_key_arn
   tags                  = local.tags
+}
+
+module "async_jobs" {
+  source = "../../modules/async-jobs"
+
+  name_prefix = local.name_prefix
+  kms_key_arn = module.security.kms_key_arn
+  tags        = local.tags
+}
+
+module "private_assets" {
+  source = "../../modules/private-assets"
+
+  name_prefix = local.name_prefix
+  kms_key_arn = module.security.kms_key_arn
+  tags        = local.tags
 }
 
 module "web" {

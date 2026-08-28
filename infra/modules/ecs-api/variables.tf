@@ -56,6 +56,18 @@ variable "secret_arns" {
   default     = {}
 }
 
+variable "async_queue_arns" {
+  type        = list(string)
+  description = "SQS queue ARNs the task may use for asynchronous jobs."
+  default     = []
+}
+
+variable "asset_bucket_arn" {
+  type        = string
+  description = "Private S3 asset bucket ARN the task may use."
+  default     = null
+}
+
 variable "secret_kms_key_arn" {
   type        = string
   description = "Optional KMS key ARN used to decrypt injected secrets."

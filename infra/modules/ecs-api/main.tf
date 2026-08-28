@@ -234,6 +234,33 @@ resource "aws_iam_role" "task" {
   tags = var.tags
 }
 
+resource "aws_iam_role_policy" "task_async_jobs" {
+  count = length(var.async_queue_arns) > 0 || var.asset_bucket_arn != null ? 1 : 0
+
+  name = "${var.name_prefix}-async-jobs-assets"
+  role = aws_iam_role.task.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = concat(
+      length(var.async_queue_arns) == 0 ? [] : [{
+        Effect   = "Allow"
+        Action   = ["sqs:SendMessage", "sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:ChangeMessageVisibility", "sqs:GetQueueAttributes"]
+        Resource = var.async_queue_arns
+      }],
+      var.asset_bucket_arn == null ? [] : [{
+        Effect   = "Allow"
+        Action   = ["s3:ListBucket"]
+        Resource = var.asset_bucket_arn
+      }, {
+        Effect   = "Allow"
+        Action   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
+        Resource = "${var.asset_bucket_arn}/*"
+      }]
+    )
+  })
+}
+
 resource "aws_iam_role_policy" "task_bedrock_embeddings" {
   name = "${var.name_prefix}-bedrock-embeddings"
   role = aws_iam_role.task.id
