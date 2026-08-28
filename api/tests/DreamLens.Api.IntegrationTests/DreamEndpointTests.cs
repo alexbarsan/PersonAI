@@ -203,6 +203,22 @@ public sealed class DreamEndpointTests
     }
 
     [Fact]
+    public async Task FailedInterpretationDoesNotConsumeDailyQuota()
+    {
+        using var app = CreateDreamApp(
+            new QueueDreamChatClient("{ invalid json", "{ still invalid", CanonicalAiOutput),
+            dailyDreamQuota: 1);
+        using var client = app.CreateAuthenticatedClient("subject-a");
+        await PutProfileAsync(client);
+
+        var failed = await client.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest());
+        var retry = await client.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest());
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, failed.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, retry.StatusCode);
+    }
+
+    [Fact]
     public async Task PremiumEntitlementAllowsHigherDailyQuota()
     {
         using var app = CreateDreamApp(

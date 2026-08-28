@@ -22,7 +22,8 @@ public sealed class EfDreamQuotaService(
         var submissionCount = await dbContext.Dreams.CountAsync(
             dream => dream.UserSubject == userSubject
                 && dream.CreatedAt >= todayStart
-                && dream.CreatedAt < tomorrowStart,
+                && dream.CreatedAt < tomorrowStart
+                && dream.Status != "failed",
             cancellationToken);
 
         return submissionCount < limit;
