@@ -5,6 +5,7 @@ using DreamLens.Api.Features.Me.GetMe;
 using DreamLens.Api.Features.Entitlements;
 using DreamLens.Api.Features.Profile;
 using DreamLens.Api.Features.Dreams;
+using DreamLens.Api.Features.Privacy;
 using DreamLens.Api.Infrastructure.Identity;
 using DreamLens.Api.Infrastructure.Embeddings;
 using DreamLens.Api.Infrastructure.Images;
@@ -28,6 +29,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 builder.Services.AddDreamLensObservability();
 builder.Services.AddDreamLensAuthentication(builder.Configuration, builder.Environment);
+builder.Services.AddDreamLensPrivacyAuthorization(builder.Configuration);
 builder.Services.AddDreamLensRateLimiting(builder.Configuration);
 builder.Services.AddDreamLensPersistence(builder.Configuration);
 builder.Services.AddDreamLensEmbeddings(builder.Configuration);
@@ -43,6 +45,7 @@ builder.Services.AddScoped<GetEntitlementHandler>();
 
 if (!string.IsNullOrWhiteSpace(PersistenceServiceCollectionExtensions.ResolveConnectionString(builder.Configuration)))
 {
+    builder.Services.AddScoped<IAnonymizedUserAccessService, AnonymizedUserAccessService>();
     builder.Services.AddScoped<GetJobHandler>();
     builder.Services.AddScoped<RetryJobHandler>();
 }
@@ -65,9 +68,15 @@ if (dreamEndpointsEnabled)
     builder.Services.AddScoped<RequestDreamImageHandler>();
     builder.Services.AddScoped<GetDreamImageHandler>();
     builder.Services.AddScoped<ListDreamsHandler>();
+    builder.Services.AddScoped<UpdateDreamJournalHandler>();
     builder.Services.AddScoped<DeleteDreamHandler>();
     builder.Services.AddScoped<GetInsightsHandler>();
     builder.Services.AddScoped<SemanticMemoryService>();
+    builder.Services.AddScoped<RequestAnonymizationHandler>();
+    builder.Services.AddScoped<GetAnonymizationRequestHandler>();
+    builder.Services.AddScoped<ListAnonymizationRequestsHandler>();
+    builder.Services.AddScoped<ApproveAnonymizationHandler>();
+    builder.Services.AddScoped<ExportUserDataHandler>();
 }
 
 var app = builder.Build();
@@ -86,6 +95,7 @@ if (app.Environment.IsDevelopment())
 app.UseDreamLensSecurityHeaders();
 app.UseCors(SecurityServiceCollectionExtensions.CorsPolicyName);
 app.UseAuthentication();
+app.UseDreamLensAnonymizedUserGuard();
 app.UseRateLimiter();
 app.UseAuthorization();
 
@@ -96,6 +106,7 @@ app.MapProfileEndpoints();
 app.MapDreamEndpoints();
 app.MapInsightsEndpoints();
 app.MapJobEndpoints();
+app.MapPrivacyEndpoints();
 
 app.Run();
 

@@ -60,6 +60,16 @@ describe("ProfileForm", () => {
       })
     );
   });
+
+  it("lets a profile user request administrator-approved anonymization", async () => {
+    const requestAnonymization = jest.fn(mockApiClient.requestAnonymization);
+    renderWithProviders(<ProfileForm mode="profile" />, { requestAnonymization });
+
+    fireEvent.press(screen.getByTestId("request-anonymization"));
+
+    await waitFor(() => expect(requestAnonymization).toHaveBeenCalledTimes(1));
+    expect(screen.getByText("Anonymization request is pending administrator approval.")).toBeTruthy();
+  });
 });
 
 function renderWithProviders(

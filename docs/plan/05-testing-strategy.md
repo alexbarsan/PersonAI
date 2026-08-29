@@ -92,7 +92,7 @@ Required tests:
 - sensitive traits are omitted when consent is false
 - history is omitted when history consent is false
 - logs do not contain raw dream text in tested paths
-- export and erasure behavior is covered before release
+- export, approval-gated anonymization, asset cleanup, and anonymized-ledger behavior are covered before release
 
 ## CI Quality Gates
 

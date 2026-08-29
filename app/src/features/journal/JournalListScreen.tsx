@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "expo-router";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { useApiClient } from "@/api/apiContext";
 import { DreamJournalResponse } from "@/api/dto";
@@ -10,9 +11,13 @@ export function JournalListScreen() {
   const api = useApiClient();
   const theme = useTheme();
   const queryClient = useQueryClient();
+  const [query, setQuery] = useState("");
+  const [mood, setMood] = useState("");
+  const [tag, setTag] = useState("");
+  const filters = { query, mood, tag };
   const journal = useQuery({
-    queryKey: ["journal"],
-    queryFn: () => api.listDreams()
+    queryKey: ["journal", filters],
+    queryFn: () => api.listDreams(filters)
   });
   const deleteDream = useMutation({
     mutationFn: (id: string) => api.deleteDream(id),
@@ -37,6 +42,35 @@ export function JournalListScreen() {
       <View style={styles.header}>
         <Text style={[styles.title, { color: theme.colors.text }]}>Journal</Text>
         <Text style={[styles.subtitle, { color: theme.colors.mutedText }]}>Review dreams you have interpreted.</Text>
+      </View>
+
+      <View style={[styles.filters, { borderColor: theme.colors.border }]}>
+        <TextInput
+          accessibilityLabel="Search dreams"
+          onChangeText={setQuery}
+          placeholder="Search dreams"
+          placeholderTextColor={theme.colors.mutedText}
+          style={[styles.input, { borderColor: theme.colors.border, color: theme.colors.text }]}
+          value={query}
+        />
+        <View style={styles.filterRow}>
+          <TextInput
+            accessibilityLabel="Filter mood"
+            onChangeText={setMood}
+            placeholder="Mood"
+            placeholderTextColor={theme.colors.mutedText}
+            style={[styles.filterInput, { borderColor: theme.colors.border, color: theme.colors.text }]}
+            value={mood}
+          />
+          <TextInput
+            accessibilityLabel="Filter tag"
+            onChangeText={setTag}
+            placeholder="Tag"
+            placeholderTextColor={theme.colors.mutedText}
+            style={[styles.filterInput, { borderColor: theme.colors.border, color: theme.colors.text }]}
+            value={tag}
+          />
+        </View>
       </View>
 
       {journal.isLoading ? <Text style={[styles.body, { color: theme.colors.mutedText }]}>Loading dreams</Text> : null}
@@ -104,6 +138,30 @@ const styles = StyleSheet.create({
   },
   list: {
     gap: 12
+  },
+  filters: {
+    borderBottomWidth: 1,
+    gap: 8,
+    paddingBottom: 14
+  },
+  filterRow: {
+    flexDirection: "row",
+    gap: 8
+  },
+  input: {
+    borderRadius: 8,
+    borderWidth: 1,
+    fontSize: 16,
+    minHeight: 44,
+    paddingHorizontal: 12
+  },
+  filterInput: {
+    borderRadius: 8,
+    borderWidth: 1,
+    flex: 1,
+    fontSize: 16,
+    minHeight: 42,
+    paddingHorizontal: 12
   },
   card: {
     borderRadius: 8,

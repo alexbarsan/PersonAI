@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams } from "expo-router";
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { useApiClient } from "@/api/apiContext";
 import { ApiError } from "@/api/client";
-import { DreamImageResponse } from "@/api/dto";
+import { DreamImageResponse, DreamResponse } from "@/api/dto";
 import { ResultSectionRenderer } from "@/features/dreams/ResultSectionRenderer";
 import { SafetyCard } from "@/features/dreams/SafetyCard";
 import { useDreamResultStore } from "@/state/dreamResultStore";
@@ -91,9 +92,57 @@ export function DreamResultScreen() {
               requestError={requestImage.error}
             />
           )}
+          <JournalDetailsEditor dream={dream.data} />
         </View>
       ) : null}
     </ScrollView>
+  );
+}
+
+function JournalDetailsEditor({ dream }: { dream: DreamResponse | undefined }) {
+  const api = useApiClient();
+  const theme = useTheme();
+  const queryClient = useQueryClient();
+  const [mood, setMood] = useState("");
+  const [tags, setTags] = useState("");
+  const [occurredAt, setOccurredAt] = useState("");
+  const [journalNote, setJournalNote] = useState("");
+  useEffect(() => {
+    setMood(dream?.mood ?? "");
+    setTags(dream?.tags?.join(", ") ?? "");
+    setOccurredAt(dream?.occurredAt ?? "");
+    setJournalNote(dream?.journalNote ?? "");
+  }, [dream]);
+  const save = useMutation({
+    mutationFn: () => api.updateDreamJournal(dream!.id, {
+      mood: mood || null,
+      tags: tags.split(",").map((tag) => tag.trim()).filter(Boolean),
+      occurredAt: occurredAt || null,
+      journalNote: journalNote || null,
+      sleepQuality: dream?.sleepQuality ?? null
+    }),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(["dream", dream?.id], updated);
+      queryClient.invalidateQueries({ queryKey: ["journal"] });
+    }
+  });
+
+  if (!dream) {
+    return null;
+  }
+
+  return (
+    <View style={[styles.journalEditor, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+      <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Journal details</Text>
+      <TextInput accessibilityLabel="Journal mood" onChangeText={setMood} placeholder="Mood" placeholderTextColor={theme.colors.mutedText} style={[styles.input, { borderColor: theme.colors.border, color: theme.colors.text }]} value={mood} />
+      <TextInput accessibilityLabel="Journal tags" onChangeText={setTags} placeholder="Tags, separated by commas" placeholderTextColor={theme.colors.mutedText} style={[styles.input, { borderColor: theme.colors.border, color: theme.colors.text }]} value={tags} />
+      <TextInput accessibilityLabel="Dream date" onChangeText={setOccurredAt} placeholder="Dream date, YYYY-MM-DD" placeholderTextColor={theme.colors.mutedText} style={[styles.input, { borderColor: theme.colors.border, color: theme.colors.text }]} value={occurredAt} />
+      <TextInput accessibilityLabel="Journal note" multiline onChangeText={setJournalNote} placeholder="Personal note" placeholderTextColor={theme.colors.mutedText} style={[styles.noteInput, { borderColor: theme.colors.border, color: theme.colors.text }]} textAlignVertical="top" value={journalNote} />
+      {save.isError ? <Text style={[styles.error, { color: theme.colors.warning }]}>Journal details could not be saved.</Text> : null}
+      <Pressable accessibilityRole="button" onPress={() => save.mutate()} style={[styles.imageButton, { backgroundColor: theme.colors.primary }]} testID="save-journal-details">
+        <Text style={[styles.buttonText, { color: theme.colors.primaryText }]}>{save.isPending ? "Saving" : "Save journal details"}</Text>
+      </Pressable>
+    </View>
   );
 }
 
@@ -190,6 +239,26 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     gap: 10,
     padding: 14
+  },
+  journalEditor: {
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 10,
+    padding: 14
+  },
+  input: {
+    borderRadius: 8,
+    borderWidth: 1,
+    fontSize: 16,
+    minHeight: 44,
+    paddingHorizontal: 12
+  },
+  noteInput: {
+    borderRadius: 8,
+    borderWidth: 1,
+    fontSize: 16,
+    minHeight: 88,
+    padding: 12
   },
   image: {
     aspectRatio: 1,

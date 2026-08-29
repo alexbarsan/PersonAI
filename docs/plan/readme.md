@@ -24,7 +24,7 @@ This folder is the complete, agent-executable development master plan for DreamL
 | 01-backend-architecture.md | .NET 9 Minimal API, Vertical Slice Architecture, CQRS-lite (no MediatR), PersonaKit design, EF Core 9 + PostgreSQL/pgvector, AI provider abstractions, SQS async jobs, private S3 asset storage, design patterns and SOLID mapping. |
 | 02-frontend-architecture.md | Expo (React Native + TypeScript) app for iOS + Android + Web: Expo Router, TanStack Query + Zustand, react-hook-form + zod, generic `sections[]` renderer, white-label brand config, EAS builds. |
 | 03-aws-infrastructure.md | Terraform IaC: ECS Fargate + ALB + WAF, RDS PostgreSQL/pgvector, Cognito, S3 + CloudFront web, private S3 assets, SQS async jobs, Bedrock embeddings, Secrets Manager, GitHub Actions OIDC. |
-| 04-security-privacy.md | Pseudonymization (HMAC pseudonymId), consent gating, AES-GCM column encryption with KMS envelope keys, prompt-injection firewall, GDPR export/erasure. |
+| 04-security-privacy.md | Pseudonymization (HMAC pseudonymId), consent gating, AES-GCM column encryption with KMS envelope keys, prompt-injection firewall, data export, and approval-gated anonymization. |
 | 05-testing-strategy.md | Test pyramid: xUnit + FluentAssertions + NSubstitute, WebApplicationFactory + Testcontainers + WireMock.Net, Verify snapshots, RNTL + Maestro + Playwright + MSW, k6 load. |
 | 06-dev-orchestrator.md | The MASTER ORCHESTRATOR PROMPT, per-slice workflow rules, the 5-minute human audit checklist, SLICE-STATUS.md format, stuck/red-suite recovery protocol. |
 | 07-slices-S0-S5.md | Copy-paste slice prompts S0–S5: monorepo + CI, walking skeleton, Postgres/EF Core, Cognito auth, encrypted user profile, DeepSeek `IChatClient` + resilience decorators. |

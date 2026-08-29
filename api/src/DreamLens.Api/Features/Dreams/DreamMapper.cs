@@ -11,13 +11,27 @@ public static class DreamMapper
     {
         result ??= ReadResult(record);
 
-        return new DreamResponse(record.Id, record.CreatedAt, record.Status, result, record.ErrorMessage);
+        return new DreamResponse(
+            record.Id,
+            record.CreatedAt,
+            record.Status,
+            result,
+            record.ErrorMessage,
+            record.Mood,
+            record.SleepQuality,
+            ReadTags(record),
+            record.OccurredAt,
+            record.JournalNote);
     }
 
     public static string? ReadSummary(DreamRecord record)
     {
         return ReadResult(record)?.Summary;
     }
+
+    public static string[] ReadTags(DreamRecord record) => string.IsNullOrWhiteSpace(record.TagsJson)
+        ? []
+        : JsonSerializer.Deserialize<string[]>(record.TagsJson, JsonOptions) ?? [];
 
     private static DreamResultResponse? ReadResult(DreamRecord record)
     {

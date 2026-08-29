@@ -49,6 +49,27 @@ export type DreamResponse = {
   status: "completed" | "failed";
   result: DreamResultResponse | null;
   errorMessage: string | null;
+  mood?: string | null;
+  sleepQuality?: number | null;
+  tags?: string[];
+  occurredAt?: string | null;
+  journalNote?: string | null;
+};
+
+export type DreamJournalFilters = {
+  query?: string;
+  mood?: string;
+  tag?: string;
+  from?: string;
+  to?: string;
+};
+
+export type UpdateDreamJournalRequest = {
+  mood?: string | null;
+  sleepQuality?: number | null;
+  tags?: string[];
+  occurredAt?: string | null;
+  journalNote?: string | null;
 };
 
 export type RequestDreamImageRequest = {
@@ -150,4 +171,19 @@ export type EntitlementResponse = {
   tier: "free" | "premium";
   dailyDreamLimit: number;
   deepAnalysisEnabled: boolean;
+};
+
+export type AnonymizationRequestResponse = {
+  id: string;
+  status: "pending" | "approved";
+  requestedAt: string;
+  reviewedAt: string | null;
+  completedAt: string | null;
+};
+
+export type UserDataExportResponse = {
+  generatedAt: string;
+  profile: ProfileResponse;
+  dreams: Array<{ id: string; text: string }>;
+  aiOperations: Array<{ id: string; operationType: string; estimatedCostUsd: number }>;
 };

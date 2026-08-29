@@ -303,5 +303,5 @@ SOLID:
 - Context JSON sent to DeepSeek **always includes the full profile snapshot** (the product requirement) but **never** name, email, phone, Cognito `sub`, IP, or device ids — only `pseudonymId`.
 - Sensitive traits (fears, allergies, health-adjacent fields) require `consent.sensitiveTraits = true`; absent consent they are omitted and the persona template degrades gracefully.
 - Sensitive columns are encrypted at rest (AES-GCM; KMS envelope keys in AWS, local key for dev).
-- GDPR: users can export their data and request erasure. Erasure removes or anonymizes personal data across dreams, interpretations, run records, and cost ledger rows according to retention rules documented before implementation; any admin approval workflow must not block legally required erasure.
+- Privacy workflow: users can export their data and request administrator-approved anonymization. Approval removes profile/content/derived records and private assets, anonymizes retained cost audit rows, and blocks the original subject through an HMAC tombstone. A separate support process must handle statutory erasure rights without an approval delay.
 - Dream text is untrusted input: prompt-injection firewall rules live in every persona system prompt; the model gets **no tools** and its output is schema-validated.

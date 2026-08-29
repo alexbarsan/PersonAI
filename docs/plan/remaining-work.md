@@ -1,6 +1,6 @@
 # Remaining Work
 
-Last updated after S25 dream image generation on 2026-08-29.
+Last updated after S23 journal and privacy controls on 2026-08-29.
 
 ## Planned Slices
 
@@ -11,7 +11,7 @@ All planned slices S0-S21 are implemented.
 The imported Catch Dreamer feature notes add several capabilities that are not fully implemented yet. Track the detailed backlog in `13-post-s21-feature-backlog.md`.
 
 - Historical fact backfill: completed dreams created before S22 do not yet have the normalized `DreamFacts` projection.
-- Journal v2: edit dreams, search/filter history, and export user data from the app.
+- Native mobile export sharing, Cognito disable/delete procedure after approved anonymization, and a documented support path for statutory erasure requests.
 - Voice capture and transcription with explicit retention controls.
 - Select a supported launch image model, approve its access/cost profile, configure an image quota, and then enable the completed SQS/private-S3 dream-image workflow in a controlled environment.
 - Embeddings and semantic memory using PostgreSQL `pgvector` and Amazon Bedrock Titan Embeddings V2 by default, not full-history prompts.
@@ -43,3 +43,4 @@ The imported Catch Dreamer feature notes add several capabilities that are not f
 - The AI cost ledger covers dream interpretation and dream-image attempts, including an operation type, model/provider, status, latency, failure category, and estimated cost. Embeddings, repair retries, transcription, Ask DreamLens, and deep interpretation still need consistent per-operation rows. S22 fact extraction does not call an AI model and therefore does not create a new ledger operation.
 - Dream result detail uses an in-memory submitted-result cache before falling back to `GET /v1/dreams/{id}`; Playwright covers the submit/result path, and S17+ should not depend on this cache behavior.
 - Profile form uses simple text inputs for comma-separated traits; richer controls can be added after the core flows are complete.
+- Approved anonymization is implemented using the `dreamlens-admin` Cognito group or configured subject allow-list. The first production privacy administrator still needs to be assigned to that group before approval can be used outside local tests.

@@ -23,6 +23,10 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
 
     public DbSet<AsyncJobRecord> AsyncJobs => Set<AsyncJobRecord>();
 
+    public DbSet<AnonymizationRequest> AnonymizationRequests => Set<AnonymizationRequest>();
+
+    public DbSet<AnonymizedUserTombstone> AnonymizedUserTombstones => Set<AnonymizedUserTombstone>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasPostgresExtension("vector");
@@ -87,6 +91,8 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
             entity.Property(dream => dream.Status)
                 .HasMaxLength(32)
                 .IsRequired();
+            entity.Property(dream => dream.JournalNote)
+                .HasMaxLength(2000);
             entity.Property(dream => dream.CreatedAt)
                 .IsRequired();
         });
@@ -198,6 +204,28 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
             entity.Property(job => job.LastError).HasMaxLength(2000);
             entity.Property(job => job.CreatedAt).IsRequired();
             entity.Property(job => job.UpdatedAt).IsRequired();
+        });
+
+        modelBuilder.Entity<AnonymizationRequest>(entity =>
+        {
+            entity.ToTable("AnonymizationRequests");
+            entity.HasKey(request => request.Id);
+            entity.HasIndex(request => new { request.RequestingUserSubject, request.Status });
+            entity.HasIndex(request => new { request.Status, request.RequestedAt });
+            entity.Property(request => request.RequestingUserSubject).HasMaxLength(256);
+            entity.Property(request => request.RequesterPseudonym).HasMaxLength(64).IsRequired();
+            entity.Property(request => request.Status).HasMaxLength(32).IsRequired();
+            entity.Property(request => request.ReviewedBySubject).HasMaxLength(256);
+            entity.Property(request => request.RequestedAt).IsRequired();
+        });
+
+        modelBuilder.Entity<AnonymizedUserTombstone>(entity =>
+        {
+            entity.ToTable("AnonymizedUserTombstones");
+            entity.HasKey(tombstone => tombstone.Id);
+            entity.HasIndex(tombstone => tombstone.SubjectPseudonym).IsUnique();
+            entity.Property(tombstone => tombstone.SubjectPseudonym).HasMaxLength(64).IsRequired();
+            entity.Property(tombstone => tombstone.AnonymizedAt).IsRequired();
         });
     }
 

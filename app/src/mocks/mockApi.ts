@@ -1,6 +1,6 @@
 import type { ApiClient } from "@/api/client";
 import { ApiError } from "@/api/errors";
-import { mockDream, mockDreamImage, mockEntitlement, mockInsights, mockJournal, mockMe, mockProfile } from "@/mocks/mockData";
+import { mockAnonymizationRequest, mockDream, mockDreamImage, mockEntitlement, mockInsights, mockJournal, mockMe, mockProfile, mockUserDataExport } from "@/mocks/mockData";
 
 export const mockApiClient: ApiClient = {
   getMe: async () => mockMe,
@@ -17,11 +17,14 @@ export const mockApiClient: ApiClient = {
   },
   listDreams: async () => mockJournal,
   getDream: async () => mockDream,
+  updateDreamJournal: async (_, request) => ({ ...mockDream, ...request }),
   requestDreamImage: async () => mockDreamImage,
   getDreamImage: async () => mockDreamImage,
   deleteDream: async () => undefined,
   getInsights: async () => mockInsights,
-  getEntitlements: async () => mockEntitlement
+  getEntitlements: async () => mockEntitlement,
+  exportUserData: async () => mockUserDataExport,
+  requestAnonymization: async () => mockAnonymizationRequest
 };
 
 function readMockSubmitMode() {

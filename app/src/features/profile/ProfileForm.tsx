@@ -100,8 +100,55 @@ export function ProfileForm({ mode }: ProfileFormProps) {
           </Text>
         </Pressable>
       </View>
+      {mode === "profile" ? <PrivacyActions /> : null}
     </ScrollView>
   );
+}
+
+function PrivacyActions() {
+  const api = useApiClient();
+  const theme = useTheme();
+  const entitlement = useQuery({ queryKey: ["entitlements"], queryFn: () => api.getEntitlements() });
+  const exportData = useMutation({
+    mutationFn: () => api.exportUserData(),
+    onSuccess: (data) => downloadExport(data)
+  });
+  const anonymization = useMutation({ mutationFn: () => api.requestAnonymization() });
+
+  return (
+    <View style={[styles.panel, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+      <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Your data</Text>
+      {entitlement.data?.tier === "premium" ? (
+        <>
+          <Pressable accessibilityRole="button" onPress={() => exportData.mutate()} style={[styles.secondaryButton, { borderColor: theme.colors.primary }]} testID="prepare-data-export">
+            <Text style={[styles.secondaryButtonText, { color: theme.colors.primary }]}>{exportData.isPending ? "Preparing export" : "Prepare data export"}</Text>
+          </Pressable>
+          {exportData.data ? <Text style={[styles.helpText, { color: theme.colors.mutedText }]}>Export downloaded with {exportData.data.dreams.length} dream(s).</Text> : null}
+        </>
+      ) : (
+        <Text style={[styles.helpText, { color: theme.colors.mutedText }]}>Data export is available with Premium.</Text>
+      )}
+      <Pressable accessibilityRole="button" onPress={() => anonymization.mutate()} style={[styles.secondaryButton, { borderColor: theme.colors.warning }]} testID="request-anonymization">
+        <Text style={[styles.secondaryButtonText, { color: theme.colors.warning }]}>{anonymization.isPending ? "Requesting approval" : "Request anonymization"}</Text>
+      </Pressable>
+      {anonymization.data ? <Text style={[styles.helpText, { color: theme.colors.mutedText }]}>Anonymization request is pending administrator approval.</Text> : null}
+      {anonymization.isError ? <Text style={[styles.error, { color: theme.colors.warning }]}>Anonymization request could not be created.</Text> : null}
+    </View>
+  );
+}
+
+function downloadExport(data: unknown) {
+  if (typeof document === "undefined") {
+    return;
+  }
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "dreamlens-data-export.json";
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 function Field({
@@ -253,6 +300,18 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontSize: 16,
+    fontWeight: "700"
+  },
+  secondaryButton: {
+    alignItems: "center",
+    borderRadius: 8,
+    borderWidth: 1,
+    justifyContent: "center",
+    minHeight: 44,
+    paddingHorizontal: 16
+  },
+  secondaryButtonText: {
+    fontSize: 15,
     fontWeight: "700"
   }
 });

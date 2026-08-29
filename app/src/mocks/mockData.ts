@@ -1,5 +1,6 @@
 import {
   DreamJournalResponse,
+  AnonymizationRequestResponse,
   DreamImageResponse,
   DreamResponse,
   EntitlementResponse,
@@ -130,4 +131,19 @@ export const mockEntitlement: EntitlementResponse = {
   tier: "free",
   dailyDreamLimit: 3,
   deepAnalysisEnabled: false
+};
+
+export const mockAnonymizationRequest: AnonymizationRequestResponse = {
+  id: "anonymization_mock_1",
+  status: "pending",
+  requestedAt: "2026-08-29T19:00:00Z",
+  reviewedAt: null,
+  completedAt: null
+};
+
+export const mockUserDataExport = {
+  generatedAt: "2026-08-29T19:00:00Z",
+  profile: mockProfile,
+  dreams: [{ id: mockDream.id, text: "I was near dark water." }],
+  aiOperations: [{ id: "ai_operation_mock_1", operationType: "dream.interpretation", estimatedCostUsd: 0.001 }]
 };

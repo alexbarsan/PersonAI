@@ -103,16 +103,20 @@ Production auth is Cognito. The API validates JWTs and derives the current user 
 
 Local `dotnet user-jwts` tokens are development-only and must not be enabled in production.
 
-## GDPR Export And Erasure
+## GDPR Export And Anonymization
 
-Users can export their data and request erasure. Erasure removes or anonymizes personal data across dreams, interpretations, run records, and cost ledger rows according to retention rules documented before implementation. Admin approval must not block legally required erasure.
+Premium users can export their current data as authenticated JSON. The product privacy workflow is a request for irreversible anonymization, which requires approval by a member of the Cognito `dreamlens-admin` group or an explicit configured admin subject.
 
-Open decisions before implementation:
+Approval deletes the profile, raw dream text, interpretations, journal metadata, facts, embeddings, queued jobs, image records, and private S3 assets. AI cost rows are retained only with their user and dream identifiers replaced or removed. An HMAC-based tombstone blocks the original Cognito subject from using the API again; it does not retain the source subject.
 
-- retention windows
-- legal basis for retaining anonymized cost ledger rows
-- whether support/admin tooling is required in v1
-- whether erasure is self-serve in v1 or starts as a support flow
+This product approval gate does not replace statutory deletion rights. A valid legal erasure request must have a support/escalation path and must not be delayed by an administrator workflow.
+
+Open decisions before public launch:
+
+- retention window and legal basis for anonymized cost ledger rows
+- Cognito account disable/delete procedure after approval
+- native mobile export sharing
+- documented support process for statutory erasure requests
 
 ## Threat Model Summary
 
@@ -122,7 +126,7 @@ Primary threats:
 - prompt injection from dream text
 - sensitive data in logs
 - broken object-level authorization
-- unauthorized export or erasure
+- unauthorized export or anonymization approval
 - provider key leakage
 - quota abuse and cost spikes
 

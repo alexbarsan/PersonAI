@@ -94,4 +94,20 @@ describe("api client", () => {
     expect(requested.status).toBe("completed");
     expect(image.downloadUrl).toContain("data:image/png");
   });
+
+  it("updates journal metadata and prepares privacy actions", async () => {
+    const client = createApiClient({
+      baseUrl: "http://localhost",
+      getAccessToken: () => "test-token",
+      mockMode: false
+    });
+
+    const updated = await client.updateDreamJournal("dream_mock_1", { journalNote: "Remember this." });
+    const exported = await client.exportUserData();
+    const anonymization = await client.requestAnonymization();
+
+    expect(updated.id).toBe("dream_mock_1");
+    expect(exported.dreams).toHaveLength(1);
+    expect(anonymization.status).toBe("pending");
+  });
 });

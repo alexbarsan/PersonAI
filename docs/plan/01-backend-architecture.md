@@ -85,7 +85,7 @@ Initial aggregate areas:
 
 Sensitive columns are encrypted at rest. In development use a local key from configuration or user secrets. In AWS use KMS envelope keys. Encryption must happen below feature handlers so slices cannot accidentally persist plaintext sensitive fields.
 
-`pgvector` is the launch vector store. Keep embedding rows tied to internal dream/user ids so authorization, consent filtering, erasure, and relational filters remain in one transactional store. Revisit S3 Vectors or a dedicated vector database only if pgvector becomes a measured bottleneck.
+`pgvector` is the launch vector store. Keep embedding rows tied to internal dream/user ids so authorization, consent filtering, approved anonymization, and relational filters remain in one transactional store. Revisit S3 Vectors or a dedicated vector database only if pgvector becomes a measured bottleneck.
 
 Embedding dimensions must be stored in configuration and must match the pgvector index. Changing embedding provider or dimension requires a backfill plan and a versioned embedding column/table.
 

@@ -30,6 +30,11 @@ public sealed class TestAuthenticationHandler(
 
         AddOptionalClaim(claims, "email", ClaimTypes.Email, Request.Headers["X-Test-Email"].FirstOrDefault());
         AddOptionalClaim(claims, "name", ClaimTypes.Name, Request.Headers["X-Test-Name"].FirstOrDefault());
+        foreach (var group in Request.Headers["X-Test-Groups"].ToString().Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+        {
+            claims.Add(new Claim("cognito:groups", group));
+            claims.Add(new Claim(ClaimTypes.Role, group));
+        }
 
         var identity = new ClaimsIdentity(claims, SchemeName);
         var principal = new ClaimsPrincipal(identity);

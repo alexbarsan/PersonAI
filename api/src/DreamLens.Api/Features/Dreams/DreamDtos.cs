@@ -12,7 +12,12 @@ public sealed record DreamResponse(
     DateTimeOffset CreatedAt,
     string Status,
     DreamResultResponse? Result,
-    string? ErrorMessage);
+    string? ErrorMessage,
+    string? Mood = null,
+    int? SleepQuality = null,
+    string[]? Tags = null,
+    string? OccurredAt = null,
+    string? JournalNote = null);
 
 public sealed record DreamResultResponse(
     string Summary,
@@ -43,3 +48,10 @@ public sealed record DreamJournalItemResponse(
     string? Summary,
     string? Mood,
     string? OccurredAt);
+
+public sealed record UpdateDreamJournalRequest(
+    string? Mood,
+    int? SleepQuality,
+    string[]? Tags,
+    string? OccurredAt,
+    string? JournalNote);

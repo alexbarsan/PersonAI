@@ -22,5 +22,7 @@ public sealed class DreamRecord
 
     public string? ErrorMessage { get; set; }
 
+    public string? JournalNote { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 }

@@ -4,7 +4,9 @@ using DreamLens.Api.Features.Dreams;
 using DreamLens.Api.Features.Insights;
 using DreamLens.Api.Features.Jobs;
 using DreamLens.Api.Features.Profile;
+using DreamLens.Api.Features.Privacy;
 using DreamLens.Api.Infrastructure.Jobs;
+using DreamLens.Api.Infrastructure.Identity;
 using DreamLens.Api.Infrastructure.Persistence;
 using DreamLens.Api.Infrastructure.Quotas;
 using Microsoft.AspNetCore.Hosting;
@@ -122,6 +124,91 @@ public sealed class DreamEndpointTests
         var response = await client.PostAsJsonAsync($"/v1/dreams/{dream!.Id}/image", new { style = "SOFT_DIGITAL_PAINTING" });
 
         Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UserCanUpdateJournalMetadataAndFilterTheirJournal()
+    {
+        using var app = CreateDreamApp(new StaticDreamChatClient(CanonicalAiOutput));
+        using var client = app.CreateAuthenticatedClient("subject-a");
+        await PutProfileAsync(client);
+        var dream = await (await client.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest()))
+            .Content.ReadFromJsonAsync<DreamResponse>();
+
+        var update = await client.PutAsJsonAsync($"/v1/dreams/{dream!.Id}/journal", new
+        {
+            mood = "curious",
+            sleepQuality = 4,
+            tags = new[] { "water", "recurring" },
+            occurredAt = "2026-06-15",
+            journalNote = "I remembered the water after breakfast."
+        });
+        var updated = await update.Content.ReadFromJsonAsync<DreamResponse>();
+        var filtered = await (await client.GetAsync("/v1/dreams?query=breakfast&mood=curious&tag=water"))
+            .Content.ReadFromJsonAsync<DreamJournalResponse>();
+
+        Assert.Equal(HttpStatusCode.OK, update.StatusCode);
+        Assert.NotNull(updated);
+        Assert.Equal("curious", updated.Mood);
+        Assert.Equal(4, updated.SleepQuality);
+        Assert.Contains("water", updated.Tags!);
+        Assert.Equal("I remembered the water after breakfast.", updated.JournalNote);
+        Assert.NotNull(filtered);
+        Assert.Single(filtered.Items);
+        Assert.Equal(dream.Id, filtered.Items[0].Id);
+    }
+
+    [Fact]
+    public async Task UserDataExportContainsProfileDreamsAndAiOperations()
+    {
+        using var app = CreateDreamApp(new StaticDreamChatClient(CanonicalAiOutput), premiumSubjects: ["subject-a"]);
+        using var client = app.CreateAuthenticatedClient("subject-a");
+        await PutProfileAsync(client);
+        await client.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest());
+
+        var response = await client.GetAsync("/v1/privacy/export");
+        var export = await response.Content.ReadFromJsonAsync<UserDataExportResponse>();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.NotNull(export);
+        Assert.Equal(33, export.Profile.Age);
+        Assert.Single(export.Dreams);
+        Assert.Contains("falling into dark water", export.Dreams[0].Text, StringComparison.Ordinal);
+        Assert.Single(export.AiOperations);
+        Assert.Equal("dream.interpretation", export.AiOperations[0].OperationType);
+    }
+
+    [Fact]
+    public async Task FreeUserCannotExportData()
+    {
+        using var app = CreateDreamApp(new StaticDreamChatClient(CanonicalAiOutput));
+        using var client = app.CreateAuthenticatedClient("subject-a");
+
+        var response = await client.GetAsync("/v1/privacy/export");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task AdminApprovedAnonymizationRemovesUserContentAndBlocksFurtherAccess()
+    {
+        using var app = CreateDreamApp(new StaticDreamChatClient(CanonicalAiOutput));
+        using var user = app.CreateAuthenticatedClient("subject-a");
+        using var nonAdmin = app.CreateAuthenticatedClient("subject-b");
+        using var admin = app.CreateAuthenticatedClient("privacy-admin", "dreamlens-admin");
+        await PutProfileAsync(user);
+        await user.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest());
+
+        var requestResponse = await user.PostAsync("/v1/privacy/anonymization-requests", null);
+        var request = await requestResponse.Content.ReadFromJsonAsync<AnonymizationRequestResponse>();
+        var unauthorizedApproval = await nonAdmin.PostAsync($"/v1/privacy/admin/anonymization-requests/{request!.Id}/approve", null);
+        var approval = await admin.PostAsync($"/v1/privacy/admin/anonymization-requests/{request.Id}/approve", null);
+
+        Assert.Equal(HttpStatusCode.Accepted, requestResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, unauthorizedApproval.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, approval.StatusCode);
+        await app.AssertAnonymizedAsync();
+        Assert.Equal(HttpStatusCode.Forbidden, (await user.GetAsync("/v1/dreams")).StatusCode);
     }
 
     [Fact]
@@ -505,6 +592,7 @@ public sealed class DreamEndpointTests
                     services.AddSingleton<RecordingAsyncJobQueue>();
                     services.AddSingleton<IAsyncJobQueue>(serviceProvider => serviceProvider.GetRequiredService<RecordingAsyncJobQueue>());
                     services.AddScoped<AsyncJobService>();
+                    services.AddScoped<IAnonymizedUserAccessService, AnonymizedUserAccessService>();
                     services.AddScoped<IDreamQuotaService, EfDreamQuotaService>();
                     services.AddScoped<GetProfileHandler>();
                     services.AddScoped<UpdateProfileHandler>();
@@ -515,9 +603,15 @@ public sealed class DreamEndpointTests
                     services.AddScoped<RequestDreamImageHandler>();
                     services.AddScoped<GetDreamImageHandler>();
                     services.AddScoped<ListDreamsHandler>();
+                    services.AddScoped<UpdateDreamJournalHandler>();
                     services.AddScoped<DeleteDreamHandler>();
                     services.AddScoped<GetInsightsHandler>();
                     services.AddScoped<RetryJobHandler>();
+                    services.AddScoped<RequestAnonymizationHandler>();
+                    services.AddScoped<GetAnonymizationRequestHandler>();
+                    services.AddScoped<ListAnonymizationRequestsHandler>();
+                    services.AddScoped<ApproveAnonymizationHandler>();
+                    services.AddScoped<ExportUserDataHandler>();
                 });
             });
 
@@ -561,11 +655,35 @@ public sealed class DreamEndpointTests
     {
         public HttpClient CreateClient() => factory.CreateClient();
 
-        public HttpClient CreateAuthenticatedClient(string subject)
+        public HttpClient CreateAuthenticatedClient(string subject, string? groups = null)
         {
             var client = factory.CreateClient();
             client.DefaultRequestHeaders.Add("X-Test-Subject", subject);
+            if (!string.IsNullOrWhiteSpace(groups))
+            {
+                client.DefaultRequestHeaders.Add("X-Test-Groups", groups);
+            }
+
             return client;
+        }
+
+        public async Task AssertAnonymizedAsync()
+        {
+            using var scope = factory.Services.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<DreamLensDbContext>();
+            Assert.Empty(await dbContext.UserProfiles.ToArrayAsync());
+            Assert.Empty(await dbContext.Dreams.ToArrayAsync());
+            Assert.Empty(await dbContext.DreamFacts.ToArrayAsync());
+            Assert.Empty(await dbContext.DreamEmbeddings.ToArrayAsync());
+            Assert.Empty(await dbContext.AsyncJobs.ToArrayAsync());
+            Assert.Empty(await dbContext.DreamImages.ToArrayAsync());
+            Assert.Single(await dbContext.AnonymizedUserTombstones.ToArrayAsync());
+            var ledger = Assert.Single(await dbContext.AiCostLedger.ToArrayAsync());
+            Assert.StartsWith("anon_", ledger.UserSubject, StringComparison.Ordinal);
+            Assert.Null(ledger.DreamId);
+            var request = Assert.Single(await dbContext.AnonymizationRequests.ToArrayAsync());
+            Assert.Null(request.RequestingUserSubject);
+            Assert.Equal(AnonymizationRequestStatuses.Approved, request.Status);
         }
 
         public void Dispose()

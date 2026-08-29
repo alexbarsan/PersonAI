@@ -7,7 +7,7 @@ This backlog captures product capabilities from `docs/to-be-analyzed/catch-dream
 | Candidate Slice | Capability | Missing From Current Baseline | Backend Work | App Work |
 | --- | --- | --- | --- | --- |
 | S22 | Dream output schema v2 | Complete. Structured observations are first-class, versioned output fields and normalized fact rows. | Added schema v1.1, fact extraction/persistence, owner-scoped fact API, deletion cleanup, migration, and coverage. Existing dreams are not automatically backfilled. | Added generic entity rendering for people and locations plus result sections for structured observations. |
-| S23 | Journal v2 | Journal has list/detail/delete, but not edit, search, filters, or export. | Add update endpoint, full-text/search projection, export endpoint, and erasure/export tests. | Add edit form, search/filter controls, and export action. |
+| S23 | Journal v2 and privacy controls | Complete. | Added owner-scoped journal metadata editing, query/mood/tag/date filters, Premium-gated authenticated JSON export, user anonymization requests, Cognito-group/admin approval, S3 asset cleanup, HMAC tombstones, and approval/export coverage. Approval deletes profile, raw dreams, results, facts, embeddings, jobs, and image records/assets; AI cost rows retain only anonymized audit data. | Added journal search/filter controls, journal-details editing, Premium browser JSON export, and pending anonymization-request UI. Native export sharing remains a mobile follow-up. |
 | S24 | Voice capture and transcription | Voice capture is not implemented. | Add transcription provider abstraction, upload policy, optional private S3 storage, retention controls, cost ledger operation type, and abuse limits. | Add record/review/transcribe flow with clear retention UX. |
 | S25 | Dream image generation | Complete behind a disabled-by-default launch flag. | Added image provider abstraction, premium entitlement check, idempotent SQS job, private S3 persistence, signed access, retry-safe worker handling, and per-attempt AI cost/latency ledger rows. Nova Canvas is configured as a switchable Bedrock adapter but is not enabled. | Added premium-aware image request, queued/generating/failed/completed states, and signed-image rendering in the dream result screen. |
 | S26 | Embeddings and semantic memory | Context history is summary-based; async embedding jobs and production retrieval integration remain. | Add pgvector migration, embedding provider abstraction, Bedrock Titan Embeddings V2 adapter, dream embeddings, and consent-aware retrieval foundation. SQS backfill and pipeline wiring move to S32. | Add settings/disclosure copy and similar-context indicators where useful. |
@@ -28,7 +28,8 @@ This backlog captures product capabilities from `docs/to-be-analyzed/catch-dream
 - Completed interpretations and generated images should be persisted so reopening a dream does not trigger avoidable AI calls.
 - Every individual AI operation must record provider, model, operation type, prompt/schema version where applicable, tokens where available, response time, status, failure category, and estimated cost.
 - Stronger models and image generation should be gated by entitlement and quota.
-- Generated images, exports, and optional assets must use private S3 storage with signed access; do not mix them with the public web hosting bucket.
+- Generated images, exports, and optional assets must use private S3 storage with signed access; do not mix them with the public web hosting bucket. The current data export is an authenticated JSON response downloaded by the web client.
+- Standard user privacy requests use administrator-approved anonymization. Approval removes user content and identifiers, deletes private assets, retains only anonymized financial/audit rows, and blocks the original Cognito subject using an HMAC tombstone.
 - Image generation, embedding backfills, exports, and future batch AI work should use SQS-backed async jobs with DLQs and cost/latency telemetry.
 - Titan Embeddings V2 is the default embedding provider for launch, but embedding provider, model id, dimensions, and embedding version must be recorded to support future provider migration.
 
@@ -46,4 +47,4 @@ This backlog captures product capabilities from `docs/to-be-analyzed/catch-dream
 1. Resolve the Titan Embeddings V2 account quota with AWS Support, then retry/backfill failed embedding jobs and verify semantic matches return results.
 2. Decide whether historical completed dreams should be backfilled into `DreamFacts` before analytics launches.
 3. Select and approve a supported image provider, then configure cost/quotas and enable S25 in a controlled dev test.
-4. S23 journal v2: editing, search/filtering, export, and privacy/erasure coverage.
+4. S24 voice capture and transcription with explicit retention controls.

@@ -34,6 +34,12 @@ public sealed class S3PrivateAssetStore(
         });
     }
 
+    public async Task DeleteAsync(string key, CancellationToken cancellationToken)
+    {
+        ValidateKey(key);
+        await s3.DeleteObjectAsync(options.Value.BucketName, key, cancellationToken);
+    }
+
     private static void ValidateKey(string key)
     {
         if (string.IsNullOrWhiteSpace(key) || key.StartsWith('/') || key.Contains("..", StringComparison.Ordinal))

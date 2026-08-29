@@ -1,5 +1,6 @@
 import {
   DreamJournalResponse,
+  DreamJournalFilters,
   DreamImageResponse,
   DreamResponse,
   EntitlementResponse,
@@ -7,8 +8,11 @@ import {
   MeResponse,
   ProfileUpdateRequest,
   ProfileResponse,
+  AnonymizationRequestResponse,
   RequestDreamImageRequest,
-  SubmitDreamRequest
+  SubmitDreamRequest,
+  UpdateDreamJournalRequest,
+  UserDataExportResponse
 } from "@/api/dto";
 import { ApiError } from "@/api/errors";
 import { mockApiClient } from "@/mocks/mockApi";
@@ -25,13 +29,16 @@ export type ApiClient = {
   getProfile: () => Promise<ProfileResponse>;
   updateProfile: (request: ProfileUpdateRequest) => Promise<ProfileResponse>;
   submitDream: (request: SubmitDreamRequest) => Promise<DreamResponse>;
-  listDreams: () => Promise<DreamJournalResponse>;
+  listDreams: (filters?: DreamJournalFilters) => Promise<DreamJournalResponse>;
   getDream: (id: string) => Promise<DreamResponse>;
+  updateDreamJournal: (id: string, request: UpdateDreamJournalRequest) => Promise<DreamResponse>;
   requestDreamImage: (id: string, request?: RequestDreamImageRequest) => Promise<DreamImageResponse>;
   getDreamImage: (id: string) => Promise<DreamImageResponse>;
   deleteDream: (id: string) => Promise<void>;
   getInsights: () => Promise<InsightsResponse>;
   getEntitlements: () => Promise<EntitlementResponse>;
+  exportUserData: () => Promise<UserDataExportResponse>;
+  requestAnonymization: () => Promise<AnonymizationRequestResponse>;
 };
 
 export { ApiError };
@@ -82,8 +89,13 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
         method: "POST",
         body: JSON.stringify(body)
     }),
-    listDreams: () => request<DreamJournalResponse>("/v1/dreams"),
+    listDreams: (filters = {}) => request<DreamJournalResponse>(`/v1/dreams${toQueryString(filters)}`),
     getDream: (id) => request<DreamResponse>(`/v1/dreams/${id}`),
+    updateDreamJournal: (id, body) =>
+      request<DreamResponse>(`/v1/dreams/${id}/journal`, {
+        method: "PUT",
+        body: JSON.stringify(body)
+      }),
     requestDreamImage: (id, body = {}) =>
       request<DreamImageResponse>(`/v1/dreams/${id}/image`, {
         method: "POST",
@@ -95,8 +107,24 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
         method: "DELETE"
       }),
     getInsights: () => request<InsightsResponse>("/v1/insights"),
-    getEntitlements: () => request<EntitlementResponse>("/v1/entitlements")
+    getEntitlements: () => request<EntitlementResponse>("/v1/entitlements"),
+    exportUserData: () => request<UserDataExportResponse>("/v1/privacy/export"),
+    requestAnonymization: () =>
+      request<AnonymizationRequestResponse>("/v1/privacy/anonymization-requests", {
+        method: "POST"
+      })
   };
+}
+
+function toQueryString(filters: DreamJournalFilters) {
+  const parameters = new URLSearchParams();
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value?.trim()) {
+      parameters.set(key, value.trim());
+    }
+  });
+  const serialized = parameters.toString();
+  return serialized ? `?${serialized}` : "";
 }
 
 async function readBody(response: Response) {

@@ -11,9 +11,14 @@ public static class DreamEndpoints
             .WithTags("Dreams");
 
         group.MapGet("", async (
+            [FromQuery] string? query,
+            [FromQuery] string? mood,
+            [FromQuery] string? tag,
+            [FromQuery] string? from,
+            [FromQuery] string? to,
             [FromServices] ListDreamsHandler handler,
             CancellationToken cancellationToken) =>
-            Results.Ok(await handler.HandleAsync(cancellationToken)))
+            Results.Ok(await handler.HandleAsync(new DreamJournalQuery(query, mood, tag, from, to), cancellationToken)))
             .WithName("ListDreams")
             .WithSummary("Lists dreams for the current user.");
 
@@ -45,6 +50,22 @@ public static class DreamEndpoints
         })
             .WithName("GetDream")
             .WithSummary("Returns one dream for the current user.");
+
+        group.MapPut("{id:guid}/journal", async (
+            Guid id,
+            UpdateDreamJournalRequest request,
+            [FromServices] UpdateDreamJournalHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var result = await handler.HandleAsync(id, request, cancellationToken);
+            return result.Dream is not null
+                ? Results.Ok(result.Dream)
+                : result.StatusCode == StatusCodes.Status404NotFound
+                    ? Results.NotFound()
+                    : Results.Json(result.Errors, statusCode: result.StatusCode);
+        })
+            .WithName("UpdateDreamJournal")
+            .WithSummary("Updates journal metadata without reinterpreting the dream.");
 
         group.MapGet("{id:guid}/facts", async (
             Guid id,
