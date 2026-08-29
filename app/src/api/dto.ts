@@ -87,6 +87,26 @@ export type DreamImageResponse = {
   createdAt: string;
 };
 
+export type VoiceCaptureResponse = {
+  id: string;
+  status: "pending" | "transcribing" | "completed" | "failed";
+  durationSeconds: number;
+  retainRecording: boolean;
+  transcript: string | null;
+  recordingUrl: string | null;
+  jobId: string | null;
+  errorMessage: string | null;
+  createdAt: string;
+};
+
+export type VoiceCaptureUpload = {
+  uri: string;
+  contentType: string;
+  durationSeconds: number;
+  retainRecording: boolean;
+  language?: string;
+};
+
 export type DreamResultResponse = {
   summary: string;
   sections: DreamSectionResponse[];

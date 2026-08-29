@@ -63,18 +63,24 @@ module "api" {
   asset_bucket_arn     = module.private_assets.bucket_arn
 
   environment_variables = {
-    ASPNETCORE_ENVIRONMENT              = "Production"
-    ConnectionStrings__Host             = module.database.endpoint
-    ConnectionStrings__Database         = module.database.database_name
-    Authentication__Cognito__Region     = var.aws_region
-    Authentication__Cognito__UserPoolId = module.cognito.user_pool_id
-    Authentication__Cognito__Audience   = module.cognito.user_pool_client_id
-    Authentication__Cognito__ClientId   = module.cognito.user_pool_client_id
-    Cors__AllowedOrigins__0             = "https://dreamdna.world"
-    Jobs__QueueUrl                      = module.async_jobs.queue_url
-    Jobs__Worker__Enabled               = "true"
-    Jobs__EmbeddingBackfill__Enabled    = "false"
-    Assets__BucketName                  = module.private_assets.bucket_name
+    ASPNETCORE_ENVIRONMENT                 = "Production"
+    ConnectionStrings__Host                = module.database.endpoint
+    ConnectionStrings__Database            = module.database.database_name
+    Authentication__Cognito__Region        = var.aws_region
+    Authentication__Cognito__UserPoolId    = module.cognito.user_pool_id
+    Authentication__Cognito__Audience      = module.cognito.user_pool_client_id
+    Authentication__Cognito__ClientId      = module.cognito.user_pool_client_id
+    Cors__AllowedOrigins__0                = "https://dreamdna.world"
+    Jobs__QueueUrl                         = module.async_jobs.queue_url
+    Jobs__Worker__Enabled                  = "true"
+    Jobs__EmbeddingBackfill__Enabled       = "false"
+    Assets__BucketName                     = module.private_assets.bucket_name
+    VoiceTranscription__Enabled            = "false"
+    VoiceTranscription__Provider           = "amazon-transcribe"
+    VoiceTranscription__Model              = "amazon-transcribe-standard"
+    VoiceTranscription__DailyLimit         = "3"
+    VoiceTranscription__MaxDurationSeconds = "180"
+    VoiceTranscription__MaxUploadBytes     = "10485760"
   }
 
   secret_arns = {

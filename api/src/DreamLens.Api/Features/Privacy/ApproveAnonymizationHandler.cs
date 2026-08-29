@@ -35,7 +35,11 @@ public sealed class ApproveAnonymizationHandler(
             .Where(image => image.UserSubject == subject && image.AssetKey != null)
             .Select(image => image.AssetKey!)
             .ToArrayAsync(cancellationToken);
-        foreach (var key in imageKeys)
+        var voiceKeys = await dbContext.VoiceCaptures
+            .Where(capture => capture.UserSubject == subject && capture.RetainRecording)
+            .Select(capture => capture.SourceAssetKey)
+            .ToArrayAsync(cancellationToken);
+        foreach (var key in imageKeys.Concat(voiceKeys))
         {
             await assetStore.DeleteAsync(key, cancellationToken);
         }
@@ -45,6 +49,7 @@ public sealed class ApproveAnonymizationHandler(
         var facts = await dbContext.DreamFacts.Where(fact => fact.UserSubject == subject).ToArrayAsync(cancellationToken);
         var embeddings = await dbContext.DreamEmbeddings.Where(embedding => embedding.UserSubject == subject).ToArrayAsync(cancellationToken);
         var images = await dbContext.DreamImages.Where(image => image.UserSubject == subject).ToArrayAsync(cancellationToken);
+        var voiceCaptures = await dbContext.VoiceCaptures.Where(capture => capture.UserSubject == subject).ToArrayAsync(cancellationToken);
         var jobs = await dbContext.AsyncJobs.Where(job => job.UserSubject == subject).ToArrayAsync(cancellationToken);
         var ledgerRows = await dbContext.AiCostLedger.Where(row => row.UserSubject == subject).ToArrayAsync(cancellationToken);
 
@@ -53,6 +58,7 @@ public sealed class ApproveAnonymizationHandler(
         dbContext.DreamFacts.RemoveRange(facts);
         dbContext.DreamEmbeddings.RemoveRange(embeddings);
         dbContext.DreamImages.RemoveRange(images);
+        dbContext.VoiceCaptures.RemoveRange(voiceCaptures);
         dbContext.AsyncJobs.RemoveRange(jobs);
         var anonymizedLedgerSubject = $"anon_{request.Id:N}";
         foreach (var row in ledgerRows)

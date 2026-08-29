@@ -64,6 +64,8 @@ Future post-S21 routes should stay versioned and feature-sliced:
 - `POST /v1/dreams/ask`
 - `POST /v1/exports`
 - `GET /v1/exports/{jobId}`
+- `POST /v1/voice-captures`
+- `GET /v1/voice-captures/{id}`
 
 ## Persistence
 
@@ -79,7 +81,8 @@ Initial aggregate areas:
 - Dream embeddings stored with PostgreSQL `pgvector`.
 - Structured dream facts for longitudinal analytics: symbols, emotions, people, places, scenarios, scores, tags, occurred date, weekday/weekend classification, source model, schema version, and extraction confidence where available.
 - Generated image and export metadata pointing to private S3 objects.
-- Async job records for image generation, embedding generation/backfill, exports, and future batch AI work.
+- Voice-capture metadata, transcript, explicit retention state, and private source-asset key.
+- Async job records for image generation, embedding generation/backfill, transcription, exports, and future batch AI work.
 - Journal and insight read models.
 - Quota counters.
 
@@ -117,7 +120,7 @@ Cross-cutting provider behavior is composed through decorators:
 - circuit breaker
 - usage logging: tokens, latency, estimated cost
 
-Async AI work is queued through SQS-backed job handlers. Image generation, embedding backfills, exports, and future batch analysis should not run inside the interactive request unless a slice explicitly decides that latency is acceptable.
+Async AI work is queued through SQS-backed job handlers. Image generation, transcription, embedding backfills, exports, and future batch analysis should not run inside the interactive request unless a slice explicitly decides that latency is acceptable.
 
 ## Asset Storage
 
@@ -125,9 +128,11 @@ Private user assets live in S3, separate from the public web build bucket:
 
 - generated dream images
 - user exports
-- optional uploaded source assets, such as future voice/image inputs
+- optional uploaded source assets, including transient voice recordings
 
 Store only S3 bucket/key/version metadata in PostgreSQL. Return signed URLs or proxied download endpoints, not public object URLs. Buckets must use Block Public Access, encryption at rest, lifecycle policies, and CloudTrail/S3 monitoring for sensitive operations.
+
+Voice recordings are Premium-only and opt-in. Validate accepted types, bytes, and duration before upload, cap daily transcription requests, and delete input/output objects after transcript extraction unless the user explicitly chose retention. Persist a ledger row for every attempt with provider, model, response time, status, failure category, and estimated duration-based cost.
 
 ## Context Builder
 

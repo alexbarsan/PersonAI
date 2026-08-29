@@ -282,6 +282,23 @@ resource "aws_iam_role_policy" "task_bedrock_models" {
   })
 }
 
+resource "aws_iam_role_policy" "task_transcription" {
+  name = "${var.name_prefix}-transcription"
+  role = aws_iam_role.task.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "transcribe:StartTranscriptionJob",
+        "transcribe:GetTranscriptionJob"
+      ]
+      Resource = "*"
+    }]
+  })
+}
+
 resource "aws_ecs_task_definition" "api" {
   family                   = "${var.name_prefix}-api"
   requires_compatibilities = ["FARGATE"]

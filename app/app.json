@@ -6,8 +6,22 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
-    "platforms": ["ios", "android", "web"],
-    "plugins": ["expo-router", "expo-secure-store"],
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Allow DreamLens to record a dream for transcription.",
+          "enableBackgroundPlayback": false
+        }
+      ]
+    ],
     "extra": {
       "apiBaseUrl": "http://localhost:5000",
       "mockApi": true,

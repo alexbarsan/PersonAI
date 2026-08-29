@@ -24,7 +24,29 @@ export const mockApiClient: ApiClient = {
   getInsights: async () => mockInsights,
   getEntitlements: async () => mockEntitlement,
   exportUserData: async () => mockUserDataExport,
-  requestAnonymization: async () => mockAnonymizationRequest
+  requestAnonymization: async () => mockAnonymizationRequest,
+  uploadVoiceCapture: async () => ({
+    id: "voice-1",
+    status: "completed",
+    durationSeconds: 12,
+    retainRecording: false,
+    transcript: "I was walking beside a quiet river at dawn.",
+    recordingUrl: null,
+    jobId: "voice-job-1",
+    errorMessage: null,
+    createdAt: "2026-08-30T00:00:00Z"
+  }),
+  getVoiceCapture: async () => ({
+    id: "voice-1",
+    status: "completed",
+    durationSeconds: 12,
+    retainRecording: false,
+    transcript: "I was walking beside a quiet river at dawn.",
+    recordingUrl: null,
+    jobId: "voice-job-1",
+    errorMessage: null,
+    createdAt: "2026-08-30T00:00:00Z"
+  })
 };
 
 function readMockSubmitMode() {

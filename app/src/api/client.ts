@@ -13,6 +13,9 @@ import {
   SubmitDreamRequest,
   UpdateDreamJournalRequest,
   UserDataExportResponse
+  ,
+  VoiceCaptureResponse,
+  VoiceCaptureUpload
 } from "@/api/dto";
 import { ApiError } from "@/api/errors";
 import { mockApiClient } from "@/mocks/mockApi";
@@ -39,6 +42,8 @@ export type ApiClient = {
   getEntitlements: () => Promise<EntitlementResponse>;
   exportUserData: () => Promise<UserDataExportResponse>;
   requestAnonymization: () => Promise<AnonymizationRequestResponse>;
+  uploadVoiceCapture: (capture: VoiceCaptureUpload) => Promise<VoiceCaptureResponse>;
+  getVoiceCapture: (id: string) => Promise<VoiceCaptureResponse>;
 };
 
 export { ApiError };
@@ -69,6 +74,26 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
     });
     const body = await readBody(response);
 
+    if (!response.ok) {
+      throw new ApiError("API request failed", response.status, body);
+    }
+
+    return body as T;
+  }
+
+  async function requestForm<T>(path: string, form: FormData): Promise<T> {
+    const headers = new Headers({ Accept: "application/json" });
+    const token = options.getAccessToken();
+    if (token) {
+      headers.set("Authorization", `Bearer ${token}`);
+    }
+
+    const response = await fetcher(`${options.baseUrl}${path}`, {
+      method: "POST",
+      headers,
+      body: form
+    });
+    const body = await readBody(response);
     if (!response.ok) {
       throw new ApiError("API request failed", response.status, body);
     }
@@ -112,8 +137,39 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
     requestAnonymization: () =>
       request<AnonymizationRequestResponse>("/v1/privacy/anonymization-requests", {
         method: "POST"
-      })
+      }),
+    uploadVoiceCapture: async (capture) => {
+      const source = await fetcher(capture.uri);
+      const audio = await source.blob();
+      const form = new FormData();
+      form.append("audio", audio, `dream-recording${extensionFor(capture.contentType)}`);
+      form.append("durationSeconds", String(capture.durationSeconds));
+      form.append("retainRecording", String(capture.retainRecording));
+      if (capture.language) {
+        form.append("language", capture.language);
+      }
+
+      return requestForm<VoiceCaptureResponse>("/v1/voice-captures", form);
+    },
+    getVoiceCapture: (id) => request<VoiceCaptureResponse>(`/v1/voice-captures/${id}`)
   };
+}
+
+function extensionFor(contentType: string) {
+  switch (contentType) {
+    case "audio/mpeg":
+      return ".mp3";
+    case "audio/wav":
+      return ".wav";
+    case "audio/ogg":
+      return ".ogg";
+    case "audio/webm":
+      return ".webm";
+    case "audio/m4a":
+      return ".m4a";
+    default:
+      return ".mp4";
+  }
 }
 
 function toQueryString(filters: DreamJournalFilters) {

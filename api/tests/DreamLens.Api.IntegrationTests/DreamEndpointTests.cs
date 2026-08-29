@@ -5,10 +5,13 @@ using DreamLens.Api.Features.Insights;
 using DreamLens.Api.Features.Jobs;
 using DreamLens.Api.Features.Profile;
 using DreamLens.Api.Features.Privacy;
+using DreamLens.Api.Features.Voice;
+using DreamLens.Api.Infrastructure.Assets;
 using DreamLens.Api.Infrastructure.Jobs;
 using DreamLens.Api.Infrastructure.Identity;
 using DreamLens.Api.Infrastructure.Persistence;
 using DreamLens.Api.Infrastructure.Quotas;
+using DreamLens.Api.Infrastructure.Voice;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -124,6 +127,76 @@ public sealed class DreamEndpointTests
         var response = await client.PostAsJsonAsync($"/v1/dreams/{dream!.Id}/image", new { style = "SOFT_DIGITAL_PAINTING" });
 
         Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task VoiceUploadIsUnavailableUntilVoiceTranscriptionIsEnabled()
+    {
+        using var app = CreateDreamApp(new StaticDreamChatClient(CanonicalAiOutput), premiumSubjects: ["subject-a"]);
+        using var client = app.CreateAuthenticatedClient("subject-a");
+
+        using var response = await client.PostAsync("/v1/voice-captures", CreateVoiceUploadContent());
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PremiumUserCanQueueVoiceTranscriptionAndOnlyOwnerCanReadIt()
+    {
+        using var app = CreateDreamApp(
+            new StaticDreamChatClient(CanonicalAiOutput),
+            premiumSubjects: ["subject-a"],
+            voiceTranscriptionEnabled: true);
+        using var owner = app.CreateAuthenticatedClient("subject-a");
+        using var otherUser = app.CreateAuthenticatedClient("subject-b");
+
+        using var upload = await owner.PostAsync("/v1/voice-captures", CreateVoiceUploadContent());
+        var capture = await upload.Content.ReadFromJsonAsync<VoiceCaptureResponse>();
+
+        Assert.Equal(HttpStatusCode.Accepted, upload.StatusCode);
+        Assert.NotNull(capture);
+        Assert.Equal("pending", capture.Status);
+        Assert.False(capture.RetainRecording);
+        Assert.Equal(1, app.PublishedAsyncJobCount);
+        Assert.Equal(1, await app.CountVoiceCapturesAsync());
+
+        using var otherResponse = await otherUser.GetAsync($"/v1/voice-captures/{capture.Id}");
+        Assert.Equal(HttpStatusCode.NotFound, otherResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task FreeUserCannotQueueVoiceTranscription()
+    {
+        using var app = CreateDreamApp(new StaticDreamChatClient(CanonicalAiOutput), voiceTranscriptionEnabled: true);
+        using var client = app.CreateAuthenticatedClient("subject-a");
+
+        using var response = await client.PostAsync("/v1/voice-captures", CreateVoiceUploadContent());
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task VoiceWorkerDeletesNonRetainedRecordingAndWritesCostLedger()
+    {
+        using var app = CreateDreamApp(
+            new StaticDreamChatClient(CanonicalAiOutput),
+            premiumSubjects: ["subject-a"],
+            voiceTranscriptionEnabled: true);
+        using var client = app.CreateAuthenticatedClient("subject-a");
+
+        using var upload = await client.PostAsync("/v1/voice-captures", CreateVoiceUploadContent());
+        var queued = await upload.Content.ReadFromJsonAsync<VoiceCaptureResponse>();
+        Assert.NotNull(queued);
+
+        await app.ProcessVoiceCaptureAsync();
+        var completed = await client.GetFromJsonAsync<VoiceCaptureResponse>($"/v1/voice-captures/{queued.Id}");
+        var ledger = await app.GetCostLedgerRowsAsync();
+
+        Assert.NotNull(completed);
+        Assert.Equal("completed", completed.Status);
+        Assert.NotNull(completed.Transcript);
+        Assert.Null(completed.RecordingUrl);
+        Assert.Contains(ledger, row => row.OperationType == "voice.transcription" && row.Status == "completed");
     }
 
     [Fact]
@@ -540,7 +613,8 @@ public sealed class DreamEndpointTests
         string[]? premiumSubjects = null,
         int rateLimitPermitLimit = 1000,
         TimeSpan? rateLimitWindow = null,
-        List<string>? capturedLogs = null)
+        List<string>? capturedLogs = null,
+        bool voiceTranscriptionEnabled = false)
     {
         var databaseName = $"dream-tests-{Guid.NewGuid():N}";
         var factory = new WebApplicationFactory<Program>()
@@ -559,7 +633,9 @@ public sealed class DreamEndpointTests
                         ["Monetization:FreeDailyDreamSubmissions"] = dailyDreamQuota.ToString(System.Globalization.CultureInfo.InvariantCulture),
                         ["Monetization:PremiumDailyDreamSubmissions"] = premiumDailyDreamQuota.ToString(System.Globalization.CultureInfo.InvariantCulture),
                         ["DreamRateLimiting:PermitLimit"] = rateLimitPermitLimit.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                        ["DreamRateLimiting:Window"] = (rateLimitWindow ?? TimeSpan.FromMinutes(1)).ToString()
+                        ["DreamRateLimiting:Window"] = (rateLimitWindow ?? TimeSpan.FromMinutes(1)).ToString(),
+                        ["VoiceTranscription:Enabled"] = voiceTranscriptionEnabled.ToString(),
+                        ["VoiceTranscription:Provider"] = "fake"
                     });
                     if (premiumSubjects is not null)
                     {
@@ -587,11 +663,14 @@ public sealed class DreamEndpointTests
                     services.RemoveAll<DreamLensDbContext>();
                     services.RemoveAll<IChatClient>();
                     services.RemoveAll<IAsyncJobQueue>();
+                    services.RemoveAll<IPrivateAssetStore>();
                     services.AddDbContext<DreamLensDbContext>(options => options.UseInMemoryDatabase(databaseName));
                     services.AddSingleton(chatClient);
                     services.AddSingleton<RecordingAsyncJobQueue>();
                     services.AddSingleton<IAsyncJobQueue>(serviceProvider => serviceProvider.GetRequiredService<RecordingAsyncJobQueue>());
+                    services.AddSingleton<IPrivateAssetStore, InMemoryPrivateAssetStore>();
                     services.AddScoped<AsyncJobService>();
+                    services.AddScoped<IAsyncJobHandler, VoiceTranscriptionJobHandler>();
                     services.AddScoped<IAnonymizedUserAccessService, AnonymizedUserAccessService>();
                     services.AddScoped<IDreamQuotaService, EfDreamQuotaService>();
                     services.AddScoped<GetProfileHandler>();
@@ -612,6 +691,8 @@ public sealed class DreamEndpointTests
                     services.AddScoped<ListAnonymizationRequestsHandler>();
                     services.AddScoped<ApproveAnonymizationHandler>();
                     services.AddScoped<ExportUserDataHandler>();
+                    services.AddScoped<UploadVoiceCaptureHandler>();
+                    services.AddScoped<GetVoiceCaptureHandler>();
                 });
             });
 
@@ -649,6 +730,17 @@ public sealed class DreamEndpointTests
             2,
             ["recurring"],
             "2026-06-12");
+    }
+
+    private static MultipartFormDataContent CreateVoiceUploadContent()
+    {
+        var form = new MultipartFormDataContent();
+        var audio = new ByteArrayContent([1, 2, 3, 4]);
+        audio.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("audio/webm");
+        form.Add(audio, "audio", "dream.webm");
+        form.Add(new StringContent("12"), "durationSeconds");
+        form.Add(new StringContent("false"), "retainRecording");
+        return form;
     }
 
     private sealed class DreamTestApp(WebApplicationFactory<Program> factory) : IDisposable
@@ -696,6 +788,23 @@ public sealed class DreamEndpointTests
             using var scope = factory.Services.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<DreamLensDbContext>();
             return await dbContext.AiCostLedger.CountAsync();
+        }
+
+        public async Task<int> CountVoiceCapturesAsync()
+        {
+            using var scope = factory.Services.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<DreamLensDbContext>();
+            return await dbContext.VoiceCaptures.CountAsync();
+        }
+
+        public async Task ProcessVoiceCaptureAsync()
+        {
+            var message = factory.Services.GetRequiredService<RecordingAsyncJobQueue>().Messages
+                .Single(job => job.JobType == AsyncJobTypes.VoiceTranscription);
+            await using var scope = factory.Services.CreateAsyncScope();
+            var handler = scope.ServiceProvider.GetServices<IAsyncJobHandler>()
+                .Single(candidate => candidate.JobType == AsyncJobTypes.VoiceTranscription);
+            await handler.HandleAsync(message, CancellationToken.None);
         }
 
         public async Task<AiCostLedgerRecord[]> GetCostLedgerRowsAsync()
@@ -764,6 +873,31 @@ public sealed class DreamEndpointTests
             Messages.Add(message);
             return Task.CompletedTask;
         }
+    }
+
+    private sealed class InMemoryPrivateAssetStore : IPrivateAssetStore
+    {
+        private readonly Dictionary<string, byte[]> values = [];
+
+        public async Task PutAsync(string key, Stream content, string contentType, CancellationToken cancellationToken)
+        {
+            using var buffer = new MemoryStream();
+            await content.CopyToAsync(buffer, cancellationToken);
+            values[key] = buffer.ToArray();
+        }
+
+        public Task<Stream> OpenReadAsync(string key, CancellationToken cancellationToken)
+        {
+            return Task.FromResult<Stream>(new MemoryStream(values[key], writable: false));
+        }
+
+        public Task DeleteAsync(string key, CancellationToken cancellationToken)
+        {
+            values.Remove(key);
+            return Task.CompletedTask;
+        }
+
+        public string CreateReadUrl(string key) => $"https://assets.invalid/{key}";
     }
 
     private sealed class QueueDreamChatClient(params string[] responses) : IChatClient

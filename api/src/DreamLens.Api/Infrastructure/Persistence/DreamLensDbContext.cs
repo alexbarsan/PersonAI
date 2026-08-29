@@ -17,6 +17,8 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
 
     public DbSet<DreamImageRecord> DreamImages => Set<DreamImageRecord>();
 
+    public DbSet<VoiceCaptureRecord> VoiceCaptures => Set<VoiceCaptureRecord>();
+
     public DbSet<AiCostLedgerRecord> AiCostLedger => Set<AiCostLedgerRecord>();
 
     public DbSet<DreamEmbedding> DreamEmbeddings => Set<DreamEmbedding>();
@@ -129,6 +131,23 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
             entity.Property(image => image.ErrorMessage).HasMaxLength(2000);
             entity.Property(image => image.CreatedAt).IsRequired();
             entity.Property(image => image.UpdatedAt).IsRequired();
+        });
+
+        modelBuilder.Entity<VoiceCaptureRecord>(entity =>
+        {
+            entity.ToTable("VoiceCaptures");
+            entity.HasKey(capture => capture.Id);
+            entity.HasIndex(capture => new { capture.UserSubject, capture.CreatedAt });
+            entity.HasIndex(capture => new { capture.UserSubject, capture.Status, capture.CreatedAt });
+            entity.Property(capture => capture.UserSubject).HasMaxLength(256).IsRequired();
+            entity.Property(capture => capture.Status).HasMaxLength(32).IsRequired();
+            entity.Property(capture => capture.ContentType).HasMaxLength(128).IsRequired();
+            entity.Property(capture => capture.Language).HasMaxLength(32);
+            entity.Property(capture => capture.SourceAssetKey).HasMaxLength(512).IsRequired();
+            entity.Property(capture => capture.Transcript).HasMaxLength(8000);
+            entity.Property(capture => capture.ErrorMessage).HasMaxLength(2000);
+            entity.Property(capture => capture.CreatedAt).IsRequired();
+            entity.Property(capture => capture.UpdatedAt).IsRequired();
         });
 
         modelBuilder.Entity<AiCostLedgerRecord>(entity =>

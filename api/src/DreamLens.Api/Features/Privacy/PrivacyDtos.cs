@@ -19,6 +19,7 @@ public sealed record UserDataExportResponse(
     DateTimeOffset GeneratedAt,
     ProfileResponse Profile,
     UserDataExportDream[] Dreams,
+    UserDataExportVoiceCapture[] VoiceCaptures,
     UserDataExportCost[] AiOperations);
 
 public sealed record UserDataExportDream(
@@ -39,6 +40,15 @@ public sealed record UserDataExportDream(
 public sealed record UserDataExportFact(string Type, string Value, decimal? Score, decimal? ExtractionConfidence);
 
 public sealed record UserDataExportImage(Guid Id, string Status, string Style, string? DownloadUrl, DateTimeOffset CreatedAt);
+
+public sealed record UserDataExportVoiceCapture(
+    Guid Id,
+    string Status,
+    int DurationSeconds,
+    bool RetainRecording,
+    string? Transcript,
+    string? RecordingUrl,
+    DateTimeOffset CreatedAt);
 
 public sealed record UserDataExportCost(
     Guid Id,

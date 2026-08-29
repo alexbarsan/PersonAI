@@ -26,7 +26,7 @@ public static class PrivacyEndpoints
             return Results.Ok(await handler.HandleAsync(cancellationToken));
         })
             .WithName("ExportUserData")
-            .WithSummary("Exports all currently accessible data for a Premium user.");
+            .WithSummary("Exports all currently accessible data for a Premium user, including voice transcripts and explicitly retained recordings.");
 
         group.MapPost("/anonymization-requests", async ([FromServices] RequestAnonymizationHandler handler, CancellationToken cancellationToken) =>
                 Results.Accepted("/v1/privacy/anonymization-requests/me", await handler.HandleAsync(cancellationToken)))

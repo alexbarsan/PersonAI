@@ -43,5 +43,6 @@ public static class AsyncJobTypes
 {
     public const string DreamEmbedding = "dream.embedding";
     public const string DreamImage = "dream.image";
+    public const string VoiceTranscription = "voice.transcription";
     public const string Export = "export";
 }

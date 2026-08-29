@@ -7,6 +7,7 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-
 import { useApiClient } from "@/api/apiContext";
 import { ApiError } from "@/api/client";
 import { toSubmitDreamRequest } from "@/features/dreams/dreamCaptureMapping";
+import { VoiceCapturePanel } from "@/features/dreams/VoiceCapturePanel";
 import {
   defaultDreamCaptureValues,
   DreamCaptureValues,
@@ -58,6 +59,7 @@ export function DreamCaptureScreen({ onSubmitted }: DreamCaptureScreenProps) {
 
       <View style={[styles.panel, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
         <Field control={form.control} label="Dream text" name="text" multiline />
+        <VoiceCapturePanel onTranscript={(transcript) => form.setValue("text", transcript, { shouldDirty: true, shouldValidate: true })} />
         <Field control={form.control} label="Mood" name="mood" />
         <Field control={form.control} label="Sleep quality" name="sleepQuality" keyboardType="number-pad" />
         <Field control={form.control} label="Tags" name="tags" placeholder="recurring, water" />

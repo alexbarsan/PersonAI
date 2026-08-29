@@ -10,8 +10,10 @@ DreamLens is a wellness and entertainment app for reflective dream interpretatio
 4. Review the consent flags. AI processing consent is required before submitting dreams.
 5. Open dream capture.
 6. Enter your dream description, mood, sleep quality, tags, and date.
-7. Submit the dream.
-8. Read the result sections: summary, symbols, emotions, themes, interpretation, guidance, and follow-up questions.
+7. Optionally choose Voice capture, record a dream note, stop the recording, and choose whether to keep the recording. By default, it is deleted after transcription.
+8. Select Transcribe recording and review the transcript inserted into Dream text.
+9. Submit the dream.
+10. Read the result sections: summary, symbols, emotions, themes, interpretation, guidance, and follow-up questions.
 
 ## Journal
 
@@ -26,6 +28,8 @@ Future Dream DNA analytics will turn months of journal history into a personal m
 ## Premium
 
 The Premium screen shows planned paid-tier benefits. In the current local build, purchases are not connected yet. Free users have a lower daily dream limit, and Premium entitlement support is available for testing through mock/configured state.
+
+Voice transcription is a Premium feature. A recording can be up to three minutes and is subject to a daily cap. The transcript is retained as journal data. The audio recording is deleted after transcription unless you explicitly turn on Keep recording after transcription; retained audio remains private and is available only through a short-lived link.
 
 ## Privacy Notes
 

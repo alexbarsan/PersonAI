@@ -6,10 +6,12 @@ using DreamLens.Api.Features.Entitlements;
 using DreamLens.Api.Features.Profile;
 using DreamLens.Api.Features.Dreams;
 using DreamLens.Api.Features.Privacy;
+using DreamLens.Api.Features.Voice;
 using DreamLens.Api.Infrastructure.Identity;
 using DreamLens.Api.Infrastructure.Embeddings;
 using DreamLens.Api.Infrastructure.Images;
 using DreamLens.Api.Infrastructure.Assets;
+using DreamLens.Api.Infrastructure.Voice;
 using DreamLens.Api.Infrastructure.Jobs;
 using DreamLens.Api.Infrastructure.Monetization;
 using DreamLens.Api.Infrastructure.Observability;
@@ -34,6 +36,7 @@ builder.Services.AddDreamLensRateLimiting(builder.Configuration);
 builder.Services.AddDreamLensPersistence(builder.Configuration);
 builder.Services.AddDreamLensEmbeddings(builder.Configuration);
 builder.Services.AddDreamLensImageGeneration(builder.Configuration);
+builder.Services.AddDreamLensVoiceTranscription(builder.Configuration);
 builder.Services.AddDreamLensJobs(builder.Configuration);
 builder.Services.AddDreamLensAssets(builder.Configuration);
 builder.Services.AddDreamLensSecurity(builder.Configuration);
@@ -77,6 +80,8 @@ if (dreamEndpointsEnabled)
     builder.Services.AddScoped<ListAnonymizationRequestsHandler>();
     builder.Services.AddScoped<ApproveAnonymizationHandler>();
     builder.Services.AddScoped<ExportUserDataHandler>();
+    builder.Services.AddScoped<UploadVoiceCaptureHandler>();
+    builder.Services.AddScoped<GetVoiceCaptureHandler>();
 }
 
 var app = builder.Build();
@@ -107,6 +112,7 @@ app.MapDreamEndpoints();
 app.MapInsightsEndpoints();
 app.MapJobEndpoints();
 app.MapPrivacyEndpoints();
+app.MapVoiceEndpoints();
 
 app.Run();
 

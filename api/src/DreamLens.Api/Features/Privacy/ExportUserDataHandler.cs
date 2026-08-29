@@ -30,6 +30,10 @@ public sealed class ExportUserDataHandler(
         var images = await dbContext.DreamImages.AsNoTracking()
             .Where(image => image.UserSubject == subject && dreamIds.Contains(image.DreamId))
             .ToArrayAsync(cancellationToken);
+        var voiceCaptures = await dbContext.VoiceCaptures.AsNoTracking()
+            .Where(capture => capture.UserSubject == subject)
+            .OrderBy(capture => capture.CreatedAt)
+            .ToArrayAsync(cancellationToken);
         var ledgerRows = await dbContext.AiCostLedger.AsNoTracking()
             .Where(row => row.UserSubject == subject)
             .OrderBy(row => row.CreatedAt)
@@ -63,6 +67,17 @@ public sealed class ExportUserDataHandler(
                             : null,
                         image.CreatedAt))
                     .ToArray()))
+                .ToArray(),
+            voiceCaptures.Select(capture => new UserDataExportVoiceCapture(
+                capture.Id,
+                capture.Status,
+                capture.DurationSeconds,
+                capture.RetainRecording,
+                capture.Transcript,
+                capture.RetainRecording && capture.Status == VoiceCaptureStatuses.Completed
+                    ? assetStore.CreateReadUrl(capture.SourceAssetKey)
+                    : null,
+                capture.CreatedAt))
                 .ToArray(),
             ledgerRows.Select(row => new UserDataExportCost(
                 row.Id,

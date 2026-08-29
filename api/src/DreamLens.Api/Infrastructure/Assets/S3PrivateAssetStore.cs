@@ -34,6 +34,13 @@ public sealed class S3PrivateAssetStore(
         });
     }
 
+    public async Task<Stream> OpenReadAsync(string key, CancellationToken cancellationToken)
+    {
+        ValidateKey(key);
+        var response = await s3.GetObjectAsync(options.Value.BucketName, key, cancellationToken);
+        return response.ResponseStream;
+    }
+
     public async Task DeleteAsync(string key, CancellationToken cancellationToken)
     {
         ValidateKey(key);

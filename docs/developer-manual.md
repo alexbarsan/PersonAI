@@ -47,6 +47,12 @@ npm run web
 
 The app defaults to mock API mode through `app/app.json`.
 
+## Voice Transcription
+
+`VoiceTranscription` is disabled by default in local configuration. The API accepts only authenticated Premium uploads and enforces supported audio types, a 10 MB size cap, a three-minute duration cap, and a daily request cap. Input and generated transcript objects use the private asset bucket; source audio is deleted after extraction unless `retainRecording` is explicitly true.
+
+For AWS, use `Provider=amazon-transcribe`, a private asset bucket, SQS worker, and task-role `transcribe:StartTranscriptionJob` / `transcribe:GetTranscriptionJob` permissions. Terraform declares this only for dev, and the task-role policy is applied. The live dev task definition remains safely disabled until its Terraform revision drift is reconciled. Before enabling QA or production, complete one controlled Premium dev transcription, verify the `voice.transcription` ledger row and source-object deletion, then apply equivalent environment configuration.
+
 To select the Astra brand variant for a build or shell session:
 
 ```powershell
