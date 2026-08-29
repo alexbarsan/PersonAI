@@ -86,10 +86,48 @@ export type InsightsResponse = {
   totalDreams: number;
   currentStreakDays: number;
   recurringThemes: ThemeInsightResponse[];
+  dateRange: InsightDateRangeResponse | null;
+  factGroups: FactInsightGroupResponse[];
+  timingPatterns: TimingPatternInsightResponse[];
+  monthlyDreamCounts: MonthlyDreamCountResponse[];
 };
 
 export type ThemeInsightResponse = {
   name: string;
+  count: number;
+};
+
+export type InsightDateRangeResponse = {
+  start: string;
+  end: string;
+};
+
+export type FactInsightGroupResponse = {
+  type: string;
+  title: string;
+  facts: FactInsightResponse[];
+};
+
+export type FactInsightResponse = {
+  value: string;
+  count: number;
+  percentageOfDreams: number;
+  averageScore: number | null;
+};
+
+export type TimingPatternInsightResponse = {
+  type: string;
+  value: string;
+  occurrences: number;
+  weekdayDreams: number;
+  weekendDreams: number;
+  weekdayRate: number;
+  weekendRate: number;
+  weekdayToWeekendRatio: number;
+};
+
+export type MonthlyDreamCountResponse = {
+  month: string;
   count: number;
 };
 

@@ -11,7 +11,7 @@ This backlog captures product capabilities from `docs/to-be-analyzed/catch-dream
 | S24 | Voice capture and transcription | Voice capture is not implemented. | Add transcription provider abstraction, upload policy, optional private S3 storage, retention controls, cost ledger operation type, and abuse limits. | Add record/review/transcribe flow with clear retention UX. |
 | S25 | Dream image generation | "Visualize my dream" is not implemented. | Add image provider abstraction, SQS async job model, private S3 storage, signed access, entitlement checks, and AI cost ledger entries. | Add image request/status/result UI and paywall/credit handling. |
 | S26 | Embeddings and semantic memory | Context history is summary-based; async embedding jobs and production retrieval integration remain. | Add pgvector migration, embedding provider abstraction, Bedrock Titan Embeddings V2 adapter, dream embeddings, and consent-aware retrieval foundation. SQS backfill and pipeline wiring move to S32. | Add settings/disclosure copy and similar-context indicators where useful. |
-| S27 | Similar dreams and Dream DNA | Insights currently cover recurring themes and streaks only; the app is not yet a personal subconscious map over time. | Add frequent symbols/emotions/people/places/scenarios, trend windows, sample sizes, weekday/weekend correlations, clusters, and similar-dream endpoints. | Add analytics screens, trend charts, frequency cards, correlation callouts, and similar-dream links. |
+| S27 | Similar dreams and Dream DNA | Complete for fact-based analytics. Semantic matches remain empty until new embeddings can be generated. | Added recurring fact groups, sample sizes, date coverage, monthly activity, guarded weekday/weekend rate comparisons, and owner-scoped similar-dream endpoint. Similarity is empty without a source embedding and never crosses user boundaries. | Reworked Insights into a personal dream map with recurring categories, percentages, score averages, activity, timing observations, and reflective language. |
 | S28 | Ask DreamLens | Users cannot ask questions over their own dream history. | Add retrieval-backed question endpoint, prompt/schema, safety rules, quota/cost ledger integration, and no-full-history prompt tests. | Add question UI, answer view, loading/error states, and history links. |
 | S29 | Deep Interpretation | Entitlement flag exists, but premium deep-analysis flow is not wired to a stronger model or richer context. | Add deep interpretation endpoint or request mode, model routing, richer retrieved context, tier limits, and cost controls. | Add deep-analysis entry point and result state. |
 | S30 | Social sign-in providers | Cognito auth is scaffolded, but provider-specific launch setup is incomplete. | Configure Cognito hosted UI providers for Google and Apple first; Facebook is optional after privacy/product review. | Add provider buttons and platform-specific OAuth validation. |
@@ -20,7 +20,7 @@ This backlog captures product capabilities from `docs/to-be-analyzed/catch-dream
 
 ## Product Rules
 
-- Dream DNA and Ask DreamLens must present patterns and correlations, not causal, diagnostic, or predictive claims.
+- Dream DNA and Ask DreamLens must present patterns and correlations, not causal, diagnostic, or predictive claims. Timing callouts require at least three occurrences plus both weekday and weekend dream samples.
 - Retrieval must use embeddings and compact summaries, not full journal prompts.
 - Dream DNA is the long-term product center: after enough history exists, show a personal map of recurring symbols, emotions, people, places, scenarios, timing patterns, and month-over-month changes.
 - Pattern statements must include sample size/date range when practical. Example: `water` in 3 dreams, `flying` in 11 dreams, anxiety 15%, happiness 55%, dreams about being late 3.3x more common during the work week, recurring person `Alex` 5 times.
@@ -43,7 +43,7 @@ This backlog captures product capabilities from `docs/to-be-analyzed/catch-dream
 
 ## Recommended Order
 
-1. S27 Dream DNA analytics: longitudinal stats, trends, correlations, clusters, and similar-dream links over `DreamFacts`.
-2. Resolve the Titan Embeddings V2 account quota with AWS Support, then retry/backfill failed embedding jobs and verify completion.
-3. Decide whether historical completed dreams should be backfilled into `DreamFacts` before analytics launches.
-4. S25 dream image generation: image provider, entitlement/credit checks, async status API, S3 persistence, and UI.
+1. Resolve the Titan Embeddings V2 account quota with AWS Support, then retry/backfill failed embedding jobs and verify semantic matches return results.
+2. Decide whether historical completed dreams should be backfilled into `DreamFacts` before analytics launches.
+3. S25 dream image generation: image provider, entitlement/credit checks, async status API, S3 persistence, and UI.
+4. S23 journal v2: editing, search/filtering, export, and privacy/erasure coverage.

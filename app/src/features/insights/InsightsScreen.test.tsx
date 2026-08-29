@@ -14,7 +14,8 @@ describe("InsightsScreen", () => {
     renderWithProviders(<InsightsScreen />);
 
     expect(await screen.findByText("1 days")).toBeTruthy();
-    expect(screen.getByText(mockInsights.recurringThemes[0].name)).toBeTruthy();
+    expect(screen.getByText("Recurring symbols")).toBeTruthy();
+    expect(screen.getByText(mockInsights.factGroups[0].facts[0].value)).toBeTruthy();
   });
 
   it("renders an empty state", async () => {
@@ -22,12 +23,16 @@ describe("InsightsScreen", () => {
       getInsights: async (): Promise<InsightsResponse> => ({
         totalDreams: 0,
         currentStreakDays: 0,
-        recurringThemes: []
+        recurringThemes: [],
+        dateRange: null,
+        factGroups: [],
+        timingPatterns: [],
+        monthlyDreamCounts: []
       })
     });
 
     expect(await screen.findByText("No insights yet")).toBeTruthy();
-    expect(screen.getByText("Interpret dreams to reveal recurring themes.")).toBeTruthy();
+    expect(screen.getByText("Interpret dreams to reveal recurring patterns.")).toBeTruthy();
   });
 });
 

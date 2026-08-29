@@ -30,6 +30,10 @@ public sealed record DreamFactResponse(
     decimal? ExtractionConfidence,
     string SourceSchemaVersion);
 
+public sealed record SimilarDreamsResponse(Guid DreamId, SimilarDreamResponse[] Matches);
+
+public sealed record SimilarDreamResponse(Guid Id, string? Summary, string? OccurredAt, decimal Similarity);
+
 public sealed record DreamJournalResponse(DreamJournalItemResponse[] Items);
 
 public sealed record DreamJournalItemResponse(

@@ -96,7 +96,22 @@ export const mockInsights: InsightsResponse = {
       name: "transition",
       count: 1
     }
-  ]
+  ],
+  dateRange: { start: "2026-07-01", end: "2026-07-01" },
+  factGroups: [
+    {
+      type: "symbol",
+      title: "Recurring symbols",
+      facts: [{ value: "water", count: 1, percentageOfDreams: 100, averageScore: null }]
+    },
+    {
+      type: "emotion",
+      title: "Frequent emotions",
+      facts: [{ value: "curiosity", count: 1, percentageOfDreams: 100, averageScore: 0.7 }]
+    }
+  ],
+  timingPatterns: [],
+  monthlyDreamCounts: [{ month: "2026-07-01", count: 1 }]
 };
 
 export const mockEntitlement: EntitlementResponse = {

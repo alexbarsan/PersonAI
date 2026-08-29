@@ -213,6 +213,44 @@ public sealed class DreamEndpointTests
     }
 
     [Fact]
+    public async Task DreamMapAggregatesFactsAndOnlyShowsSupportedTimingPatterns()
+    {
+        using var app = CreateDreamApp(new StaticDreamChatClient(CanonicalAiOutput), dailyDreamQuota: 10);
+        using var userA = app.CreateAuthenticatedClient("subject-a");
+        await PutProfileAsync(userA);
+        var dates = new[] { "2026-06-08", "2026-06-09", "2026-06-10", "2026-06-11", "2026-06-13", "2026-06-14" };
+        var dreams = new List<DreamResponse>();
+        foreach (var date in dates)
+        {
+            var dream = await (await userA.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest() with { OccurredAt = date }))
+                .Content.ReadFromJsonAsync<DreamResponse>();
+            dreams.Add(Assert.IsType<DreamResponse>(dream));
+        }
+
+        await app.AddDreamFactsAsync(
+            CreateFact(dreams[0].Id),
+            CreateFact(dreams[1].Id),
+            CreateFact(dreams[2].Id),
+            CreateFact(dreams[4].Id));
+
+        var response = await userA.GetAsync("/v1/insights");
+        var insights = await response.Content.ReadFromJsonAsync<InsightsResponse>();
+        var noEmbeddingResponse = await userA.GetAsync($"/v1/dreams/{dreams[0].Id}/similar");
+        var similarDreams = await noEmbeddingResponse.Content.ReadFromJsonAsync<SimilarDreamsResponse>();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.NotNull(insights);
+        Assert.Equal(6, insights.TotalDreams);
+        Assert.Equal(new DateOnly(2026, 6, 8), insights.DateRange!.Start);
+        var scenarios = Assert.Single(insights.FactGroups, group => group.Type == "scenario");
+        Assert.Contains(scenarios.Facts, fact => fact.Value == "being late" && fact.Count == 4 && fact.PercentageOfDreams == 66.7m);
+        Assert.Contains(insights.TimingPatterns, pattern => pattern.Value == "being late" && pattern.WeekdayToWeekendRatio == 1.5m);
+        Assert.Equal(HttpStatusCode.OK, noEmbeddingResponse.StatusCode);
+        Assert.NotNull(similarDreams);
+        Assert.Empty(similarDreams.Matches);
+    }
+
+    [Fact]
     public async Task DailyQuotaBlocksExcessDreamSubmissions()
     {
         using var app = CreateDreamApp(new StaticDreamChatClient(CanonicalAiOutput), dailyDreamQuota: 1);
@@ -459,6 +497,7 @@ public sealed class DreamEndpointTests
                     services.AddScoped<SubmitDreamHandler>();
                     services.AddScoped<GetDreamHandler>();
                     services.AddScoped<GetDreamFactsHandler>();
+                    services.AddScoped<GetSimilarDreamsHandler>();
                     services.AddScoped<ListDreamsHandler>();
                     services.AddScoped<DeleteDreamHandler>();
                     services.AddScoped<GetInsightsHandler>();
@@ -539,6 +578,14 @@ public sealed class DreamEndpointTests
             using var scope = factory.Services.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<DreamLensDbContext>();
             dbContext.AsyncJobs.Add(job);
+            await dbContext.SaveChangesAsync();
+        }
+
+        public async Task AddDreamFactsAsync(params DreamFactRecord[] facts)
+        {
+            using var scope = factory.Services.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<DreamLensDbContext>();
+            dbContext.DreamFacts.AddRange(facts);
             await dbContext.SaveChangesAsync();
         }
     }
@@ -686,7 +733,49 @@ public sealed class DreamEndpointTests
         string? Mood,
         string? OccurredAt);
 
-    private sealed record InsightsResponse(int TotalDreams, int CurrentStreakDays, ThemeInsightResponse[] RecurringThemes);
+    private sealed record InsightsResponse(
+        int TotalDreams,
+        int CurrentStreakDays,
+        ThemeInsightResponse[] RecurringThemes,
+        InsightDateRangeResponse? DateRange,
+        FactInsightGroupResponse[] FactGroups,
+        TimingPatternInsightResponse[] TimingPatterns,
+        MonthlyDreamCountResponse[] MonthlyDreamCounts);
+
+    private sealed record SimilarDreamsResponse(Guid DreamId, SimilarDreamResponse[] Matches);
+
+    private sealed record SimilarDreamResponse(Guid Id, string? Summary, string? OccurredAt, decimal Similarity);
+
+    private sealed record InsightDateRangeResponse(DateOnly Start, DateOnly End);
+
+    private sealed record FactInsightGroupResponse(string Type, string Title, FactInsightResponse[] Facts);
+
+    private sealed record FactInsightResponse(string Value, int Count, decimal PercentageOfDreams, decimal? AverageScore);
+
+    private sealed record TimingPatternInsightResponse(
+        string Type,
+        string Value,
+        int Occurrences,
+        int WeekdayDreams,
+        int WeekendDreams,
+        decimal WeekdayRate,
+        decimal WeekendRate,
+        decimal WeekdayToWeekendRatio);
+
+    private sealed record MonthlyDreamCountResponse(DateOnly Month, int Count);
+
+    private static DreamFactRecord CreateFact(Guid dreamId)
+    {
+        return new DreamFactRecord
+        {
+            DreamId = dreamId,
+            UserSubject = "subject-a",
+            FactType = "scenario",
+            NormalizedValue = "being late",
+            DisplayValue = "being late",
+            SourceSchemaVersion = "1.1"
+        };
+    }
 
     private sealed record ThemeInsightResponse(string Name, int Count);
 

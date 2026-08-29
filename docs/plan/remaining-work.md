@@ -15,7 +15,7 @@ The imported Catch Dreamer feature notes add several capabilities that are not f
 - Voice capture and transcription with explicit retention controls.
 - Dream image generation with SQS async jobs, private S3 storage, signed access, and entitlement/cost limits.
 - Embeddings and semantic memory using PostgreSQL `pgvector` and Amazon Bedrock Titan Embeddings V2 by default, not full-history prompts.
-- Similar-dream search, automatic clustering, and Dream DNA analytics that turn months of journal history into a personal subconscious map across symbols, emotions, people, places, scenarios, trends, and correlations.
+- Historical fact backfill and semantic clustering: the Dream DNA overview is implemented, while similarity has no matches until embeddings are available and clustering remains future work.
 - Ask DreamLens: retrieval-backed questions over the user's own dream history.
 - Premium Deep Interpretation using a stronger model and richer retrieved context.
 - Cognito social sign-in provider setup for Google and Apple first; Facebook remains optional after product/privacy review.
@@ -31,7 +31,7 @@ The imported Catch Dreamer feature notes add several capabilities that are not f
 - Maestro mobile flow exists, but local verification is blocked until Maestro is installed.
 - Terraform infrastructure is applied for dev. QA/prod still need remote state bootstrap, environment-specific Terraform values, GitHub environment variables, and protected `prod` approvals.
 - Deployment workflows are active for dev. Real QA/prod deployment still requires environment-specific ECR/ECS/S3/CloudFront outputs, EAS project setup, and final launch approvals.
-- `pgvector` foundation, SQS job wiring, and embedding handler are implemented. Titan Embeddings V2 cannot complete in dev until AWS Support resolves this account's zero on-demand RPM allocation; similar-dream product endpoints remain S27 work.
+- `pgvector` foundation, SQS job wiring, embedding handler, and owner-scoped similar-dream endpoint are implemented. Titan Embeddings V2 cannot complete in dev until AWS Support resolves this account's zero on-demand RPM allocation, so the similarity endpoint correctly returns no matches until embeddings are backfilled.
 - A private KMS-encrypted S3 asset bucket and signed-access service are implemented. Image/export/upload job handlers and user-facing asset flows remain S23-S25 work.
 - Encrypted SQS queue/DLQ, durable job records, worker leases, retries, and backfill mechanics are implemented. Concrete image/export/transcription job handlers remain future work.
 - Local API image build verification remains blocked until Docker Desktop or another Docker daemon is running.

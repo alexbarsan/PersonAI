@@ -57,6 +57,18 @@ public static class DreamEndpoints
             .WithName("GetDreamFacts")
             .WithSummary("Returns normalized extracted facts for one dream owned by the current user.");
 
+        group.MapGet("{id:guid}/similar", async (
+            Guid id,
+            [FromQuery] int? limit,
+            [FromServices] GetSimilarDreamsHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var similarDreams = await handler.HandleAsync(id, limit ?? 5, cancellationToken);
+            return similarDreams is null ? Results.NotFound() : Results.Ok(similarDreams);
+        })
+            .WithName("GetSimilarDreams")
+            .WithSummary("Returns the current user's closest semantic dream matches when embeddings are available.");
+
         group.MapDelete("{id:guid}", async (
             Guid id,
             [FromServices] DeleteDreamHandler handler,

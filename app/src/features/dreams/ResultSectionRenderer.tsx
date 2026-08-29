@@ -114,7 +114,7 @@ function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" ? (value as Record<string, unknown>) : {};
 }
 
-function toText(value: unknown) {
+function toText(value: unknown): string {
   if (typeof value === "string") {
     return value;
   }

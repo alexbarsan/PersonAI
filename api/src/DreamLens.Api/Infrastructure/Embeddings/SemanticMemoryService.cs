@@ -43,6 +43,14 @@ public sealed class SemanticMemoryService(
         CancellationToken cancellationToken)
     {
         var vector = new Vector(query);
+        if (!dbContext.Database.IsNpgsql())
+        {
+            return await dbContext.DreamEmbeddings
+                .AsNoTracking()
+                .Where(embedding => embedding.UserSubject == userSubject)
+                .ToListAsync(cancellationToken);
+        }
+
         return await dbContext.DreamEmbeddings
             .FromSqlInterpolated($"SELECT * FROM \"DreamEmbeddings\" WHERE \"UserSubject\" = {userSubject} ORDER BY \"Embedding\" <=> {vector} LIMIT {Math.Clamp(limit, 1, 20)}")
             .AsNoTracking()
