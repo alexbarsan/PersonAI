@@ -5,7 +5,7 @@ namespace PersonaKit.Tests;
 public sealed class OutputValidatorTests
 {
     [Fact]
-    public async Task DreamInterpreterSchemaAcceptsCanonicalAiOutputJsonV1()
+    public async Task DreamInterpreterSchemaAcceptsCanonicalAiOutputJsonV11()
     {
         var registry = new FilePersonaRegistry(PersonaTestPaths.PersonasRoot);
         var persona = await registry.GetAsync("dream-interpreter");
@@ -25,11 +25,19 @@ public sealed class OutputValidatorTests
         var validator = new JsonSchemaOutputValidator();
         const string invalidJson = """
         {
-          "schemaVersion": "1.0",
+          "schemaVersion": "1.1",
           "summary": "Missing required fields.",
           "symbols": [],
           "emotions": [],
           "themes": [],
+          "alternativeInterpretations": [],
+          "people": [],
+          "locations": [],
+          "objects": [],
+          "scenarios": [],
+          "lucidityScore": 0,
+          "nightmareIntensity": 0,
+          "factExtractionConfidence": 0,
           "interpretation": "text",
           "guidance": "text",
           "followUpQuestions": [],

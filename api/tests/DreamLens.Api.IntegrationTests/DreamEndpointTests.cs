@@ -84,6 +84,33 @@ public sealed class DreamEndpointTests
     }
 
     [Fact]
+    public async Task UserCanFetchNormalizedFactsForOwnDream()
+    {
+        using var app = CreateDreamApp(new StaticDreamChatClient(CanonicalAiOutput));
+        using var userA = app.CreateAuthenticatedClient("subject-a");
+        using var userB = app.CreateAuthenticatedClient("subject-b");
+        await PutProfileAsync(userA);
+        await PutProfileAsync(userB);
+        var submitted = await (await userA.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest()))
+            .Content.ReadFromJsonAsync<DreamResponse>();
+
+        var response = await userA.GetAsync($"/v1/dreams/{submitted!.Id}/facts");
+        var facts = await response.Content.ReadFromJsonAsync<DreamFactsResponse>();
+        var otherUserResponse = await userB.GetAsync($"/v1/dreams/{submitted.Id}/facts");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.NotNull(facts);
+        Assert.Equal(submitted.Id, facts.DreamId);
+        Assert.Contains(facts.Facts, fact => fact.Type == "symbol" && fact.Value == "falling");
+        Assert.Contains(facts.Facts, fact => fact.Type == "emotion" && fact.Value == "anxiety" && fact.Score == 0.7m);
+        Assert.Contains(facts.Facts, fact => fact.Type == "person" && fact.Value == "Alex");
+        Assert.Contains(facts.Facts, fact => fact.Type == "location" && fact.Value == "dark water");
+        Assert.Contains(facts.Facts, fact => fact.Type == "scenario" && fact.Value == "falling");
+        Assert.Contains(facts.Facts, fact => fact.Type == "lucidity-score" && fact.Score == 0.1m);
+        Assert.Equal(HttpStatusCode.NotFound, otherUserResponse.StatusCode);
+    }
+
+    [Fact]
     public async Task UserCannotFetchAnotherUsersDream()
     {
         using var app = CreateDreamApp(new StaticDreamChatClient(CanonicalAiOutput));
@@ -431,6 +458,7 @@ public sealed class DreamEndpointTests
                     services.AddScoped<UpdateProfileHandler>();
                     services.AddScoped<SubmitDreamHandler>();
                     services.AddScoped<GetDreamHandler>();
+                    services.AddScoped<GetDreamFactsHandler>();
                     services.AddScoped<ListDreamsHandler>();
                     services.AddScoped<DeleteDreamHandler>();
                     services.AddScoped<GetInsightsHandler>();
@@ -641,6 +669,15 @@ public sealed class DreamEndpointTests
 
     private sealed record DreamJournalResponse(DreamJournalItemResponse[] Items);
 
+    private sealed record DreamFactsResponse(Guid DreamId, DreamFactResponse[] Facts);
+
+    private sealed record DreamFactResponse(
+        string Type,
+        string Value,
+        decimal? Score,
+        decimal? ExtractionConfidence,
+        string SourceSchemaVersion);
+
     private sealed record DreamJournalItemResponse(
         Guid Id,
         DateTimeOffset CreatedAt,
@@ -657,7 +694,7 @@ public sealed class DreamEndpointTests
 
     private const string CanonicalAiOutput = """
     {
-      "schemaVersion": "1.0",
+      "schemaVersion": "1.1",
       "summary": "The dream centers on uncertainty, pressure, and a wish to regain steadiness.",
       "symbols": [
         {
@@ -674,6 +711,18 @@ public sealed class DreamEndpointTests
         }
       ],
       "themes": ["loss of control", "transition"],
+      "alternativeInterpretations": ["The water may also represent uncertainty about a new responsibility."],
+      "people": [
+        { "name": "Alex", "role": "a familiar voice" }
+      ],
+      "locations": [
+        { "name": "dark water", "kind": "natural setting" }
+      ],
+      "objects": ["water"],
+      "scenarios": ["falling"],
+      "lucidityScore": 0.1,
+      "nightmareIntensity": 0.6,
+      "factExtractionConfidence": 0.82,
       "interpretation": "This dream may reflect a period where responsibilities feel fluid and hard to hold.",
       "guidance": "Consider a simple grounding routine before sleep and a short note about what felt unresolved today.",
       "followUpQuestions": ["Where did the falling begin?", "What changed when you reached the water?"],

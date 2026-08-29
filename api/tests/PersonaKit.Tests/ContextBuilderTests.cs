@@ -121,7 +121,7 @@ public sealed class ContextBuilderTests
         return new ContextBuildRequest(
             "00000000-0000-0000-0000-000000000001",
             "en-US",
-            new ContextPersona("dream-interpreter", "1.0.0"),
+            new ContextPersona("dream-interpreter", "1.1.0"),
             new ContextUserSource(
                 internalUserId,
                 email,

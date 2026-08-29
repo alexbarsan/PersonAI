@@ -18,6 +18,10 @@ public sealed class DeleteDreamHandler(DreamLensDbContext dbContext, ICurrentUse
             return false;
         }
 
+        var facts = await dbContext.DreamFacts
+            .Where(fact => fact.DreamId == dream.Id && fact.UserSubject == currentUser.Subject)
+            .ToArrayAsync(cancellationToken);
+        dbContext.DreamFacts.RemoveRange(facts);
         dbContext.Dreams.Remove(dream);
         await dbContext.SaveChangesAsync(cancellationToken);
         return true;

@@ -33,7 +33,7 @@ public sealed class SectionMapResultMapper : IResultSectionMapper
         var source = Resolve(root, item.Source);
         object? content;
 
-        if (item.Kind is "symbols" && source.ValueKind == JsonValueKind.Array)
+        if (item.Kind is "symbols" or "entities" && source.ValueKind == JsonValueKind.Array)
         {
             content = source.EnumerateArray()
                 .Select(symbol => new Dictionary<string, object?>

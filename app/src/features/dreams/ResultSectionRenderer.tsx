@@ -20,6 +20,8 @@ function renderContent(kind: string, content: unknown) {
       return <SymbolList content={content} />;
     case "emotions":
       return <EmotionList content={content} />;
+    case "entities":
+      return <EntityList content={content} />;
     case "list":
       return <TextList content={content} />;
     case "text":
@@ -56,11 +58,9 @@ function SymbolList({ content }: { content: unknown }) {
         const record = asRecord(item);
         return (
           <View key={`${record.symbol ?? index}`} style={styles.item}>
-            <Text style={[styles.itemTitle, { color: theme.colors.text }]}>{toText(record.symbol ?? "Symbol")}</Text>
-            <Text style={[styles.body, { color: theme.colors.mutedText }]}>{toText(record.meaning ?? item)}</Text>
-            {record.personalRelevance ? (
-              <Text style={[styles.body, { color: theme.colors.mutedText }]}>{toText(record.personalRelevance)}</Text>
-            ) : null}
+            <Text style={[styles.itemTitle, { color: theme.colors.text }]}>{toText(record.title ?? record.symbol ?? "Symbol")}</Text>
+            <Text style={[styles.body, { color: theme.colors.mutedText }]}>{toText(record.body ?? record.meaning ?? item)}</Text>
+            {record.personalRelevance ? <Text style={[styles.body, { color: theme.colors.mutedText }]}>{toText(record.personalRelevance)}</Text> : null}
           </View>
         );
       })}
@@ -75,15 +75,34 @@ function EmotionList({ content }: { content: unknown }) {
     <View style={styles.list}>
       {items.map((item, index) => {
         const record = asRecord(item);
+        const intensity = record.value ?? record.intensity;
         return (
           <View key={`${record.name ?? index}`} style={styles.item}>
-            <Text style={[styles.itemTitle, { color: theme.colors.text }]}>{toText(record.name ?? "Emotion")}</Text>
+            <Text style={[styles.itemTitle, { color: theme.colors.text }]}>{toText(record.title ?? record.name ?? "Emotion")}</Text>
             <Text style={[styles.body, { color: theme.colors.mutedText }]}>
-              {record.intensity ? `Intensity ${toText(record.intensity)}` : toText(record.evidence ?? item)}
+              {typeof intensity === "number" ? `Intensity ${toText(intensity)}` : toText(record.body ?? record.evidence ?? item)}
             </Text>
             {record.evidence ? (
               <Text style={[styles.body, { color: theme.colors.mutedText }]}>{toText(record.evidence)}</Text>
             ) : null}
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
+function EntityList({ content }: { content: unknown }) {
+  const theme = useTheme();
+  const items = Array.isArray(content) ? content : [];
+  return (
+    <View style={styles.list}>
+      {items.map((item, index) => {
+        const record = asRecord(item);
+        return (
+          <View key={`${toText(record.title ?? index)}-${index}`} style={styles.item}>
+            <Text style={[styles.itemTitle, { color: theme.colors.text }]}>{toText(record.title ?? "Detail")}</Text>
+            <Text style={[styles.body, { color: theme.colors.mutedText }]}>{toText(record.body ?? item)}</Text>
           </View>
         );
       })}
@@ -106,6 +125,10 @@ function toText(value: unknown) {
 
   if (value === null || value === undefined) {
     return "";
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(toText).filter(Boolean).join("\n");
   }
 
   return JSON.stringify(value);

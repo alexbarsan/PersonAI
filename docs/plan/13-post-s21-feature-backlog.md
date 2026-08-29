@@ -6,7 +6,7 @@ This backlog captures product capabilities from `docs/to-be-analyzed/catch-dream
 
 | Candidate Slice | Capability | Missing From Current Baseline | Backend Work | App Work |
 | --- | --- | --- | --- | --- |
-| S22 | Dream output schema v2 | Main vs alternative interpretations, people, places, objects, lucidity score, nightmare/intensity score, repeated scenarios, and extraction confidence are not first-class fields. | Extend persona schema, section maps, DTO mapping, structured fact persistence, tests, and prompt snapshots. | Render new result sections without hard-coding DreamLens-only assumptions. |
+| S22 | Dream output schema v2 | Complete. Structured observations are first-class, versioned output fields and normalized fact rows. | Added schema v1.1, fact extraction/persistence, owner-scoped fact API, deletion cleanup, migration, and coverage. Existing dreams are not automatically backfilled. | Added generic entity rendering for people and locations plus result sections for structured observations. |
 | S23 | Journal v2 | Journal has list/detail/delete, but not edit, search, filters, or export. | Add update endpoint, full-text/search projection, export endpoint, and erasure/export tests. | Add edit form, search/filter controls, and export action. |
 | S24 | Voice capture and transcription | Voice capture is not implemented. | Add transcription provider abstraction, upload policy, optional private S3 storage, retention controls, cost ledger operation type, and abuse limits. | Add record/review/transcribe flow with clear retention UX. |
 | S25 | Dream image generation | "Visualize my dream" is not implemented. | Add image provider abstraction, SQS async job model, private S3 storage, signed access, entitlement checks, and AI cost ledger entries. | Add image request/status/result UI and paywall/credit handling. |
@@ -36,15 +36,14 @@ This backlog captures product capabilities from `docs/to-be-analyzed/catch-dream
 
 - Whether voice recordings are discarded immediately after transcription or stored temporarily for user review.
 - Which image provider launches first.
-- Whether embeddings for newly submitted dreams are generated synchronously immediately after interpretation or queued asynchronously; backfills should use SQS.
+- Whether historical completed dreams should be backfilled into the new `DreamFacts` projection before S27 analytics launches.
 - Whether Facebook social login is worth the privacy/review overhead for v1 global launch.
 - Whether Ask DreamLens and Deep Interpretation are premium-only at launch.
 - Final monthly/yearly product IDs and tier limits after real cost data exists.
 
 ## Recommended Order
 
-1. S26 semantic memory foundation: pgvector, embedding abstraction, Titan Embeddings V2 adapter, and retrieval tests.
-2. S32 async job and asset foundation: SQS queues, DLQ policy, worker host pattern, private S3 asset bucket, signed access.
-3. S22 structured dream schema v2: persist queryable symbols, emotions, people, places, scenarios, scores, and model/schema provenance for analytics.
-4. S27 Dream DNA analytics: longitudinal stats, trends, correlations, clusters, and similar-dream links.
-5. S25 dream image generation: image provider, entitlement/credit checks, async status API, S3 persistence, and UI.
+1. S27 Dream DNA analytics: longitudinal stats, trends, correlations, clusters, and similar-dream links over `DreamFacts`.
+2. Resolve the Titan Embeddings V2 account quota with AWS Support, then retry/backfill failed embedding jobs and verify completion.
+3. Decide whether historical completed dreams should be backfilled into `DreamFacts` before analytics launches.
+4. S25 dream image generation: image provider, entitlement/credit checks, async status API, S3 persistence, and UI.

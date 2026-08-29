@@ -21,6 +21,15 @@ public sealed record DreamResultResponse(
 
 public sealed record DreamSectionResponse(string Kind, string Title, object? Content);
 
+public sealed record DreamFactsResponse(Guid DreamId, DreamFactResponse[] Facts);
+
+public sealed record DreamFactResponse(
+    string Type,
+    string Value,
+    decimal? Score,
+    decimal? ExtractionConfidence,
+    string SourceSchemaVersion);
+
 public sealed record DreamJournalResponse(DreamJournalItemResponse[] Items);
 
 public sealed record DreamJournalItemResponse(

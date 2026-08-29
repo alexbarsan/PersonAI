@@ -24,6 +24,12 @@ describe("ResultSectionRenderer", () => {
             }}
           />
           <ResultSectionRenderer section={{ kind: "list", title: "Themes", content: ["transition"] }} />
+          <ResultSectionRenderer
+            section={{ kind: "entities", title: "People", content: [{ title: "Alex", body: ["friend"] }] }}
+          />
+          <ResultSectionRenderer
+            section={{ kind: "symbols", title: "Mapped symbols", content: [{ title: "stairs", body: ["Change", "Progress"] }] }}
+          />
         </>
       </ThemeProvider>
     );
@@ -33,5 +39,8 @@ describe("ResultSectionRenderer", () => {
     expect(screen.getByText("Emotional depth")).toBeTruthy();
     expect(screen.getByText("anxiety")).toBeTruthy();
     expect(screen.getByText("transition")).toBeTruthy();
+    expect(screen.getByText("Alex")).toBeTruthy();
+    expect(screen.getByText("stairs")).toBeTruthy();
+    expect(screen.getByText("Change\nProgress")).toBeTruthy();
   });
 });

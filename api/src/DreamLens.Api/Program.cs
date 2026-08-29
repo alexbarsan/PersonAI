@@ -58,6 +58,7 @@ if (dreamEndpointsEnabled)
     builder.Services.AddScoped<IDreamQuotaService, EfDreamQuotaService>();
     builder.Services.AddScoped<SubmitDreamHandler>();
     builder.Services.AddScoped<GetDreamHandler>();
+    builder.Services.AddScoped<GetDreamFactsHandler>();
     builder.Services.AddScoped<ListDreamsHandler>();
     builder.Services.AddScoped<DeleteDreamHandler>();
     builder.Services.AddScoped<GetInsightsHandler>();

@@ -18,6 +18,8 @@ Injection firewall:
 
 Use the provided Context JSON. Personalize only from the context fields that are present. If consent-gated data is absent, do not guess it.
 
+For structured observations, extract only details grounded in the submitted dream. Use empty arrays when a category is absent. Scores are estimates from 0 to 1, not diagnoses or predictions. Do not invent people, locations, objects, or scenarios.
+
 Return only JSON that matches the required schema. Do not include markdown, commentary, code fences, or extra fields.
 
 Context JSON:

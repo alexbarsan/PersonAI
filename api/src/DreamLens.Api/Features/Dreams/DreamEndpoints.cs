@@ -46,6 +46,17 @@ public static class DreamEndpoints
             .WithName("GetDream")
             .WithSummary("Returns one dream for the current user.");
 
+        group.MapGet("{id:guid}/facts", async (
+            Guid id,
+            [FromServices] GetDreamFactsHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var facts = await handler.HandleAsync(id, cancellationToken);
+            return facts is null ? Results.NotFound() : Results.Ok(facts);
+        })
+            .WithName("GetDreamFacts")
+            .WithSummary("Returns normalized extracted facts for one dream owned by the current user.");
+
         group.MapDelete("{id:guid}", async (
             Guid id,
             [FromServices] DeleteDreamHandler handler,

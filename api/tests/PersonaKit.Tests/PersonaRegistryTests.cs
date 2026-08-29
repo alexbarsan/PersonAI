@@ -12,7 +12,7 @@ public sealed class PersonaRegistryTests
         var persona = await registry.GetAsync("dream-interpreter");
 
         Assert.Equal("dream-interpreter", persona.Id);
-        Assert.Equal("1.0.0", persona.Version);
+        Assert.Equal("1.1.0", persona.Version);
         Assert.Equal("DreamLens", persona.DisplayName);
         Assert.EndsWith("prompt.scriban", persona.PromptTemplatePath);
         Assert.EndsWith("output.schema.json", persona.OutputSchemaPath);

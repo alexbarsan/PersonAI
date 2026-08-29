@@ -13,6 +13,8 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
 
     public DbSet<DreamRecord> Dreams => Set<DreamRecord>();
 
+    public DbSet<DreamFactRecord> DreamFacts => Set<DreamFactRecord>();
+
     public DbSet<AiCostLedgerRecord> AiCostLedger => Set<AiCostLedgerRecord>();
 
     public DbSet<DreamEmbedding> DreamEmbeddings => Set<DreamEmbedding>();
@@ -85,6 +87,25 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
                 .IsRequired();
             entity.Property(dream => dream.CreatedAt)
                 .IsRequired();
+        });
+
+        modelBuilder.Entity<DreamFactRecord>(entity =>
+        {
+            entity.ToTable("DreamFacts");
+            entity.HasKey(fact => fact.Id);
+            entity.HasIndex(fact => new { fact.DreamId, fact.FactType, fact.NormalizedValue })
+                .IsUnique();
+            entity.HasIndex(fact => new { fact.UserSubject, fact.FactType, fact.NormalizedValue });
+            entity.HasIndex(fact => new { fact.UserSubject, fact.CreatedAt });
+
+            entity.Property(fact => fact.UserSubject).HasMaxLength(256).IsRequired();
+            entity.Property(fact => fact.FactType).HasMaxLength(64).IsRequired();
+            entity.Property(fact => fact.NormalizedValue).HasMaxLength(256).IsRequired();
+            entity.Property(fact => fact.DisplayValue).HasMaxLength(256).IsRequired();
+            entity.Property(fact => fact.Score).HasPrecision(5, 4);
+            entity.Property(fact => fact.ExtractionConfidence).HasPrecision(5, 4);
+            entity.Property(fact => fact.SourceSchemaVersion).HasMaxLength(16).IsRequired();
+            entity.Property(fact => fact.CreatedAt).IsRequired();
         });
 
         modelBuilder.Entity<AiCostLedgerRecord>(entity =>

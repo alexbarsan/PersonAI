@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://dreamlens.local/schemas/dream-interpreter-output-v1.json",
+  "$id": "https://dreamlens.local/schemas/dream-interpreter-output-v1.1.json",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -13,11 +13,19 @@
     "guidance",
     "followUpQuestions",
     "safety",
-    "confidence"
+    "confidence",
+    "alternativeInterpretations",
+    "people",
+    "locations",
+    "objects",
+    "scenarios",
+    "lucidityScore",
+    "nightmareIntensity",
+    "factExtractionConfidence"
   ],
   "properties": {
     "schemaVersion": {
-      "const": "1.0"
+      "const": "1.1"
     },
     "summary": {
       "type": "string",
@@ -52,6 +60,62 @@
     "themes": {
       "type": "array",
       "items": { "type": "string", "minLength": 1 }
+    },
+    "alternativeInterpretations": {
+      "type": "array",
+      "maxItems": 3,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "people": {
+      "type": "array",
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "role"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 256 },
+          "role": { "type": "string", "maxLength": 256 }
+        }
+      }
+    },
+    "locations": {
+      "type": "array",
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "kind"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 256 },
+          "kind": { "type": "string", "maxLength": 256 }
+        }
+      }
+    },
+    "objects": {
+      "type": "array",
+      "maxItems": 12,
+      "items": { "type": "string", "minLength": 1, "maxLength": 256 }
+    },
+    "scenarios": {
+      "type": "array",
+      "maxItems": 12,
+      "items": { "type": "string", "minLength": 1, "maxLength": 256 }
+    },
+    "lucidityScore": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "nightmareIntensity": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "factExtractionConfidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
     },
     "interpretation": {
       "type": "string",

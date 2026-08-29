@@ -22,6 +22,35 @@
       "source": "$.themes"
     },
     {
+      "kind": "entities",
+      "title": "People",
+      "source": "$.people",
+      "titleField": "name",
+      "bodyFields": ["role"]
+    },
+    {
+      "kind": "entities",
+      "title": "Locations",
+      "source": "$.locations",
+      "titleField": "name",
+      "bodyFields": ["kind"]
+    },
+    {
+      "kind": "list",
+      "title": "Objects",
+      "source": "$.objects"
+    },
+    {
+      "kind": "list",
+      "title": "Scenarios",
+      "source": "$.scenarios"
+    },
+    {
+      "kind": "list",
+      "title": "Alternative interpretations",
+      "source": "$.alternativeInterpretations"
+    },
+    {
       "kind": "text",
       "title": "Interpretation",
       "source": "$.interpretation"

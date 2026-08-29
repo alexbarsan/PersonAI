@@ -1,10 +1,10 @@
-{
+﻿{
   "schemaVersion": "1.0",
   "requestId": "00000000-0000-0000-0000-000000000001",
   "locale": "en-US",
   "persona": {
     "id": "dream-interpreter",
-    "version": "1.0.0"
+    "version": "1.1.0"
   },
   "user": {
     "pseudonymId": "usr_ehCW2FLE_kcFPB3w",

@@ -9,7 +9,7 @@ internal static class CanonicalJson
       "locale": "en-US",
       "persona": {
         "id": "dream-interpreter",
-        "version": "1.0.0"
+        "version": "1.1.0"
       },
       "user": {
         "pseudonymId": "usr_9g25c2",
@@ -53,7 +53,7 @@ internal static class CanonicalJson
 
     public const string AiOutput = """
     {
-      "schemaVersion": "1.0",
+      "schemaVersion": "1.1",
       "summary": "The dream centers on uncertainty, pressure, and a wish to regain steadiness.",
       "symbols": [
         {
@@ -70,6 +70,18 @@ internal static class CanonicalJson
         }
       ],
       "themes": ["loss of control", "transition"],
+      "alternativeInterpretations": ["The water may also represent uncertainty about a new responsibility."],
+      "people": [
+        { "name": "Alex", "role": "a familiar voice" }
+      ],
+      "locations": [
+        { "name": "dark water", "kind": "natural setting" }
+      ],
+      "objects": ["water"],
+      "scenarios": ["falling"],
+      "lucidityScore": 0.1,
+      "nightmareIntensity": 0.6,
+      "factExtractionConfidence": 0.82,
       "interpretation": "This dream may reflect a period where responsibilities feel fluid and hard to hold.",
       "guidance": "Consider a simple grounding routine before sleep and a short note about what felt unresolved today.",
       "followUpQuestions": ["Where did the falling begin?", "What changed when you reached the water?"],

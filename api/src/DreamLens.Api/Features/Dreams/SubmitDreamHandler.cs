@@ -76,7 +76,7 @@ public sealed class SubmitDreamHandler(
                 new ContextBuildRequest(
                     Guid.NewGuid().ToString(),
                     NormalizeLocale(profile.Language),
-                    new ContextPersona("dream-interpreter", "1.0.0"),
+                    new ContextPersona("dream-interpreter", "1.1.0"),
                     new ContextUserSource(
                         profile.UserSubject,
                         null,
@@ -125,6 +125,10 @@ public sealed class SubmitDreamHandler(
         };
 
         dbContext.Dreams.Add(record);
+        if (record.Status == "completed" && interpretation.Result is not null)
+        {
+            dbContext.DreamFacts.AddRange(DreamFactExtractor.Extract(record, interpretation.Result.RawJson));
+        }
         dbContext.AiCostLedger.Add(CreateLedgerRecord(record, interpretation, latency));
         if (record.Status == "failed")
         {
