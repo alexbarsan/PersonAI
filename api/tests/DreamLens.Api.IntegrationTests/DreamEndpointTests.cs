@@ -111,6 +111,20 @@ public sealed class DreamEndpointTests
     }
 
     [Fact]
+    public async Task DreamImageRequestIsUnavailableUntilImageGenerationIsEnabled()
+    {
+        using var app = CreateDreamApp(new StaticDreamChatClient(CanonicalAiOutput));
+        using var client = app.CreateAuthenticatedClient("subject-a");
+        await PutProfileAsync(client);
+        var dream = await (await client.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest()))
+            .Content.ReadFromJsonAsync<DreamResponse>();
+
+        var response = await client.PostAsJsonAsync($"/v1/dreams/{dream!.Id}/image", new { style = "SOFT_DIGITAL_PAINTING" });
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+    }
+
+    [Fact]
     public async Task UserCannotFetchAnotherUsersDream()
     {
         using var app = CreateDreamApp(new StaticDreamChatClient(CanonicalAiOutput));
@@ -498,6 +512,8 @@ public sealed class DreamEndpointTests
                     services.AddScoped<GetDreamHandler>();
                     services.AddScoped<GetDreamFactsHandler>();
                     services.AddScoped<GetSimilarDreamsHandler>();
+                    services.AddScoped<RequestDreamImageHandler>();
+                    services.AddScoped<GetDreamImageHandler>();
                     services.AddScoped<ListDreamsHandler>();
                     services.AddScoped<DeleteDreamHandler>();
                     services.AddScoped<GetInsightsHandler>();

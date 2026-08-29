@@ -69,6 +69,31 @@ public static class DreamEndpoints
             .WithName("GetSimilarDreams")
             .WithSummary("Returns the current user's closest semantic dream matches when embeddings are available.");
 
+        group.MapPost("{id:guid}/image", async (
+            Guid id,
+            RequestDreamImageRequest request,
+            [FromServices] RequestDreamImageHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var result = await handler.HandleAsync(id, request, cancellationToken);
+            return result.Image is not null
+                ? Results.Accepted($"/v1/dreams/{id}/image", result.Image)
+                : Results.Json(result.Errors, statusCode: result.StatusCode);
+        })
+            .WithName("RequestDreamImage")
+            .WithSummary("Queues a premium dream image for asynchronous generation.");
+
+        group.MapGet("{id:guid}/image", async (
+            Guid id,
+            [FromServices] GetDreamImageHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var image = await handler.HandleAsync(id, cancellationToken);
+            return image is null ? Results.NotFound() : Results.Ok(image);
+        })
+            .WithName("GetDreamImage")
+            .WithSummary("Returns the latest generated image for a dream owned by the current user.");
+
         group.MapDelete("{id:guid}", async (
             Guid id,
             [FromServices] DeleteDreamHandler handler,

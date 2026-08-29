@@ -1,8 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams } from "expo-router";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { useApiClient } from "@/api/apiContext";
+import { ApiError } from "@/api/client";
+import { DreamImageResponse } from "@/api/dto";
 import { ResultSectionRenderer } from "@/features/dreams/ResultSectionRenderer";
 import { SafetyCard } from "@/features/dreams/SafetyCard";
 import { useDreamResultStore } from "@/state/dreamResultStore";
@@ -11,6 +13,7 @@ import { useTheme } from "@/theme/ThemeProvider";
 export function DreamResultScreen() {
   const theme = useTheme();
   const api = useApiClient();
+  const queryClient = useQueryClient();
   const params = useLocalSearchParams<{ id?: string }>();
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
   const cachedDream = useDreamResultStore((state) => (id ? state.getDream(id) : null));
@@ -22,6 +25,28 @@ export function DreamResultScreen() {
   });
   const result = dream.data?.result;
   const elevatedSafety = result?.safety?.selfHarmRisk === "elevated";
+  const entitlement = useQuery({
+    queryKey: ["entitlements"],
+    queryFn: () => api.getEntitlements(),
+    enabled: Boolean(result) && !elevatedSafety
+  });
+  const canGenerateImage = entitlement.data?.deepAnalysisEnabled === true;
+  const image = useQuery({
+    queryKey: ["dream-image", id],
+    queryFn: () => api.getDreamImage(id!),
+    enabled: Boolean(id) && canGenerateImage,
+    retry: false,
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      return status === "pending" || status === "generating" ? 3000 : false;
+    }
+  });
+  const requestImage = useMutation({
+    mutationFn: () => api.requestDreamImage(id!),
+    onSuccess: (created) => {
+      queryClient.setQueryData<DreamImageResponse>(["dream-image", id], created);
+    }
+  });
 
   return (
     <ScrollView contentContainerStyle={[styles.screen, { backgroundColor: theme.colors.background }]}>
@@ -57,10 +82,75 @@ export function DreamResultScreen() {
               ))}
             </View>
           )}
+          {elevatedSafety ? null : (
+            <DreamImagePanel
+              canGenerateImage={canGenerateImage}
+              image={image.data}
+              isRequesting={requestImage.isPending}
+              onRequest={() => requestImage.mutate()}
+              requestError={requestImage.error}
+            />
+          )}
         </View>
       ) : null}
     </ScrollView>
   );
+}
+
+function DreamImagePanel({
+  canGenerateImage,
+  image,
+  isRequesting,
+  onRequest,
+  requestError
+}: {
+  canGenerateImage: boolean;
+  image: DreamImageResponse | undefined;
+  isRequesting: boolean;
+  onRequest: () => void;
+  requestError: Error | null;
+}) {
+  const theme = useTheme();
+  const isWorking = image?.status === "pending" || image?.status === "generating";
+  const error = requestError ?? (image?.status === "failed" ? new Error(image.errorMessage ?? "Image generation failed.") : null);
+
+  return (
+    <View style={[styles.imagePanel, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+      <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Dream visual</Text>
+      {canGenerateImage ? (
+        <>
+          {image?.status === "completed" && image.downloadUrl ? (
+            <Image accessibilityLabel="Generated dream visual" source={{ uri: image.downloadUrl }} style={styles.image} />
+          ) : null}
+          {isWorking ? <Text style={[styles.body, { color: theme.colors.mutedText }]}>Creating your visual</Text> : null}
+          {error ? <Text style={[styles.error, { color: theme.colors.warning }]}>{mapImageError(error)}</Text> : null}
+          {image?.status !== "completed" ? (
+            <Pressable
+              accessibilityRole="button"
+              disabled={isRequesting || isWorking}
+              onPress={onRequest}
+              style={[styles.imageButton, { backgroundColor: theme.colors.primary }]}
+              testID="request-dream-image"
+            >
+              <Text style={[styles.buttonText, { color: theme.colors.primaryText }]}>
+                {isRequesting || isWorking ? "Creating visual" : "Visualize dream"}
+              </Text>
+            </Pressable>
+          ) : null}
+        </>
+      ) : (
+        <Text style={[styles.body, { color: theme.colors.mutedText }]}>Dream visuals are available with Premium.</Text>
+      )}
+    </View>
+  );
+}
+
+function mapImageError(error: Error) {
+  if (error instanceof ApiError && error.status === 503) {
+    return "Dream visuals are not available yet. Please try again later.";
+  }
+
+  return "Dream visual could not be created. Please try again.";
 }
 
 const styles = StyleSheet.create({
@@ -94,6 +184,32 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     gap: 8,
     padding: 14
+  },
+  imagePanel: {
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 10,
+    padding: 14
+  },
+  image: {
+    aspectRatio: 1,
+    borderRadius: 8,
+    width: "100%"
+  },
+  imageButton: {
+    alignItems: "center",
+    borderRadius: 8,
+    justifyContent: "center",
+    minHeight: 44,
+    paddingHorizontal: 16
+  },
+  error: {
+    fontSize: 13,
+    lineHeight: 18
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: "700"
   },
   sectionTitle: {
     fontSize: 18,

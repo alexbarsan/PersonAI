@@ -7,6 +7,7 @@ using DreamLens.Api.Features.Profile;
 using DreamLens.Api.Features.Dreams;
 using DreamLens.Api.Infrastructure.Identity;
 using DreamLens.Api.Infrastructure.Embeddings;
+using DreamLens.Api.Infrastructure.Images;
 using DreamLens.Api.Infrastructure.Assets;
 using DreamLens.Api.Infrastructure.Jobs;
 using DreamLens.Api.Infrastructure.Monetization;
@@ -30,6 +31,7 @@ builder.Services.AddDreamLensAuthentication(builder.Configuration, builder.Envir
 builder.Services.AddDreamLensRateLimiting(builder.Configuration);
 builder.Services.AddDreamLensPersistence(builder.Configuration);
 builder.Services.AddDreamLensEmbeddings(builder.Configuration);
+builder.Services.AddDreamLensImageGeneration(builder.Configuration);
 builder.Services.AddDreamLensJobs(builder.Configuration);
 builder.Services.AddDreamLensAssets(builder.Configuration);
 builder.Services.AddDreamLensSecurity(builder.Configuration);
@@ -60,6 +62,8 @@ if (dreamEndpointsEnabled)
     builder.Services.AddScoped<GetDreamHandler>();
     builder.Services.AddScoped<GetDreamFactsHandler>();
     builder.Services.AddScoped<GetSimilarDreamsHandler>();
+    builder.Services.AddScoped<RequestDreamImageHandler>();
+    builder.Services.AddScoped<GetDreamImageHandler>();
     builder.Services.AddScoped<ListDreamsHandler>();
     builder.Services.AddScoped<DeleteDreamHandler>();
     builder.Services.AddScoped<GetInsightsHandler>();

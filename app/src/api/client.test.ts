@@ -80,4 +80,18 @@ describe("api client", () => {
     expect(entitlement.tier).toBe("free");
     expect(entitlement.dailyDreamLimit).toBe(3);
   });
+
+  it("requests and reads a generated dream image", async () => {
+    const client = createApiClient({
+      baseUrl: "http://localhost",
+      getAccessToken: () => "test-token",
+      mockMode: false
+    });
+
+    const requested = await client.requestDreamImage("dream_mock_1", { style: "SOFT_DIGITAL_PAINTING" });
+    const image = await client.getDreamImage("dream_mock_1");
+
+    expect(requested.status).toBe("completed");
+    expect(image.downloadUrl).toContain("data:image/png");
+  });
 });

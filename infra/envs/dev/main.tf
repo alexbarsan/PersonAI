@@ -76,6 +76,11 @@ module "api" {
     Jobs__Worker__Enabled               = "true"
     Jobs__EmbeddingBackfill__Enabled    = "false"
     Assets__BucketName                  = module.private_assets.bucket_name
+    ImageGeneration__Enabled            = "false"
+    ImageGeneration__Provider           = "bedrock-nova-canvas"
+    ImageGeneration__Model              = "amazon.nova-canvas-v1:0"
+    ImageGeneration__DefaultStyle       = "SOFT_DIGITAL_PAINTING"
+    ImageGeneration__EstimatedCostUsd   = "0"
     Authentication__Cognito__Region     = var.aws_region
     Authentication__Cognito__UserPoolId = module.cognito.user_pool_id
     Authentication__Cognito__Audience   = module.cognito.user_pool_client_id

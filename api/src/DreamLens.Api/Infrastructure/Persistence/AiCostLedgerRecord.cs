@@ -14,6 +14,8 @@ public sealed class AiCostLedgerRecord
 
     public string PersonaId { get; set; } = string.Empty;
 
+    public string OperationType { get; set; } = string.Empty;
+
     public string Status { get; set; } = string.Empty;
 
     public string? FailureKind { get; set; }

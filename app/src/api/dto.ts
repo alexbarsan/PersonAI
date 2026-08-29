@@ -51,6 +51,21 @@ export type DreamResponse = {
   errorMessage: string | null;
 };
 
+export type RequestDreamImageRequest = {
+  style?: string | null;
+};
+
+export type DreamImageResponse = {
+  id: string;
+  dreamId: string;
+  status: "pending" | "generating" | "completed" | "failed";
+  style: string;
+  jobId: string | null;
+  downloadUrl: string | null;
+  errorMessage: string | null;
+  createdAt: string;
+};
+
 export type DreamResultResponse = {
   summary: string;
   sections: DreamSectionResponse[];

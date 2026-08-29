@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react-native";
 import { PropsWithChildren } from "react";
 
 import { ApiClientProvider } from "@/api/apiContext";
+import { ApiClient } from "@/api/client";
 import { DreamResponse } from "@/api/dto";
 import { DreamResultScreen } from "@/features/dreams/DreamResultScreen";
 import { mockApiClient } from "@/mocks/mockApi";
@@ -49,9 +50,21 @@ describe("DreamResultScreen", () => {
     expect(screen.getByText("Use immediate support if you feel at risk.")).toBeTruthy();
     expect(screen.queryByText("This should not be shown.")).toBeNull();
   });
+
+  it("shows the image action and completed visual for premium users", async () => {
+    useDreamResultStore.getState().rememberDream(mockDream);
+    const premiumApi: ApiClient = {
+      ...mockApiClient,
+      getEntitlements: async () => ({ tier: "premium", dailyDreamLimit: 25, deepAnalysisEnabled: true })
+    };
+
+    renderWithProviders(<DreamResultScreen />, premiumApi);
+
+    expect(await screen.findByLabelText("Generated dream visual")).toBeTruthy();
+  });
 });
 
-function renderWithProviders(ui: React.ReactElement) {
+function renderWithProviders(ui: React.ReactElement, api: ApiClient = mockApiClient) {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: { retry: false },
@@ -62,7 +75,7 @@ function renderWithProviders(ui: React.ReactElement) {
   function Wrapper({ children }: PropsWithChildren) {
     return (
       <ThemeProvider>
-        <ApiClientProvider client={mockApiClient}>
+        <ApiClientProvider client={api}>
           <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
         </ApiClientProvider>
       </ThemeProvider>

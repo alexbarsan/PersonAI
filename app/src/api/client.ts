@@ -1,11 +1,13 @@
 import {
   DreamJournalResponse,
+  DreamImageResponse,
   DreamResponse,
   EntitlementResponse,
   InsightsResponse,
   MeResponse,
   ProfileUpdateRequest,
   ProfileResponse,
+  RequestDreamImageRequest,
   SubmitDreamRequest
 } from "@/api/dto";
 import { ApiError } from "@/api/errors";
@@ -25,6 +27,8 @@ export type ApiClient = {
   submitDream: (request: SubmitDreamRequest) => Promise<DreamResponse>;
   listDreams: () => Promise<DreamJournalResponse>;
   getDream: (id: string) => Promise<DreamResponse>;
+  requestDreamImage: (id: string, request?: RequestDreamImageRequest) => Promise<DreamImageResponse>;
+  getDreamImage: (id: string) => Promise<DreamImageResponse>;
   deleteDream: (id: string) => Promise<void>;
   getInsights: () => Promise<InsightsResponse>;
   getEntitlements: () => Promise<EntitlementResponse>;
@@ -80,6 +84,12 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
     }),
     listDreams: () => request<DreamJournalResponse>("/v1/dreams"),
     getDream: (id) => request<DreamResponse>(`/v1/dreams/${id}`),
+    requestDreamImage: (id, body = {}) =>
+      request<DreamImageResponse>(`/v1/dreams/${id}/image`, {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    getDreamImage: (id) => request<DreamImageResponse>(`/v1/dreams/${id}/image`),
     deleteDream: (id) =>
       request<void>(`/v1/dreams/${id}`, {
         method: "DELETE"

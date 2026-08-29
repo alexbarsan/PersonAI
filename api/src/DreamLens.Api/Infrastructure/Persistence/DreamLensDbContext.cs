@@ -15,6 +15,8 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
 
     public DbSet<DreamFactRecord> DreamFacts => Set<DreamFactRecord>();
 
+    public DbSet<DreamImageRecord> DreamImages => Set<DreamImageRecord>();
+
     public DbSet<AiCostLedgerRecord> AiCostLedger => Set<AiCostLedgerRecord>();
 
     public DbSet<DreamEmbedding> DreamEmbeddings => Set<DreamEmbedding>();
@@ -108,6 +110,21 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
             entity.Property(fact => fact.CreatedAt).IsRequired();
         });
 
+        modelBuilder.Entity<DreamImageRecord>(entity =>
+        {
+            entity.ToTable("DreamImages");
+            entity.HasKey(image => image.Id);
+            entity.HasIndex(image => new { image.DreamId, image.UserSubject, image.CreatedAt });
+            entity.HasIndex(image => new { image.UserSubject, image.CreatedAt });
+            entity.Property(image => image.UserSubject).HasMaxLength(256).IsRequired();
+            entity.Property(image => image.Status).HasMaxLength(32).IsRequired();
+            entity.Property(image => image.Style).HasMaxLength(64).IsRequired();
+            entity.Property(image => image.AssetKey).HasMaxLength(512);
+            entity.Property(image => image.ErrorMessage).HasMaxLength(2000);
+            entity.Property(image => image.CreatedAt).IsRequired();
+            entity.Property(image => image.UpdatedAt).IsRequired();
+        });
+
         modelBuilder.Entity<AiCostLedgerRecord>(entity =>
         {
             entity.ToTable("AiCostLedger");
@@ -126,6 +143,9 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
                 .IsRequired();
             entity.Property(row => row.PersonaId)
                 .HasMaxLength(128)
+                .IsRequired();
+            entity.Property(row => row.OperationType)
+                .HasMaxLength(64)
                 .IsRequired();
             entity.Property(row => row.Status)
                 .HasMaxLength(32)

@@ -9,14 +9,14 @@ This backlog captures product capabilities from `docs/to-be-analyzed/catch-dream
 | S22 | Dream output schema v2 | Complete. Structured observations are first-class, versioned output fields and normalized fact rows. | Added schema v1.1, fact extraction/persistence, owner-scoped fact API, deletion cleanup, migration, and coverage. Existing dreams are not automatically backfilled. | Added generic entity rendering for people and locations plus result sections for structured observations. |
 | S23 | Journal v2 | Journal has list/detail/delete, but not edit, search, filters, or export. | Add update endpoint, full-text/search projection, export endpoint, and erasure/export tests. | Add edit form, search/filter controls, and export action. |
 | S24 | Voice capture and transcription | Voice capture is not implemented. | Add transcription provider abstraction, upload policy, optional private S3 storage, retention controls, cost ledger operation type, and abuse limits. | Add record/review/transcribe flow with clear retention UX. |
-| S25 | Dream image generation | "Visualize my dream" is not implemented. | Add image provider abstraction, SQS async job model, private S3 storage, signed access, entitlement checks, and AI cost ledger entries. | Add image request/status/result UI and paywall/credit handling. |
+| S25 | Dream image generation | Complete behind a disabled-by-default launch flag. | Added image provider abstraction, premium entitlement check, idempotent SQS job, private S3 persistence, signed access, retry-safe worker handling, and per-attempt AI cost/latency ledger rows. Nova Canvas is configured as a switchable Bedrock adapter but is not enabled. | Added premium-aware image request, queued/generating/failed/completed states, and signed-image rendering in the dream result screen. |
 | S26 | Embeddings and semantic memory | Context history is summary-based; async embedding jobs and production retrieval integration remain. | Add pgvector migration, embedding provider abstraction, Bedrock Titan Embeddings V2 adapter, dream embeddings, and consent-aware retrieval foundation. SQS backfill and pipeline wiring move to S32. | Add settings/disclosure copy and similar-context indicators where useful. |
 | S27 | Similar dreams and Dream DNA | Complete for fact-based analytics. Semantic matches remain empty until new embeddings can be generated. | Added recurring fact groups, sample sizes, date coverage, monthly activity, guarded weekday/weekend rate comparisons, and owner-scoped similar-dream endpoint. Similarity is empty without a source embedding and never crosses user boundaries. | Reworked Insights into a personal dream map with recurring categories, percentages, score averages, activity, timing observations, and reflective language. |
 | S28 | Ask DreamLens | Users cannot ask questions over their own dream history. | Add retrieval-backed question endpoint, prompt/schema, safety rules, quota/cost ledger integration, and no-full-history prompt tests. | Add question UI, answer view, loading/error states, and history links. |
 | S29 | Deep Interpretation | Entitlement flag exists, but premium deep-analysis flow is not wired to a stronger model or richer context. | Add deep interpretation endpoint or request mode, model routing, richer retrieved context, tier limits, and cost controls. | Add deep-analysis entry point and result state. |
 | S30 | Social sign-in providers | Cognito auth is scaffolded, but provider-specific launch setup is incomplete. | Configure Cognito hosted UI providers for Google and Apple first; Facebook is optional after privacy/product review. | Add provider buttons and platform-specific OAuth validation. |
 | S31 | Admin and business metrics | Metrics exist technically, but no admin view exists for MAU, conversion, revenue, AI cost, AWS cost, or gross margin. | Add admin-only metrics endpoints and least-privilege authorization. | Add internal dashboard or connect external BI later. |
-| S32 | Async assets foundation | Concrete image/export handlers remain. | Added private S3 asset bucket/module, KMS-encrypted SQS queue with DLQ, long polling, scoped ECS permissions, idempotent `AsyncJobs` persistence with target indexing, publisher, hosted worker, embedding handler, opt-in bounded backfill worker, job-status endpoint, presigned S3 asset service, and retry/lease/duration metrics. | Add shared job status client patterns that S25, exports, and future long-running features can reuse. |
+| S32 | Async assets foundation | Image handler is complete; export/transcription handlers remain. | Added private S3 asset bucket/module, KMS-encrypted SQS queue with DLQ, long polling, scoped ECS permissions, idempotent `AsyncJobs` persistence with target indexing, publisher, hosted worker, embedding and image handlers, opt-in bounded backfill worker, job-status endpoint, presigned S3 asset service, and retry/lease/duration metrics. | Shared job-status patterns remain available for exports and future long-running features. |
 
 ## Product Rules
 
@@ -35,7 +35,7 @@ This backlog captures product capabilities from `docs/to-be-analyzed/catch-dream
 ## Open Decisions
 
 - Whether voice recordings are discarded immediately after transcription or stored temporarily for user review.
-- Which image provider launches first.
+- Which currently supported image provider launches first. The Nova Canvas adapter is implemented but disabled because the available model is marked legacy; select, authorize, and cost-review a supported model before enabling it.
 - Whether historical completed dreams should be backfilled into the new `DreamFacts` projection before S27 analytics launches.
 - Whether Facebook social login is worth the privacy/review overhead for v1 global launch.
 - Whether Ask DreamLens and Deep Interpretation are premium-only at launch.
@@ -45,5 +45,5 @@ This backlog captures product capabilities from `docs/to-be-analyzed/catch-dream
 
 1. Resolve the Titan Embeddings V2 account quota with AWS Support, then retry/backfill failed embedding jobs and verify semantic matches return results.
 2. Decide whether historical completed dreams should be backfilled into `DreamFacts` before analytics launches.
-3. S25 dream image generation: image provider, entitlement/credit checks, async status API, S3 persistence, and UI.
+3. Select and approve a supported image provider, then configure cost/quotas and enable S25 in a controlled dev test.
 4. S23 journal v2: editing, search/filtering, export, and privacy/erasure coverage.

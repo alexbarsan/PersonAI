@@ -1,5 +1,6 @@
 import {
   DreamJournalResponse,
+  DreamImageResponse,
   DreamResponse,
   EntitlementResponse,
   InsightsResponse,
@@ -73,6 +74,17 @@ export const mockDream: DreamResponse = {
     }
   },
   errorMessage: null
+};
+
+export const mockDreamImage: DreamImageResponse = {
+  id: "dream_image_mock_1",
+  dreamId: mockDream.id,
+  status: "completed",
+  style: "SOFT_DIGITAL_PAINTING",
+  jobId: "job_image_mock_1",
+  downloadUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL2ngAAAABJRU5ErkJggg==",
+  errorMessage: null,
+  createdAt: mockDream.createdAt
 };
 
 export const mockJournal: DreamJournalResponse = {

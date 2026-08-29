@@ -91,7 +91,10 @@ public sealed class AsyncJobWorker(
 
         try
         {
-            var handler = scope.ServiceProvider.GetRequiredService<IAsyncJobHandler>();
+            var handler = scope.ServiceProvider
+                .GetServices<IAsyncJobHandler>()
+                .SingleOrDefault(candidate => candidate.JobType == job.JobType)
+                ?? throw new InvalidOperationException($"No async job handler is registered for '{job.JobType}'.");
             await handler.HandleAsync(jobMessage, cancellationToken);
             job.Status = AsyncJobStatuses.Completed;
             job.CompletedAt = DateTimeOffset.UtcNow;

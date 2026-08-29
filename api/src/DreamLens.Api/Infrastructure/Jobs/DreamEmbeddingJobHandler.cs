@@ -9,6 +9,8 @@ public sealed class DreamEmbeddingJobHandler(
     DreamLensDbContext dbContext,
     SemanticMemoryService semanticMemory) : IAsyncJobHandler
 {
+    public string JobType => AsyncJobTypes.DreamEmbedding;
+
     public async Task HandleAsync(AsyncJobMessage message, CancellationToken cancellationToken)
     {
         var payload = JsonSerializer.Deserialize<DreamEmbeddingJobPayload>(message.PayloadJson)

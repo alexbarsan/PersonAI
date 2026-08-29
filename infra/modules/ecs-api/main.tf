@@ -252,11 +252,11 @@ resource "aws_iam_role_policy" "task_async_jobs" {
         Effect   = "Allow"
         Action   = ["s3:ListBucket"]
         Resource = var.asset_bucket_arn
-      }, {
+        }, {
         Effect   = "Allow"
         Action   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
         Resource = "${var.asset_bucket_arn}/*"
-      }, {
+        }, {
         Effect   = "Allow"
         Action   = ["kms:Decrypt", "kms:Encrypt", "kms:GenerateDataKey"]
         Resource = var.secret_kms_key_arn
@@ -265,16 +265,19 @@ resource "aws_iam_role_policy" "task_async_jobs" {
   })
 }
 
-resource "aws_iam_role_policy" "task_bedrock_embeddings" {
-  name = "${var.name_prefix}-bedrock-embeddings"
+resource "aws_iam_role_policy" "task_bedrock_models" {
+  name = "${var.name_prefix}-bedrock-models"
   role = aws_iam_role.task.id
 
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Effect   = "Allow"
-      Action   = ["bedrock:InvokeModel"]
-      Resource = "arn:aws:bedrock:${data.aws_region.current.name}::foundation-model/amazon.titan-embed-text-v2:0"
+      Effect = "Allow"
+      Action = ["bedrock:InvokeModel"]
+      Resource = [
+        "arn:aws:bedrock:${data.aws_region.current.name}::foundation-model/amazon.titan-embed-text-v2:0",
+        "arn:aws:bedrock:${data.aws_region.current.name}::foundation-model/amazon.nova-canvas-v1:0"
+      ]
     }]
   })
 }

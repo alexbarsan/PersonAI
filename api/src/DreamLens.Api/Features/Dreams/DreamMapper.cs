@@ -3,7 +3,7 @@ using DreamLens.Api.Infrastructure.Persistence;
 
 namespace DreamLens.Api.Features.Dreams;
 
-internal static class DreamMapper
+public static class DreamMapper
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 

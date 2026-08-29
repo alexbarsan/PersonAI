@@ -25,6 +25,7 @@ public static class JobServiceCollectionExtensions
         {
             services.AddScoped<AsyncJobService>();
             services.AddScoped<IAsyncJobHandler, DreamEmbeddingJobHandler>();
+            services.AddScoped<IAsyncJobHandler, DreamImageJobHandler>();
             services.AddScoped<EmbeddingBackfillService>();
         }
 

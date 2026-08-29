@@ -195,6 +195,7 @@ public sealed class SubmitDreamHandler(
             Provider = "DeepSeek",
             Model = deepSeekOptions.Value.Model,
             PersonaId = run?.PersonaId ?? "dream-interpreter",
+            OperationType = "dream.interpretation",
             Status = interpretation.Status == InterpretationStatus.Completed ? "completed" : "failed",
             FailureKind = run?.FailureKind?.ToString(),
             AttemptCount = run?.AttemptCount ?? 0,
