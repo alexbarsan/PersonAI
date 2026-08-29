@@ -19,6 +19,12 @@ variable "domain_prefix" {
   default     = null
 }
 
+variable "privacy_admin_group_name" {
+  type        = string
+  description = "Cognito group allowed to approve user anonymization requests."
+  default     = "dreamlens-admin"
+}
+
 variable "tags" {
   type        = map(string)
   description = "Tags applied to Cognito resources."

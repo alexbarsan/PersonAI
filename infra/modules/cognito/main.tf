@@ -42,6 +42,12 @@ resource "aws_cognito_user_pool_client" "app" {
   generate_secret = false
 }
 
+resource "aws_cognito_user_group" "privacy_admin" {
+  name         = var.privacy_admin_group_name
+  user_pool_id = aws_cognito_user_pool.this.id
+  description  = "Approves DreamLens user anonymization requests."
+}
+
 resource "aws_cognito_user_pool_domain" "hosted_ui" {
   count = var.domain_prefix == null ? 0 : 1
 

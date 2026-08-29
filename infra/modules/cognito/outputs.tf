@@ -8,6 +8,11 @@ output "user_pool_client_id" {
   description = "Cognito public app client id."
 }
 
+output "privacy_admin_group_name" {
+  value       = aws_cognito_user_group.privacy_admin.name
+  description = "Cognito group allowed to approve anonymization requests."
+}
+
 output "issuer_url" {
   value       = "https://cognito-idp.${data.aws_region.current.name}.amazonaws.com/${aws_cognito_user_pool.this.id}"
   description = "JWT issuer URL."
