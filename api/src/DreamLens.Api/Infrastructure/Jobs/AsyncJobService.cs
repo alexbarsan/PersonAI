@@ -21,6 +21,11 @@ public sealed class AsyncJobService(
 
         if (existing is not null)
         {
+            if (existing.Status == AsyncJobStatuses.Failed)
+            {
+                await RequeueAsync(existing, cancellationToken);
+            }
+
             return existing;
         }
 
@@ -41,5 +46,41 @@ public sealed class AsyncJobService(
             cancellationToken);
 
         return job;
+    }
+
+    public async Task<AsyncJobRecord?> RetryFailedAsync(
+        Guid jobId,
+        string userSubject,
+        CancellationToken cancellationToken)
+    {
+        var job = await dbContext.AsyncJobs.SingleOrDefaultAsync(
+            candidate => candidate.Id == jobId
+                && candidate.UserSubject == userSubject
+                && candidate.Status == AsyncJobStatuses.Failed,
+            cancellationToken);
+
+        if (job is null)
+        {
+            return null;
+        }
+
+        await RequeueAsync(job, cancellationToken);
+        return job;
+    }
+
+    private async Task RequeueAsync(AsyncJobRecord job, CancellationToken cancellationToken)
+    {
+        job.Status = AsyncJobStatuses.Pending;
+        job.AttemptCount = 0;
+        job.AvailableAt = DateTimeOffset.UtcNow;
+        job.LockedUntil = null;
+        job.CompletedAt = null;
+        job.LastError = null;
+        job.UpdatedAt = DateTimeOffset.UtcNow;
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        await queue.PublishAsync(
+            new AsyncJobMessage(job.Id, job.JobType, job.UserSubject, job.PayloadJson),
+            cancellationToken);
     }
 }

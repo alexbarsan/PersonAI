@@ -33,7 +33,8 @@ public sealed class EmbeddingBackfillService(
                         && profile.ConsentHistoryUse)
                     && !dbContext.DreamEmbeddings.Any(embedding => embedding.DreamId == dream.Id)
                     && !dbContext.AsyncJobs.Any(job => job.JobType == AsyncJobTypes.DreamEmbedding
-                        && job.TargetId == dream.Id))
+                        && job.TargetId == dream.Id
+                        && job.Status != AsyncJobStatuses.Failed))
                 .OrderBy(dream => dream.CreatedAt)
                 .Take(Math.Min(batchSize, remaining))
                 .Select(dream => new { dream.Id, dream.UserSubject })

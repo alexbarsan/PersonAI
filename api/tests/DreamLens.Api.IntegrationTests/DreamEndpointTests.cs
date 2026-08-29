@@ -2,7 +2,9 @@ using System.Net;
 using System.Net.Http.Json;
 using DreamLens.Api.Features.Dreams;
 using DreamLens.Api.Features.Insights;
+using DreamLens.Api.Features.Jobs;
 using DreamLens.Api.Features.Profile;
+using DreamLens.Api.Infrastructure.Jobs;
 using DreamLens.Api.Infrastructure.Persistence;
 using DreamLens.Api.Infrastructure.Quotas;
 using Microsoft.AspNetCore.Hosting;
@@ -219,6 +221,36 @@ public sealed class DreamEndpointTests
     }
 
     [Fact]
+    public async Task OwnerCanRequeueFailedAsyncJob()
+    {
+        using var app = CreateDreamApp(new StaticDreamChatClient(CanonicalAiOutput));
+        using var client = app.CreateAuthenticatedClient("subject-a");
+        var jobId = Guid.NewGuid();
+        await app.AddAsyncJobAsync(new AsyncJobRecord
+        {
+            Id = jobId,
+            IdempotencyKey = $"{AsyncJobTypes.DreamEmbedding}:{jobId}:1",
+            JobType = AsyncJobTypes.DreamEmbedding,
+            UserSubject = "subject-a",
+            TargetId = jobId,
+            PayloadJson = "{}",
+            Status = AsyncJobStatuses.Failed,
+            AttemptCount = 5,
+            LastError = "Provider temporarily unavailable."
+        });
+
+        var response = await client.PostAsync($"/v1/jobs/{jobId}/retry", content: null);
+        var job = await response.Content.ReadFromJsonAsync<JobStatusResponse>();
+
+        Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
+        Assert.NotNull(job);
+        Assert.Equal(AsyncJobStatuses.Pending, job.Status);
+        Assert.Equal(0, job.AttemptCount);
+        Assert.Null(job.LastError);
+        Assert.Equal(1, app.PublishedAsyncJobCount);
+    }
+
+    [Fact]
     public async Task PremiumEntitlementAllowsHigherDailyQuota()
     {
         using var app = CreateDreamApp(
@@ -388,8 +420,12 @@ public sealed class DreamEndpointTests
                     services.RemoveAll<DbContextOptions<DreamLensDbContext>>();
                     services.RemoveAll<DreamLensDbContext>();
                     services.RemoveAll<IChatClient>();
+                    services.RemoveAll<IAsyncJobQueue>();
                     services.AddDbContext<DreamLensDbContext>(options => options.UseInMemoryDatabase(databaseName));
                     services.AddSingleton(chatClient);
+                    services.AddSingleton<RecordingAsyncJobQueue>();
+                    services.AddSingleton<IAsyncJobQueue>(serviceProvider => serviceProvider.GetRequiredService<RecordingAsyncJobQueue>());
+                    services.AddScoped<AsyncJobService>();
                     services.AddScoped<IDreamQuotaService, EfDreamQuotaService>();
                     services.AddScoped<GetProfileHandler>();
                     services.AddScoped<UpdateProfileHandler>();
@@ -398,6 +434,7 @@ public sealed class DreamEndpointTests
                     services.AddScoped<ListDreamsHandler>();
                     services.AddScoped<DeleteDreamHandler>();
                     services.AddScoped<GetInsightsHandler>();
+                    services.AddScoped<RetryJobHandler>();
                 });
             });
 
@@ -466,6 +503,16 @@ public sealed class DreamEndpointTests
             var dbContext = scope.ServiceProvider.GetRequiredService<DreamLensDbContext>();
             return await dbContext.AiCostLedger.OrderBy(row => row.CreatedAt).ToArrayAsync();
         }
+
+        public int PublishedAsyncJobCount => factory.Services.GetRequiredService<RecordingAsyncJobQueue>().Messages.Count;
+
+        public async Task AddAsyncJobAsync(AsyncJobRecord job)
+        {
+            using var scope = factory.Services.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<DreamLensDbContext>();
+            dbContext.AsyncJobs.Add(job);
+            await dbContext.SaveChangesAsync();
+        }
     }
 
     private sealed class StaticDreamChatClient(string responseText) : IChatClient
@@ -496,6 +543,17 @@ public sealed class DreamEndpointTests
 
         public void Dispose()
         {
+        }
+    }
+
+    private sealed class RecordingAsyncJobQueue : IAsyncJobQueue
+    {
+        public List<AsyncJobMessage> Messages { get; } = [];
+
+        public Task PublishAsync(AsyncJobMessage message, CancellationToken cancellationToken)
+        {
+            Messages.Add(message);
+            return Task.CompletedTask;
         }
     }
 

@@ -69,6 +69,20 @@ public sealed class AsyncJobWorker(
         var job = await ClaimAsync(db, jobMessage.JobId, cancellationToken);
         if (job is null)
         {
+            var availableAt = await db.AsyncJobs
+                .Where(candidate => candidate.Id == jobMessage.JobId
+                    && candidate.Status == AsyncJobStatuses.Pending
+                    && candidate.AvailableAt > DateTimeOffset.UtcNow)
+                .Select(candidate => (DateTimeOffset?)candidate.AvailableAt)
+                .SingleOrDefaultAsync(cancellationToken);
+
+            if (availableAt is not null)
+            {
+                await DelayMessageAsync(queueUrl, message, availableAt.Value - DateTimeOffset.UtcNow, cancellationToken);
+                RecordDuration("scheduled", jobMessage.JobType, started);
+                return;
+            }
+
             await sqs.DeleteMessageAsync(queueUrl, message.ReceiptHandle, cancellationToken);
             DreamLensMeters.AsyncJobsLeaseSkipped.Add(1, JobTypeTag(jobMessage.JobType));
             RecordDuration("lease_skipped", jobMessage.JobType, started);
@@ -89,17 +103,19 @@ public sealed class AsyncJobWorker(
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            job.Status = job.AttemptCount >= Math.Max(1, workerOptions.Value.MaxAttempts)
-                ? AsyncJobStatuses.Failed
-                : AsyncJobStatuses.Pending;
-            job.AvailableAt = DateTimeOffset.UtcNow.AddSeconds(Math.Min(300, Math.Pow(2, job.AttemptCount)));
+            var retryable = job.AttemptCount < Math.Max(1, workerOptions.Value.MaxAttempts);
+            var retryDelay = GetRetryDelay(job.AttemptCount);
+            job.Status = retryable
+                ? AsyncJobStatuses.Pending
+                : AsyncJobStatuses.Failed;
+            job.AvailableAt = DateTimeOffset.UtcNow.Add(retryDelay);
             job.LockedUntil = null;
             job.LastError = exception.Message[..Math.Min(exception.Message.Length, 2000)];
             job.UpdatedAt = DateTimeOffset.UtcNow;
             await db.SaveChangesAsync(cancellationToken);
 
             logger.LogError(exception, "Async job {JobId} failed on attempt {Attempt}.", job.Id, job.AttemptCount);
-            if (job.Status == AsyncJobStatuses.Failed)
+            if (!retryable)
             {
                 DreamLensMeters.AsyncJobsFailed.Add(1, JobTypeTag(job.JobType));
                 await sqs.DeleteMessageAsync(queueUrl, message.ReceiptHandle, cancellationToken);
@@ -108,6 +124,7 @@ public sealed class AsyncJobWorker(
             else
             {
                 DreamLensMeters.AsyncJobsRetried.Add(1, JobTypeTag(job.JobType));
+                await DelayMessageAsync(queueUrl, message, retryDelay, cancellationToken);
                 RecordDuration("retry", job.JobType, started);
             }
         }
@@ -121,6 +138,7 @@ public sealed class AsyncJobWorker(
         var now = DateTimeOffset.UtcNow;
         var updated = await db.AsyncJobs
             .Where(job => job.Id == jobId
+                && job.AvailableAt <= now
                 && (job.Status == AsyncJobStatuses.Pending
                     || (job.Status == AsyncJobStatuses.Processing && job.LockedUntil < now)))
             .ExecuteUpdateAsync(setters => setters
@@ -135,6 +153,29 @@ public sealed class AsyncJobWorker(
     }
 
     private static KeyValuePair<string, object?> JobTypeTag(string jobType) => new("job.type", jobType);
+
+    private TimeSpan GetRetryDelay(int attemptCount)
+    {
+        var baseSeconds = Math.Clamp(workerOptions.Value.RetryBaseDelaySeconds, 1, 3600);
+        var maximumSeconds = Math.Clamp(workerOptions.Value.RetryMaxDelaySeconds, baseSeconds, 43200);
+        var multiplier = Math.Pow(2, Math.Min(16, Math.Max(0, attemptCount - 1)));
+        return TimeSpan.FromSeconds(Math.Min(maximumSeconds, baseSeconds * multiplier));
+    }
+
+    private async Task DelayMessageAsync(
+        string queueUrl,
+        Message message,
+        TimeSpan delay,
+        CancellationToken cancellationToken)
+    {
+        var visibilityTimeout = (int)Math.Clamp(Math.Ceiling(delay.TotalSeconds), 1, 43200);
+        await sqs.ChangeMessageVisibilityAsync(new ChangeMessageVisibilityRequest
+        {
+            QueueUrl = queueUrl,
+            ReceiptHandle = message.ReceiptHandle,
+            VisibilityTimeout = visibilityTimeout
+        }, cancellationToken);
+    }
 
     private static void RecordDuration(string outcome, string jobType, long started)
     {

@@ -42,6 +42,7 @@ builder.Services.AddScoped<GetEntitlementHandler>();
 if (!string.IsNullOrWhiteSpace(PersistenceServiceCollectionExtensions.ResolveConnectionString(builder.Configuration)))
 {
     builder.Services.AddScoped<GetJobHandler>();
+    builder.Services.AddScoped<RetryJobHandler>();
 }
 
 var profileEndpointsEnabled = ProfileEndpointsEnabled(builder.Configuration);
