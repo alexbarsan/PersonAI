@@ -27,3 +27,6 @@ web_acm_certificate_arn = null
 api_acm_certificate_arn = null
 hosted_zone_id          = null
 api_domain_name         = "api.dev.dreamdna.world"
+
+# Add immutable Cognito user subjects here only for controlled dev Premium testing.
+premium_subjects = []

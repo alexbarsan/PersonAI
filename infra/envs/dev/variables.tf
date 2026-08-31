@@ -75,3 +75,9 @@ variable "api_domain_name" {
   description = "Optional custom API domain name."
   default     = null
 }
+
+variable "premium_subjects" {
+  type        = list(string)
+  description = "Cognito user subjects granted the mock Premium entitlement in dev."
+  default     = []
+}

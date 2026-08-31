@@ -147,3 +147,11 @@ Real purchase verification and store-ready flows require third-party setup befor
 - GitHub/app secrets for payment provider keys.
 
 Do not hard-code payment provider keys or store secrets in the repository.
+
+For controlled dev checks before RevenueCat is connected, add the registered test user's immutable Cognito `sub` claim to the local, ignored `infra/envs/dev/terraform.tfvars` file:
+
+```hcl
+premium_subjects = ["<cognito-user-sub>"]
+```
+
+Apply Terraform, then deploy the resulting task definition using the procedure in `docs/deployment.md`. This is development-only mock entitlement configuration, not a production purchase grant.

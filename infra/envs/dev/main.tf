@@ -62,7 +62,7 @@ module "api" {
   async_queue_arns     = [module.async_jobs.queue_arn]
   asset_bucket_arn     = module.private_assets.bucket_arn
 
-  environment_variables = {
+  environment_variables = merge({
     ASPNETCORE_ENVIRONMENT                        = "Production"
     ConnectionStrings__Host                       = module.database.endpoint
     ConnectionStrings__Database                   = module.database.database_name
@@ -93,7 +93,10 @@ module "api" {
     Authentication__Cognito__Audience             = module.cognito.user_pool_client_id
     Authentication__Cognito__ClientId             = module.cognito.user_pool_client_id
     Cors__AllowedOrigins__0                       = "https://dev.dreamdna.world"
-  }
+    }, {
+    for index, subject in var.premium_subjects :
+    "Monetization__PremiumSubjects__${index}" => subject
+  })
 
   secret_arns = {
     DeepSeek__ApiKey           = module.security.secret_arns["deepseek-api-key"]
