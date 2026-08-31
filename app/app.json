@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "DreamLens",
+    "name": "Dream DNA",
     "slug": "dreamlens",
     "scheme": "dreamlens",
     "version": "0.1.0",
@@ -17,7 +17,7 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "Allow DreamLens to record a dream for transcription.",
+          "microphonePermission": "Allow Dream DNA to record a dream for transcription.",
           "enableBackgroundPlayback": false
         }
       ]

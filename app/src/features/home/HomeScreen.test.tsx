@@ -18,7 +18,7 @@ describe("HomeScreen", () => {
       </AppProviders>
     );
 
-    expect(screen.getByText("DreamLens")).toBeTruthy();
+    expect(screen.getByText("Dream DNA")).toBeTruthy();
     expect(screen.getByText("Signed out")).toBeTruthy();
   });
 

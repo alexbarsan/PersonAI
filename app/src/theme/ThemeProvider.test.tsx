@@ -15,7 +15,7 @@ describe("ThemeProvider", () => {
     expect(screen.getByText("Theme ready")).toBeTruthy();
   });
 
-  it("keeps DreamLens as the default brand", () => {
+  it("keeps Dream DNA as the default brand", () => {
     expect(activeBrand).toBe(dreamLensBrand);
     expect(activeBrand.personaId).toBe("dream-interpreter");
   });

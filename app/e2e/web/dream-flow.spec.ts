@@ -7,7 +7,7 @@ test("happy path: onboarding, submit dream, view result", async ({ page }) => {
   await page.getByTestId("profile-interests").fill("journaling");
   await page.getByTestId("save-profile").click();
 
-  await expect(page.getByText("DreamLens")).toBeVisible();
+  await expect(page.getByText("Dream DNA")).toBeVisible();
 
   await page.getByTestId("mock-sign-in").click();
   await page.getByTestId("go-dream-capture").click();

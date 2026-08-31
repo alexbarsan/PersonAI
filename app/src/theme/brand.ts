@@ -10,6 +10,9 @@ type BrandConfig = {
     primaryText: string;
     border: string;
     warning: string;
+    lavender: string;
+    sage: string;
+    softInk: string;
   };
   spacing: {
     xs: number;
@@ -25,17 +28,20 @@ type BrandConfig = {
 };
 
 export const dreamLensBrand = {
-  appName: "DreamLens",
+  appName: "Dream DNA",
   personaId: "dream-interpreter",
   colors: {
-    background: "#f8faf9",
-    surface: "#ffffff",
-    text: "#17211d",
-    mutedText: "#5c6b63",
-    primary: "#2f6f5e",
+    background: "#f1f1ee",
+    surface: "#fffdf9",
+    text: "#17213d",
+    mutedText: "#657083",
+    primary: "#17213d",
     primaryText: "#ffffff",
-    border: "#d8e2dc",
-    warning: "#8a5a14"
+    border: "#d9dce3",
+    warning: "#a6493d",
+    lavender: "#eeeaf7",
+    sage: "#dce9d8",
+    softInk: "#e7edf6"
   },
   spacing: {
     xs: 4,
@@ -61,7 +67,10 @@ export const astraBrand = {
     primary: "#6f4bb2",
     primaryText: "#ffffff",
     border: "#ded8ea",
-    warning: "#8a5a14"
+    warning: "#8a5a14",
+    lavender: "#eeeaf7",
+    sage: "#dce9d8",
+    softInk: "#e7edf6"
   },
   spacing: dreamLensBrand.spacing,
   radius: dreamLensBrand.radius

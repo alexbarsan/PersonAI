@@ -1,6 +1,6 @@
-# DreamLens User Manual
+# Dream DNA User Manual
 
-DreamLens is a wellness and entertainment app for reflective dream interpretation. It is not medical, psychological, diagnostic, legal, financial, or crisis advice.
+Dream DNA is a wellness and entertainment app for reflective dream interpretation. It is not medical, psychological, diagnostic, legal, financial, or crisis advice.
 
 ## Main Flow
 
@@ -33,7 +33,7 @@ Voice transcription is a Premium feature. A recording can be up to three minutes
 
 ## Privacy Notes
 
-DreamLens sends a pseudonymized context snapshot to the AI provider. It does not send your name, email, device id, IP address, or Cognito subject. Sensitive traits are included only when consent allows it.
+Dream DNA sends a pseudonymized context snapshot to the AI provider. It does not send your name, email, device id, IP address, or Cognito subject. Sensitive traits are included only when consent allows it.
 
 ## Local Mock Mode
 

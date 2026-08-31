@@ -1,4 +1,4 @@
-# DreamLens Developer Manual
+# Dream DNA Developer Manual
 
 ## Prerequisites
 

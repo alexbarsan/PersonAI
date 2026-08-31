@@ -6,6 +6,7 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 
 import { useApiClient } from "@/api/apiContext";
 import { ApiError } from "@/api/client";
 import { DreamImageResponse, DreamResponse } from "@/api/dto";
+import { AppShell, BrandMark } from "@/components/AppShell";
 import { ResultSectionRenderer } from "@/features/dreams/ResultSectionRenderer";
 import { SafetyCard } from "@/features/dreams/SafetyCard";
 import { useDreamResultStore } from "@/state/dreamResultStore";
@@ -50,23 +51,30 @@ export function DreamResultScreen() {
   });
 
   return (
-    <ScrollView contentContainerStyle={[styles.screen, { backgroundColor: theme.colors.background }]}>
-      <Text style={[styles.title, { color: theme.colors.text }]}>Dream result</Text>
-      <Text style={[styles.disclaimer, { color: theme.colors.warning }]} testID="result-disclaimer">
-        DreamLens is for reflection and entertainment. It is not medical, mental health, or safety advice.
-      </Text>
+    <AppShell>
+      <ScrollView contentContainerStyle={styles.screen}>
+        <BrandMark detail="A reflection, not a prediction." />
+        <View style={[styles.hero, { backgroundColor: theme.colors.lavender }]}>
+          <Text style={[styles.title, { color: theme.colors.text }]}>Dream result</Text>
+          <Text style={[styles.disclaimer, { color: theme.colors.mutedText }]} testID="result-disclaimer">
+            Dream DNA is for reflection and entertainment. It is not medical, mental health, or safety advice.
+          </Text>
+        </View>
 
-      {dream.isLoading ? <Text style={[styles.body, { color: theme.colors.mutedText }]}>Loading result</Text> : null}
-      {dream.isError ? <Text style={[styles.body, { color: theme.colors.warning }]}>Result could not be loaded.</Text> : null}
-      {dream.data?.status === "failed" ? (
+        {dream.isLoading ? <Text style={[styles.body, { color: theme.colors.mutedText }]}>Loading result</Text> : null}
+        {dream.isError ? <Text style={[styles.body, { color: theme.colors.warning }]}>Result could not be loaded.</Text> : null}
+        {dream.data?.status === "failed" ? (
         <Text style={[styles.body, { color: theme.colors.warning }]}>
           {dream.data.errorMessage ?? "The interpretation service could not produce a result."}
         </Text>
-      ) : null}
+        ) : null}
 
-      {result ? (
-        <View style={styles.content}>
-          <Text style={[styles.summary, { color: theme.colors.text }]}>{result.summary}</Text>
+        {result ? (
+          <View style={styles.content}>
+          <View style={[styles.summaryCard, { backgroundColor: theme.colors.primary }]}>
+            <Text style={[styles.summaryLabel, { color: theme.colors.primaryText }]}>What this dream may be holding</Text>
+            <Text style={[styles.summary, { color: theme.colors.primaryText }]}>{result.summary}</Text>
+          </View>
           <SafetyCard safety={result.safety} />
           {elevatedSafety
             ? null
@@ -93,9 +101,10 @@ export function DreamResultScreen() {
             />
           )}
           <JournalDetailsEditor dream={dream.data} />
-        </View>
-      ) : null}
-    </ScrollView>
+          </View>
+        ) : null}
+      </ScrollView>
+    </AppShell>
   );
 }
 
@@ -204,9 +213,14 @@ function mapImageError(error: Error) {
 
 const styles = StyleSheet.create({
   screen: {
-    gap: 18,
+    gap: 16,
     padding: 20,
-    paddingBottom: 48
+    paddingBottom: 28
+  },
+  hero: {
+    borderRadius: 8,
+    gap: 8,
+    padding: 18
   },
   title: {
     fontSize: 30,
@@ -221,10 +235,20 @@ const styles = StyleSheet.create({
     lineHeight: 22
   },
   content: {
-    gap: 14
+    gap: 12
+  },
+  summaryCard: {
+    borderRadius: 8,
+    gap: 8,
+    padding: 18
+  },
+  summaryLabel: {
+    fontSize: 12,
+    fontWeight: "800",
+    textTransform: "uppercase"
   },
   summary: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "700",
     lineHeight: 25
   },

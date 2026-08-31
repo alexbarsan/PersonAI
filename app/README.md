@@ -1,4 +1,4 @@
-# DreamLens App
+# Dream DNA App
 
 Expo Router app for iOS, Android, and Web.
 

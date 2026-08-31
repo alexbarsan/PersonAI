@@ -7,7 +7,7 @@ export function ResultSectionRenderer({ section }: { section: DreamSectionRespon
   const theme = useTheme();
 
   return (
-    <View style={[styles.section, { borderColor: theme.colors.border }]}>
+    <View style={[styles.section, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
       <Text style={[styles.title, { color: theme.colors.text }]}>{section.title}</Text>
       {renderContent(section.kind, section.content)}
     </View>

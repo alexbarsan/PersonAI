@@ -6,6 +6,7 @@ import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from
 
 import { useApiClient } from "@/api/apiContext";
 import { ProfileResponse } from "@/api/dto";
+import { AppShell, BrandMark } from "@/components/AppShell";
 import { toProfileFormValues, toProfileUpdateRequest } from "@/features/profile/profileMapping";
 import {
   defaultProfileFormValues,
@@ -51,13 +52,15 @@ export function ProfileForm({ mode }: ProfileFormProps) {
   });
 
   return (
-    <ScrollView contentContainerStyle={[styles.screen, { backgroundColor: theme.colors.background }]}>
-      <View style={styles.header}>
+    <AppShell showNavigation={mode === "profile"}>
+      <ScrollView contentContainerStyle={styles.screen}>
+      <BrandMark detail={mode === "onboarding" ? "A few details make your reflections more personal." : "Only share what feels useful to you."} />
+      <View style={[styles.header, { backgroundColor: theme.colors.lavender }]}>
         <Text style={[styles.title, { color: theme.colors.text }]}>
-          {mode === "onboarding" ? "Set up DreamLens" : "Profile"}
+          {mode === "onboarding" ? "Set up Dream DNA" : "Profile"}
         </Text>
-        <Text style={[styles.disclaimer, { color: theme.colors.warning }]} testID="wellness-disclaimer">
-          DreamLens is for reflection and entertainment. It is not medical, mental health, or safety advice.
+        <Text style={[styles.disclaimer, { color: theme.colors.mutedText }]} testID="wellness-disclaimer">
+          Dream DNA is for reflection and entertainment. It is not medical, mental health, or safety advice.
         </Text>
       </View>
 
@@ -101,7 +104,8 @@ export function ProfileForm({ mode }: ProfileFormProps) {
         </Pressable>
       </View>
       {mode === "profile" ? <PrivacyActions /> : null}
-    </ScrollView>
+      </ScrollView>
+    </AppShell>
   );
 }
 
@@ -146,7 +150,7 @@ function downloadExport(data: unknown) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = "dreamlens-data-export.json";
+  link.download = "dream-dna-data-export.json";
   link.click();
   URL.revokeObjectURL(url);
 }
@@ -239,7 +243,9 @@ const styles = StyleSheet.create({
     paddingBottom: 48
   },
   header: {
-    gap: 10
+    borderRadius: 8,
+    gap: 10,
+    padding: 18
   },
   title: {
     fontSize: 30,

@@ -11,7 +11,7 @@ export function SafetyCard({ safety }: { safety?: DreamSafetyResponse | null }) 
   }
 
   return (
-    <View style={[styles.card, { borderColor: theme.colors.warning }]}>
+    <View style={[styles.card, { backgroundColor: theme.colors.lavender, borderColor: theme.colors.warning }]}>
       <Text style={[styles.title, { color: theme.colors.text }]}>Support first</Text>
       <Text style={[styles.body, { color: theme.colors.mutedText }]}>
         This result is limited because the dream may include safety concerns. Consider reaching out to someone
