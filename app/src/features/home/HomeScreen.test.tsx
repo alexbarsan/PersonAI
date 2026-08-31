@@ -20,6 +20,7 @@ describe("HomeScreen", () => {
 
     expect(screen.getByText("Dream DNA")).toBeTruthy();
     expect(screen.getByText("Signed out")).toBeTruthy();
+    expect(screen.queryByTestId("go-onboarding")).toBeNull();
   });
 
   it("handles mock sign-in and local draft state", async () => {
@@ -33,6 +34,7 @@ describe("HomeScreen", () => {
 
     await waitFor(() => expect(screen.getByText("Today's dream")).toBeTruthy());
     await waitFor(() => expect(screen.getByText("Free: 3 dreams/day")).toBeTruthy());
+    expect(screen.getByTestId("go-onboarding")).toBeTruthy();
 
     fireEvent.changeText(screen.getByLabelText("Dream text"), "I was walking through a quiet station.");
     fireEvent.changeText(screen.getByLabelText("Mood"), "calm");

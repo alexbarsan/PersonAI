@@ -127,6 +127,9 @@ export function HomeScreen() {
               <Link href="/profile" asChild>
                 <Pressable accessibilityRole="button" testID="go-profile"><Text style={{ ...styles.linkText, color: theme.colors.text }}>Profile</Text></Pressable>
               </Link>
+              <Link href="/onboarding" asChild>
+                <Pressable accessibilityRole="button" testID="go-onboarding"><Text style={{ ...styles.linkText, color: theme.colors.text }}>Set up profile</Text></Pressable>
+              </Link>
               <Link href="/paywall" asChild>
                 <Pressable accessibilityRole="button" testID="go-paywall"><Text style={{ ...styles.linkText, color: theme.colors.text }}>Plans</Text></Pressable>
               </Link>
@@ -163,9 +166,6 @@ export function HomeScreen() {
                 {cognitoSignIn.error ? <Text testID="auth-error" style={[styles.error, { color: theme.colors.warning }]}>{cognitoSignIn.error}</Text> : null}
               </>
             )}
-            <Link href="/onboarding" asChild>
-              <Pressable accessibilityRole="button" testID="go-onboarding"><Text style={[styles.linkText, { color: theme.colors.text }]}>Set up your profile first</Text></Pressable>
-            </Link>
           </View>
         )}
       </ScrollView>
