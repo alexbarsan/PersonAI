@@ -18,5 +18,5 @@ public sealed class VoiceTranscriptionOptions
 
     public int MaxWaitSeconds { get; set; } = 240;
 
-    public decimal EstimatedCostPerSecondUsd { get; set; } = 0.0004m;
+    public decimal EstimatedCostPerSecondUsd { get; set; } = 0.0001m;
 }

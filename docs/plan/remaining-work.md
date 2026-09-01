@@ -1,6 +1,6 @@
 # Remaining Work
 
-Last updated after S24 live voice verification on 2026-09-01.
+Last updated after S24 live voice verification and pricing correction on 2026-09-02.
 
 ## Planned Slices
 
@@ -30,7 +30,7 @@ The imported Catch Dreamer feature notes add several capabilities that are not f
 - Dev Cognito OAuth is wired to a hosted UI domain and the deployed web app is configured for real API mode. Production/QA Cognito domains, social providers, branded managed login, exact mobile callback URLs, and secure refresh-token persistence are still pending.
 - Maestro mobile flow exists, but local verification is blocked until Maestro is installed.
 - Terraform infrastructure is applied for dev. QA/prod still need remote state bootstrap, environment-specific Terraform values, GitHub environment variables, and protected `prod` approvals.
-- The dev ECS service runs Terraform task-definition revision 25 with Amazon Transcribe enabled, the same API image as the prior CI revision, and a local mock Premium grant for the confirmed dev account. Public `/health/live` and `/health/ready` checks pass. A controlled 29-second multilingual Premium transcription completed on 2026-09-01; CloudWatch showed the `voice.transcription` ledger write, SQS drained, and both temporary voice S3 prefixes were empty afterward. The dev WAF now counts only the managed `SizeRestrictions_BODY` subrule so bounded multipart audio reaches the API's 10 MB validation.
+- The dev ECS service runs Terraform task-definition revision 26 with Amazon Transcribe enabled, the same API image as the prior CI revision, and a local mock Premium grant for the confirmed dev account. Public `/health/live` and `/health/ready` checks pass. A controlled 29-second multilingual Premium transcription completed on 2026-09-01; CloudWatch showed the `voice.transcription` ledger write, SQS drained, and both temporary voice S3 prefixes were empty afterward. The dev WAF counts only the managed `SizeRestrictions_BODY` subrule so bounded multipart audio reaches the API's 10 MB validation. Revision 26 corrects the batch `TranscribeAudio` estimate from `$0.0004` to `$0.0001` per second based on the 2026-09-02 AWS Price List.
 - Deployment workflows are active for dev. Real QA/prod deployment still requires environment-specific ECR/ECS/S3/CloudFront outputs, EAS project setup, and final launch approvals.
 - `pgvector` foundation, SQS job wiring, embedding handler, and owner-scoped similar-dream endpoint are implemented. Titan Embeddings V2 cannot complete in dev until AWS Support resolves this account's zero on-demand RPM allocation, so the similarity endpoint correctly returns no matches until embeddings are backfilled.
 - A private KMS-encrypted S3 asset bucket and signed-access service are implemented. Voice input is private and deleted after transcription by default; explicit retention exposes it only through a short-lived signed URL. The future local-first client backup, Free device transcription, retry outbox, and tier-specific retention policy are tracked as S33. The premium dream-image handler and result UI are complete but disabled pending supported-model selection, explicit cost/quota configuration, Terraform IAM apply, and controlled dev verification. Export job generation remains future work.

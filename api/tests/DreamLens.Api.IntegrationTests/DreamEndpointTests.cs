@@ -196,7 +196,8 @@ public sealed class DreamEndpointTests
         Assert.Equal("completed", completed.Status);
         Assert.NotNull(completed.Transcript);
         Assert.Null(completed.RecordingUrl);
-        Assert.Contains(ledger, row => row.OperationType == "voice.transcription" && row.Status == "completed");
+        var voiceCost = Assert.Single(ledger, row => row.OperationType == "voice.transcription" && row.Status == "completed");
+        Assert.Equal(0.0012m, voiceCost.EstimatedCostUsd);
     }
 
     [Fact]

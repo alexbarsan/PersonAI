@@ -87,7 +87,7 @@ module "api" {
     VoiceTranscription__DailyLimit                = "3"
     VoiceTranscription__MaxDurationSeconds        = "180"
     VoiceTranscription__MaxUploadBytes            = "10485760"
-    VoiceTranscription__EstimatedCostPerSecondUsd = "0.0004"
+    VoiceTranscription__EstimatedCostPerSecondUsd = "0.0001"
     Authentication__Cognito__Region               = var.aws_region
     Authentication__Cognito__UserPoolId           = module.cognito.user_pool_id
     Authentication__Cognito__Audience             = module.cognito.user_pool_client_id
