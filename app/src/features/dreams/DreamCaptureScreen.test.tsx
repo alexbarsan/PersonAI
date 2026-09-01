@@ -29,14 +29,19 @@ describe("DreamCaptureScreen", () => {
     renderWithProviders(<DreamCaptureScreen onSubmitted={onSubmitted} />, { submitDream });
 
     fireEvent.changeText(screen.getByLabelText("Dream text"), "I was walking through a quiet station.");
-    fireEvent.changeText(screen.getByLabelText("Mood"), "calm");
+    fireEvent.press(screen.getByTestId("dream-mood-calm"));
+    fireEvent.press(screen.getByTestId("dream-sleepQuality-4"));
+    fireEvent.changeText(screen.getByLabelText("Tags"), "station, notebook");
+    fireEvent.press(screen.getByTestId("dream-tags-add"));
     fireEvent.press(screen.getByText("Interpret dream"));
 
     await waitFor(() => expect(submitDream).toHaveBeenCalledTimes(1));
     expect(submitDream).toHaveBeenCalledWith(
       expect.objectContaining({
         text: "I was walking through a quiet station.",
-        mood: "calm"
+        mood: "calm",
+        sleepQuality: 4,
+        tags: ["station", "notebook"]
       })
     );
     await waitFor(() => expect(onSubmitted).toHaveBeenCalledWith(mockDream.id));

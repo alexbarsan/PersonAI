@@ -39,18 +39,25 @@ describe("ProfileForm", () => {
 
     fireEvent.changeText(screen.getByLabelText("Age"), "41");
     fireEvent.changeText(screen.getByLabelText("Fears"), "heights, exams");
+    fireEvent.press(screen.getByTestId("profile-fears-add"));
     fireEvent.changeText(screen.getByLabelText("Interests"), "music, walking");
+    fireEvent.press(screen.getByTestId("profile-interests-add"));
     fireEvent.changeText(screen.getByLabelText("Recent life events"), "new home");
+    fireEvent.press(screen.getByTestId("profile-recentLifeEvents-add"));
+    fireEvent.press(screen.getByTestId("profile-sex-female"));
+    fireEvent.press(screen.getByTestId("profile-stressLevel-4"));
     fireEvent.press(screen.getByText("Save profile"));
 
     await waitFor(() => expect(updateProfile).toHaveBeenCalledTimes(1));
     expect(updateProfile).toHaveBeenCalledWith(
       expect.objectContaining({
         age: 41,
+        sex: "female",
         traits: expect.objectContaining({
           fears: ["heights", "exams"],
           interests: ["music", "walking"],
-          recentLifeEvents: ["new home"]
+          recentLifeEvents: ["new home"],
+          stressLevel: "4"
         }),
         consent: {
           aiProcessing: true,

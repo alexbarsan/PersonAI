@@ -7,6 +7,7 @@ import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from
 import { useApiClient } from "@/api/apiContext";
 import { ProfileResponse } from "@/api/dto";
 import { AppShell, BrandMark } from "@/components/AppShell";
+import { ChoiceOption, ChoiceSet, FivePointScale, TagEditor } from "@/components/FieldControls";
 import { toProfileFormValues, toProfileUpdateRequest } from "@/features/profile/profileMapping";
 import {
   defaultProfileFormValues,
@@ -19,6 +20,27 @@ import { useTheme } from "@/theme/ThemeProvider";
 type ProfileFormProps = {
   mode: "onboarding" | "profile";
 };
+
+const sexOptions: ChoiceOption[] = [
+  { label: "Female", value: "female" },
+  { label: "Male", value: "male" },
+  { label: "Intersex", value: "intersex" },
+  { label: "Prefer not to say", value: "" }
+];
+
+const relationshipOptions: ChoiceOption[] = [
+  { label: "Single", value: "single" },
+  { label: "Partnered", value: "partnered" },
+  { label: "Married", value: "married" },
+  { label: "Other", value: "other" }
+];
+
+const sleepPatternOptions: ChoiceOption[] = [
+  { label: "Regular", value: "regular" },
+  { label: "Light", value: "light" },
+  { label: "Restless", value: "restless" },
+  { label: "Shift work", value: "shift-work" }
+];
 
 export function ProfileForm({ mode }: ProfileFormProps) {
   const api = useApiClient();
@@ -66,22 +88,22 @@ export function ProfileForm({ mode }: ProfileFormProps) {
 
       <View style={[styles.panel, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
         <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Basics</Text>
-        <Field control={form.control} label="Age" name="age" keyboardType="number-pad" />
-        <Field control={form.control} label="Language" name="language" />
-        <Field control={form.control} label="Timezone" name="timezone" />
-        <Field control={form.control} label="Sex" name="sex" />
+        <Field control={form.control} label="Age" name="age" keyboardType="number-pad" placeholder="33" />
+        <Field control={form.control} label="Language" name="language" placeholder="en" />
+        <Field control={form.control} label="Timezone" name="timezone" placeholder="Europe/Bucharest" />
+        <ChoiceField control={form.control} label="Sex" name="sex" options={sexOptions} />
         <Field control={form.control} label="Gender identity" name="genderIdentity" />
 
         <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Traits</Text>
-        <Field control={form.control} label="Fears" name="fears" placeholder="deep water, exams" />
-        <Field control={form.control} label="Allergies" name="allergies" />
-        <Field control={form.control} label="Interests" name="interests" placeholder="journaling, hiking" />
+        <TagField control={form.control} label="Fears" name="fears" placeholder="Add a fear" />
+        <TagField control={form.control} label="Allergies" name="allergies" placeholder="Add an allergy" />
+        <TagField control={form.control} label="Interests" name="interests" placeholder="Add an interest" />
         <Field control={form.control} label="Occupation" name="occupation" />
-        <Field control={form.control} label="Relationship status" name="relationshipStatus" />
+        <ChoiceField control={form.control} label="Relationship status" name="relationshipStatus" options={relationshipOptions} />
         <Field control={form.control} label="Cultural background" name="culturalBackground" />
-        <Field control={form.control} label="Sleep pattern" name="sleepPattern" />
-        <Field control={form.control} label="Stress level" name="stressLevel" />
-        <Field control={form.control} label="Recent life events" name="recentLifeEvents" />
+        <ChoiceField control={form.control} label="Sleep pattern" name="sleepPattern" options={sleepPatternOptions} />
+        <ScaleField control={form.control} label="Stress level" name="stressLevel" />
+        <TagField control={form.control} label="Recent life events" name="recentLifeEvents" placeholder="Add a recent event" />
 
         <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Consent</Text>
         <Consent control={form.control} label="AI processing" name="consentAiProcessing" required />
@@ -190,6 +212,90 @@ function Field({
             <Text style={[styles.error, { color: theme.colors.warning }]}>{fieldState.error.message}</Text>
           ) : null}
         </View>
+      )}
+    />
+  );
+}
+
+function ChoiceField({
+  control,
+  label,
+  name,
+  options
+}: {
+  control: ReturnType<typeof useForm<ProfileFormValues>>["control"];
+  label: string;
+  name: "sex" | "relationshipStatus" | "sleepPattern";
+  options: ChoiceOption[];
+}) {
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field, fieldState }) => (
+        <ChoiceSet
+          error={fieldState.error?.message}
+          label={label}
+          onChange={field.onChange}
+          options={options}
+          testID={`profile-${name}`}
+          value={String(field.value ?? "")}
+        />
+      )}
+    />
+  );
+}
+
+function ScaleField({
+  control,
+  label,
+  name
+}: {
+  control: ReturnType<typeof useForm<ProfileFormValues>>["control"];
+  label: string;
+  name: "stressLevel";
+}) {
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field, fieldState }) => (
+        <FivePointScale
+          error={fieldState.error?.message}
+          label={label}
+          onChange={field.onChange}
+          testID={`profile-${name}`}
+          value={String(field.value ?? "")}
+        />
+      )}
+    />
+  );
+}
+
+function TagField({
+  control,
+  label,
+  name,
+  placeholder
+}: {
+  control: ReturnType<typeof useForm<ProfileFormValues>>["control"];
+  label: string;
+  name: "fears" | "allergies" | "interests" | "recentLifeEvents";
+  placeholder?: string;
+}) {
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field, fieldState }) => (
+        <TagEditor
+          error={fieldState.error?.message}
+          label={label}
+          onChange={field.onChange}
+          placeholder={placeholder}
+          testID={`profile-${name}`}
+          value={String(field.value ?? "")}
+        />
       )}
     />
   );

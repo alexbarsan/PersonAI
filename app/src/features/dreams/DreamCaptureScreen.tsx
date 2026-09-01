@@ -7,6 +7,7 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-
 import { useApiClient } from "@/api/apiContext";
 import { ApiError } from "@/api/client";
 import { AppShell, BrandMark } from "@/components/AppShell";
+import { ChoiceOption, ChoiceSet, FivePointScale, TagEditor } from "@/components/FieldControls";
 import { toSubmitDreamRequest } from "@/features/dreams/dreamCaptureMapping";
 import { VoiceCapturePanel } from "@/features/dreams/VoiceCapturePanel";
 import { defaultDreamCaptureValues, DreamCaptureValues, dreamCaptureSchema } from "@/features/dreams/dreamCaptureSchema";
@@ -15,6 +16,14 @@ import { useDreamResultStore } from "@/state/dreamResultStore";
 import { useTheme } from "@/theme/ThemeProvider";
 
 type DreamCaptureScreenProps = { onSubmitted?: (dreamId: string) => void };
+
+const moodOptions: ChoiceOption[] = [
+  { label: "Calm", value: "calm" },
+  { label: "Curious", value: "curious" },
+  { label: "Joyful", value: "joyful" },
+  { label: "Anxious", value: "anxious" },
+  { label: "Unsettled", value: "unsettled" }
+];
 
 export function DreamCaptureScreen({ onSubmitted }: DreamCaptureScreenProps) {
   const api = useApiClient();
@@ -45,11 +54,9 @@ export function DreamCaptureScreen({ onSubmitted }: DreamCaptureScreenProps) {
         <View style={[styles.form, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
           <Field control={form.control} label="Dream text" name="text" multiline placeholder="I remember..." />
           <VoiceCapturePanel onTranscript={(transcript) => form.setValue("text", transcript, { shouldDirty: true, shouldValidate: true })} />
-          <View style={styles.fieldRow}>
-            <Field control={form.control} label="Mood" name="mood" />
-            <Field control={form.control} label="Sleep quality" name="sleepQuality" keyboardType="number-pad" />
-          </View>
-          <Field control={form.control} label="Tags" name="tags" placeholder="water, recurring" />
+          <DreamChoiceField control={form.control} label="Mood" name="mood" options={moodOptions} />
+          <DreamScaleField control={form.control} label="Sleep quality" name="sleepQuality" />
+          <DreamTagField control={form.control} label="Tags" name="tags" placeholder="Add a tag" />
           <Field control={form.control} label="Occurred at" name="occurredAt" placeholder="2026-07-01" />
           {submitDream.isError ? <ErrorMessage error={submitDream.error} /> : null}
           <Pressable accessibilityRole="button" onPress={onSubmit} testID="submit-dream" style={[styles.button, { backgroundColor: theme.colors.primary }]}>
@@ -65,6 +72,90 @@ export function DreamCaptureScreen({ onSubmitted }: DreamCaptureScreenProps) {
 function Field({ control, label, name, multiline, keyboardType, placeholder }: { control: ReturnType<typeof useForm<DreamCaptureValues>>["control"]; label: string; name: keyof DreamCaptureValues; multiline?: boolean; keyboardType?: "default" | "number-pad"; placeholder?: string }) {
   const theme = useTheme();
   return <Controller control={control} name={name} render={({ field, fieldState }) => <View style={[styles.field, multiline ? styles.wideField : null]}><Text style={[styles.label, { color: theme.colors.text }]}>{label}</Text><TextInput accessibilityLabel={label} keyboardType={keyboardType} multiline={multiline} onChangeText={field.onChange} placeholder={placeholder} placeholderTextColor={theme.colors.mutedText} style={[multiline ? styles.textArea : styles.input, { backgroundColor: theme.colors.background, borderColor: theme.colors.border, color: theme.colors.text }]} testID={`dream-${String(name)}`} textAlignVertical={multiline ? "top" : "center"} value={field.value} />{fieldState.error ? <Text style={[styles.error, { color: theme.colors.warning }]}>{fieldState.error.message}</Text> : null}</View>} />;
+}
+
+function DreamChoiceField({
+  control,
+  label,
+  name,
+  options
+}: {
+  control: ReturnType<typeof useForm<DreamCaptureValues>>["control"];
+  label: string;
+  name: "mood";
+  options: ChoiceOption[];
+}) {
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field, fieldState }) => (
+        <ChoiceSet
+          error={fieldState.error?.message}
+          label={label}
+          onChange={field.onChange}
+          options={options}
+          testID={`dream-${name}`}
+          value={field.value ?? ""}
+        />
+      )}
+    />
+  );
+}
+
+function DreamScaleField({
+  control,
+  label,
+  name
+}: {
+  control: ReturnType<typeof useForm<DreamCaptureValues>>["control"];
+  label: string;
+  name: "sleepQuality";
+}) {
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field, fieldState }) => (
+        <FivePointScale
+          error={fieldState.error?.message}
+          label={label}
+          onChange={field.onChange}
+          testID={`dream-${name}`}
+          value={field.value ?? ""}
+        />
+      )}
+    />
+  );
+}
+
+function DreamTagField({
+  control,
+  label,
+  name,
+  placeholder
+}: {
+  control: ReturnType<typeof useForm<DreamCaptureValues>>["control"];
+  label: string;
+  name: "tags";
+  placeholder?: string;
+}) {
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field, fieldState }) => (
+        <TagEditor
+          error={fieldState.error?.message}
+          label={label}
+          onChange={field.onChange}
+          placeholder={placeholder}
+          testID={`dream-${name}`}
+          value={field.value ?? ""}
+        />
+      )}
+    />
+  );
 }
 
 function ErrorMessage({ error }: { error: Error }) {
@@ -89,7 +180,6 @@ const styles = StyleSheet.create({
   form: { borderRadius: 8, borderWidth: 1, gap: 16, padding: 16 },
   field: { flex: 1, gap: 6 },
   wideField: { flexBasis: "100%" },
-  fieldRow: { flexDirection: "row", gap: 10 },
   label: { fontSize: 13, fontWeight: "800" },
   input: { borderRadius: 6, borderWidth: 1, fontSize: 15, minHeight: 46, paddingHorizontal: 12 },
   textArea: { borderRadius: 6, borderWidth: 1, fontSize: 16, lineHeight: 23, minHeight: 180, padding: 13 },
