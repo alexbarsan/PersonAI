@@ -23,7 +23,11 @@ The journal lists previous dream submissions for the signed-in user. You can ope
 
 Insights currently summarize recurring themes and current dream streaks from your journal.
 
-Future Dream DNA analytics will turn months of journal history into a personal map of recurring patterns: frequent symbols, emotions, people, places, scenarios, timing patterns, and correlations. Pattern examples include `water` in 3 dreams, `flying` in 11 dreams, anxiety at 15%, happiness at 55%, dreams about being late appearing more often during the work week, or a recurring person/location appearing across several dreams.
+As your journal grows, Dream DNA builds a personal map of recurring symbols, emotions, people, places, scenarios, activity, and guarded timing observations. Results include sample sizes and are reflective patterns, not causes, predictions, or diagnoses.
+
+## Ask Dream DNA
+
+Open **Ask**, enter a question about patterns in your dream history, and select **Ask Dream DNA**. The app retrieves a small set of relevant dreams and shows the answer, observations, and the journal entries used as evidence. AI processing and dream-history consent must be enabled. If your semantic memory has not been indexed yet, the app will ask you to try again later. Free and Premium daily limits apply.
 
 ## Premium
 

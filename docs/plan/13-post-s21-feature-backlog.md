@@ -12,7 +12,7 @@ This backlog captures product capabilities from `docs/to-be-analyzed/catch-dream
 | S25 | Dream image generation | Complete behind a disabled-by-default launch flag. | Added image provider abstraction, premium entitlement check, idempotent SQS job, private S3 persistence, signed access, retry-safe worker handling, and per-attempt AI cost/latency ledger rows. Nova Canvas is configured as a switchable Bedrock adapter but is not enabled. | Added premium-aware image request, queued/generating/failed/completed states, and signed-image rendering in the dream result screen. |
 | S26 | Embeddings and semantic memory | Context history is summary-based; async embedding jobs and production retrieval integration remain. | Add pgvector migration, embedding provider abstraction, Bedrock Titan Embeddings V2 adapter, dream embeddings, and consent-aware retrieval foundation. SQS backfill and pipeline wiring move to S32. | Add settings/disclosure copy and similar-context indicators where useful. |
 | S27 | Similar dreams and Dream DNA | Complete for fact-based analytics. Semantic matches remain empty until new embeddings can be generated. | Added recurring fact groups, sample sizes, date coverage, monthly activity, guarded weekday/weekend rate comparisons, and owner-scoped similar-dream endpoint. Similarity is empty without a source embedding and never crosses user boundaries. | Reworked Insights into a personal dream map with recurring categories, percentages, score averages, activity, timing observations, and reflective language. |
-| S28 | Ask DreamLens | Users cannot ask questions over their own dream history. | Add retrieval-backed question endpoint, prompt/schema, safety rules, quota/cost ledger integration, and no-full-history prompt tests. | Add question UI, answer view, loading/error states, and history links. |
+| S28 | Ask Dream DNA | Complete in code; live answers remain dependent on Titan embeddings becoming available and existing dreams being backfilled. | Added `POST /v1/dreams/ask`, owner-scoped pgvector retrieval, compact-summary prompts, consent checks, tier quotas, schema/source validation, fail-closed memory behavior, and separate embedding/answer cost rows. | Added question, answer, evidence-link, loading, quota, consent, and memory-not-ready states with deterministic mock coverage. |
 | S29 | Deep Interpretation | Entitlement flag exists, but premium deep-analysis flow is not wired to a stronger model or richer context. | Add deep interpretation endpoint or request mode, model routing, richer retrieved context, tier limits, and cost controls. | Add deep-analysis entry point and result state. |
 | S30 | Social sign-in providers | Cognito auth is scaffolded, but provider-specific launch setup is incomplete. | Configure Cognito hosted UI providers for Google and Apple first; Facebook is optional after privacy/product review. | Add provider buttons and platform-specific OAuth validation. |
 | S31 | Admin and business metrics | Metrics exist technically, but no admin view exists for MAU, conversion, revenue, AI cost, AWS cost, or gross margin. | Add admin-only metrics endpoints and least-privilege authorization. | Add internal dashboard or connect external BI later. |
@@ -21,7 +21,7 @@ This backlog captures product capabilities from `docs/to-be-analyzed/catch-dream
 
 ## Product Rules
 
-- Dream DNA and Ask DreamLens must present patterns and correlations, not causal, diagnostic, or predictive claims. Timing callouts require at least three occurrences plus both weekday and weekend dream samples.
+- Dream DNA questions must present patterns and correlations, not causal, diagnostic, or predictive claims. Timing callouts require at least three occurrences plus both weekday and weekend dream samples.
 - Retrieval must use embeddings and compact summaries, not full journal prompts.
 - Dream DNA is the long-term product center: after enough history exists, show a personal map of recurring symbols, emotions, people, places, scenarios, timing patterns, and month-over-month changes.
 - Pattern statements must include sample size/date range when practical. Example: `water` in 3 dreams, `flying` in 11 dreams, anxiety 15%, happiness 55%, dreams about being late 3.3x more common during the work week, recurring person `Alex` 5 times.
@@ -39,7 +39,7 @@ This backlog captures product capabilities from `docs/to-be-analyzed/catch-dream
 - Which currently supported image provider launches first. The Nova Canvas adapter is implemented but disabled because the available model is marked legacy; select, authorize, and cost-review a supported model before enabling it.
 - Whether historical completed dreams should be backfilled into the new `DreamFacts` projection before S27 analytics launches.
 - Whether Facebook social login is worth the privacy/review overhead for v1 global launch.
-- Whether Ask DreamLens and Deep Interpretation are premium-only at launch.
+- Whether Ask Dream DNA should remain available to Free users at one question per day or become Premium-only at launch.
 - Final monthly/yearly product IDs and tier limits after real cost data exists.
 - Native local backup duration, Premium AWS retention duration, and whether Free audio is ever uploaded or retained in AWS.
 - Device transcription libraries and minimum supported language/platform matrix for iOS, Android, and web.
@@ -49,5 +49,5 @@ This backlog captures product capabilities from `docs/to-be-analyzed/catch-dream
 1. Resolve the Titan Embeddings V2 account quota with AWS Support, then retry/backfill failed embedding jobs and verify semantic matches return results.
 2. Decide whether historical completed dreams should be backfilled into `DreamFacts` before analytics launches.
 3. Select and approve a supported image provider, then configure cost/quotas and enable S25 in a controlled dev test.
-4. S28 Ask DreamLens with retrieval, safety rules, and per-operation cost controls.
+4. Live-verify S28 Ask Dream DNA after semantic backfill, then start S29 Deep Interpretation.
 5. S33 local-first voice before native store launch, after selecting the device transcription adapter and retention windows.

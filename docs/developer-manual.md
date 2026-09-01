@@ -51,6 +51,12 @@ The app defaults to mock API mode through `app/app.json`.
 
 `VoiceTranscription` is disabled by default in local configuration. The API accepts only authenticated Premium uploads and enforces supported audio types, a 10 MB size cap, a three-minute duration cap, and a daily request cap. Input and generated transcript objects use the private asset bucket; source audio is deleted after extraction unless `retainRecording` is explicitly true.
 
+## Ask Dream DNA
+
+`POST /v1/dreams/ask` accepts `{ "question": "..." }`. It requires an authenticated profile with AI-processing and history-use consent, embeds the question, retrieves only that user's nearest dream summaries, validates the model's JSON and referenced dream IDs, and fails with `503` if semantic memory is unavailable. `AskDreams` config controls Free/Premium daily limits and retrieval size. `Embedding:InputCostPerMillionTokensUsd` records the query-embedding estimate; the answer uses `ChatUsageCost`.
+
+Local mock mode provides a deterministic answer. A real environment also requires enabled embeddings and indexed dream rows; it never falls back to sending full journal history.
+
 For AWS, use `Provider=amazon-transcribe`, a private asset bucket, SQS worker, and task-role `transcribe:StartTranscriptionJob` / `transcribe:GetTranscriptionJob` permissions. Terraform enables this only in dev; QA and production remain disabled. The controlled dev transcription completed successfully on 2026-09-01, including ledger persistence and default source-object deletion. The batch `TranscribeAudio` estimate is configured at `$0.0001` per second for `us-east-1`; verify the AWS Price List before changing regions or launching another environment.
 
 To select the Astra brand variant for a build or shell session:
