@@ -98,6 +98,16 @@ resource "aws_wafv2_web_acl" "regional" {
       managed_rule_group_statement {
         name        = "AWSManagedRulesCommonRuleSet"
         vendor_name = "AWS"
+
+        # Voice captures are multipart audio and legitimately exceed this managed rule's 8 KB body threshold.
+        # The API enforces a stricter 10 MB type and size limit before queuing any transcription job.
+        rule_action_override {
+          name = "SizeRestrictions_BODY"
+
+          action_to_use {
+            count {}
+          }
+        }
       }
     }
 
