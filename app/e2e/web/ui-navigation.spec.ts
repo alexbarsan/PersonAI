@@ -18,6 +18,16 @@ test("signed-in navigation keeps core screens reachable", async ({ page }) => {
   await expect(page.getByTestId("request-anonymization")).toBeVisible();
 });
 
+test("web home makes voice capture immediately available", async ({ page }) => {
+  await page.goto("/");
+  await page.getByTestId("mock-sign-in").click();
+
+  await expect(page.getByTestId("voice-capture-panel")).toBeVisible();
+  await expect(page.getByTestId("voice-record-toggle")).toBeVisible();
+  await expect(page.getByText("Capture by voice", { exact: true })).toBeVisible();
+  await page.screenshot({ path: "test-results/home-voice-capture-desktop.png", fullPage: true });
+});
+
 test("onboarding uses structured choices, scales, and tags", async ({ page }) => {
   await page.goto("/");
   await page.getByTestId("mock-sign-in").click();

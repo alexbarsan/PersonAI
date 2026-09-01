@@ -35,6 +35,8 @@ describe("HomeScreen", () => {
     await waitFor(() => expect(screen.getByText("Today's dream")).toBeTruthy());
     await waitFor(() => expect(screen.getByText("Free: 3 dreams/day")).toBeTruthy());
     expect(screen.getByTestId("go-onboarding")).toBeTruthy();
+    expect(screen.getByTestId("voice-capture-panel")).toBeTruthy();
+    expect(screen.getByTestId("voice-record-toggle")).toBeTruthy();
 
     fireEvent.changeText(screen.getByLabelText("Dream text"), "I was walking through a quiet station.");
     fireEvent.changeText(screen.getByLabelText("Mood"), "calm");

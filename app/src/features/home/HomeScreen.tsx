@@ -8,6 +8,7 @@ import { useCognitoSignIn } from "@/auth/cognitoAuth";
 import { AppShell, BrandMark } from "@/components/AppShell";
 import { appConfig } from "@/core/config";
 import { useDreamDraftStore } from "@/state/dreamDraftStore";
+import { VoiceCapturePanel } from "@/features/dreams/VoiceCapturePanel";
 import { useTheme } from "@/theme/ThemeProvider";
 
 export function HomeScreen() {
@@ -84,6 +85,14 @@ export function HomeScreen() {
                   <Text style={{ ...styles.saveButtonText, color: theme.colors.primaryText }}>Save draft</Text>
                 </Pressable>
               </View>
+              <View style={styles.captureDivider} />
+              <VoiceCapturePanel
+                prominent
+                onTranscript={(transcript) => {
+                  setDraftText(transcript);
+                  saveDraft();
+                }}
+              />
               <Text testID="auth-state" style={{ ...styles.hiddenStatus, color: theme.colors.primaryText }}>{savedAt ? "Draft saved" : "Signed in"}</Text>
             </View>
 
@@ -182,6 +191,7 @@ const styles = StyleSheet.create({
   captureTitle: { fontSize: 25, fontWeight: "700", lineHeight: 31 },
   dreamInput: { borderRadius: 6, fontSize: 16, lineHeight: 23, minHeight: 150, padding: 14 },
   captureActions: { alignItems: "center", flexDirection: "row", gap: 10 },
+  captureDivider: { backgroundColor: "#536079", height: 1, marginVertical: 2 },
   moodInput: { borderRadius: 6, flex: 1, fontSize: 14, minHeight: 44, paddingHorizontal: 12 },
   saveButton: { alignItems: "center", borderRadius: 6, borderWidth: 1, justifyContent: "center", minHeight: 44, minWidth: 120 },
   saveButtonText: { fontSize: 14, fontWeight: "800" },

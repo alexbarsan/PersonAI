@@ -14,11 +14,12 @@ import { useTheme } from "@/theme/ThemeProvider";
 
 type VoiceCapturePanelProps = {
   onTranscript: (transcript: string) => void;
+  prominent?: boolean;
 };
 
 const maxDurationSeconds = 180;
 
-export function VoiceCapturePanel({ onTranscript }: VoiceCapturePanelProps) {
+export function VoiceCapturePanel({ onTranscript, prominent = false }: VoiceCapturePanelProps) {
   const api = useApiClient();
   const theme = useTheme();
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
@@ -90,9 +91,9 @@ export function VoiceCapturePanel({ onTranscript }: VoiceCapturePanelProps) {
   };
 
   return (
-    <View style={{ gap: 10 }}>
-      <Text style={{ color: theme.colors.text, fontSize: 15, fontWeight: "700" }}>Voice capture</Text>
-      <Text style={{ color: theme.colors.mutedText, fontSize: 13, lineHeight: 18 }}>
+    <View style={{ gap: 10 }} testID="voice-capture-panel">
+      <Text style={{ color: prominent ? theme.colors.primaryText : theme.colors.text, fontSize: 15, fontWeight: "700" }}>Capture by voice</Text>
+      <Text style={{ color: prominent ? "#dce3f2" : theme.colors.mutedText, fontSize: 13, lineHeight: 18 }}>
         Up to 3 minutes. Recordings are deleted after transcription unless you choose to keep one.
       </Text>
       <Pressable
@@ -108,21 +109,21 @@ export function VoiceCapturePanel({ onTranscript }: VoiceCapturePanelProps) {
       {recordingUri ? (
         <>
           <View style={{ alignItems: "center", flexDirection: "row", gap: 8, justifyContent: "space-between" }}>
-            <Text style={{ color: theme.colors.text, flex: 1, fontSize: 14 }}>Keep recording after transcription</Text>
+            <Text style={{ color: prominent ? theme.colors.primaryText : theme.colors.text, flex: 1, fontSize: 14 }}>Keep recording after transcription</Text>
             <Switch value={retainRecording} onValueChange={setRetainRecording} testID="voice-retention-toggle" />
           </View>
           <Pressable
             accessibilityRole="button"
             disabled={isTranscribing}
             onPress={transcribe}
-            style={{ alignItems: "center", backgroundColor: theme.colors.primary, borderRadius: 8, minHeight: 44, justifyContent: "center", opacity: isTranscribing ? 0.6 : 1, paddingHorizontal: 12 }}
+            style={{ alignItems: "center", backgroundColor: prominent ? theme.colors.sage : theme.colors.primary, borderRadius: 8, minHeight: 44, justifyContent: "center", opacity: isTranscribing ? 0.6 : 1, paddingHorizontal: 12 }}
             testID="voice-transcribe"
           >
-            <Text style={{ color: theme.colors.primaryText, fontWeight: "700" }}>{isTranscribing ? "Transcribing" : "Transcribe recording"}</Text>
+            <Text style={{ color: prominent ? theme.colors.text : theme.colors.primaryText, fontWeight: "700" }}>{isTranscribing ? "Transcribing" : "Transcribe recording"}</Text>
           </Pressable>
         </>
       ) : null}
-      {message ? <Text style={{ color: theme.colors.mutedText, fontSize: 13, lineHeight: 18 }}>{message}</Text> : null}
+      {message ? <Text style={{ color: prominent ? "#dce3f2" : theme.colors.mutedText, fontSize: 13, lineHeight: 18 }}>{message}</Text> : null}
     </View>
   );
 }
