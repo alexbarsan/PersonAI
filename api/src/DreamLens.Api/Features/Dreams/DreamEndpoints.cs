@@ -40,6 +40,19 @@ public static class DreamEndpoints
             .WithName("SubmitDream")
             .WithSummary("Submits a dream and returns an interpretation result.");
 
+        group.MapPost("ask", async (
+            AskDreamsRequest request,
+            [FromServices] AskDreamsHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var result = await handler.HandleAsync(request, cancellationToken);
+            return result.Response is not null
+                ? Results.Ok(result.Response)
+                : Results.Json(result.Errors, statusCode: result.StatusCode);
+        })
+            .WithName("AskDreamHistory")
+            .WithSummary("Answers a reflective question using owner-scoped semantic dream memory.");
+
         group.MapGet("{id:guid}", async (
             Guid id,
             [FromServices] GetDreamHandler handler,

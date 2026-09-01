@@ -68,6 +68,19 @@ describe("api client", () => {
     await expect(client.deleteDream("dream_mock_1")).resolves.toBeNull();
   });
 
+  it("asks a question over semantic dream memory", async () => {
+    const client = createApiClient({
+      baseUrl: "http://localhost",
+      getAccessToken: () => "test-token",
+      mockMode: false
+    });
+
+    const answer = await client.askDreams({ question: "When does water appear?" });
+
+    expect(answer.sources).toHaveLength(1);
+    expect(answer.sampleSize).toBe(1);
+  });
+
   it("reads entitlement state from the API", async () => {
     const client = createApiClient({
       baseUrl: "http://localhost",

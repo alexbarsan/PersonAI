@@ -11,4 +11,6 @@ public sealed class EmbeddingOptions
     public int Dimensions { get; set; } = 1024;
 
     public string Version { get; set; } = "1";
+
+    public decimal InputCostPerMillionTokensUsd { get; set; } = 0.02m;
 }

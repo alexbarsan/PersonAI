@@ -43,6 +43,25 @@ export type SubmitDreamRequest = {
   occurredAt?: string | null;
 };
 
+export type AskDreamsRequest = {
+  question: string;
+};
+
+export type AskDreamsResponse = {
+  answer: string;
+  observations: string[];
+  caveat: string;
+  sources: AskDreamSourceResponse[];
+  sampleSize: number;
+};
+
+export type AskDreamSourceResponse = {
+  id: string;
+  summary: string;
+  occurredAt: string | null;
+  createdAt: string;
+};
+
 export type DreamResponse = {
   id: string;
   createdAt: string;

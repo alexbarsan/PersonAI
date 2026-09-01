@@ -7,6 +7,7 @@ using DreamLens.Api.Features.Profile;
 using DreamLens.Api.Features.Privacy;
 using DreamLens.Api.Features.Voice;
 using DreamLens.Api.Infrastructure.Assets;
+using DreamLens.Api.Infrastructure.Embeddings;
 using DreamLens.Api.Infrastructure.Jobs;
 using DreamLens.Api.Infrastructure.Identity;
 using DreamLens.Api.Infrastructure.Persistence;
@@ -21,11 +22,53 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
+using Pgvector;
 
 namespace DreamLens.Api.IntegrationTests;
 
 public sealed class DreamEndpointTests
 {
+    private static readonly Guid AskSourceDreamId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+
+    [Fact]
+    public async Task AskDreamHistoryUsesOnlyOwnedSemanticMemoryAndRecordsCosts()
+    {
+        var answer = $$"""
+            {"answer":"Water appears near transitions in the indexed dream.","observations":["The source connects water and uncertainty."],"caveat":"This is a reflective observation, not a diagnosis.","referencedDreamIds":["{{AskSourceDreamId}}"]}
+            """;
+        using var app = CreateDreamApp(new StaticDreamChatClient(answer), embeddingsEnabled: true);
+        using var client = app.CreateAuthenticatedClient("subject-a");
+        await PutProfileAsync(client);
+        await app.AddSemanticDreamAsync(AskSourceDreamId, "subject-a", "A river appeared during a period of change.");
+        await app.AddSemanticDreamAsync(Guid.NewGuid(), "subject-b", "This other user's dream must never be retrieved.");
+
+        var response = await client.PostAsJsonAsync("/v1/dreams/ask", new AskDreamsRequest("When does water appear?"));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<AskDreamsResponse>();
+        Assert.NotNull(result);
+        Assert.Equal(1, result.SampleSize);
+        Assert.Equal(AskSourceDreamId, Assert.Single(result.Sources).Id);
+        var ledger = await app.GetCostLedgerRowsAsync();
+        Assert.Equal(["dream.query-embedding", "dream.ask"], ledger.Select(row => row.OperationType).ToArray());
+        Assert.All(ledger, row => Assert.Equal("subject-a", row.UserSubject));
+    }
+
+    [Fact]
+    public async Task AskDreamHistoryFailsClosedWhenMemoryIsNotReady()
+    {
+        using var app = CreateDreamApp(new StaticDreamChatClient("should not be used"), embeddingsEnabled: true);
+        using var client = app.CreateAuthenticatedClient("subject-a");
+        await PutProfileAsync(client);
+
+        var response = await client.PostAsJsonAsync("/v1/dreams/ask", new AskDreamsRequest("What pattern repeats?"));
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+        var ledger = await app.GetCostLedgerRowsAsync();
+        Assert.Single(ledger);
+        Assert.Equal("dream.query-embedding", ledger[0].OperationType);
+    }
+
     [Fact]
     public async Task DreamSubmissionReturnsUnauthorizedWithoutAuthentication()
     {
@@ -615,7 +658,8 @@ public sealed class DreamEndpointTests
         int rateLimitPermitLimit = 1000,
         TimeSpan? rateLimitWindow = null,
         List<string>? capturedLogs = null,
-        bool voiceTranscriptionEnabled = false)
+        bool voiceTranscriptionEnabled = false,
+        bool embeddingsEnabled = false)
     {
         var databaseName = $"dream-tests-{Guid.NewGuid():N}";
         var factory = new WebApplicationFactory<Program>()
@@ -636,7 +680,9 @@ public sealed class DreamEndpointTests
                         ["DreamRateLimiting:PermitLimit"] = rateLimitPermitLimit.ToString(System.Globalization.CultureInfo.InvariantCulture),
                         ["DreamRateLimiting:Window"] = (rateLimitWindow ?? TimeSpan.FromMinutes(1)).ToString(),
                         ["VoiceTranscription:Enabled"] = voiceTranscriptionEnabled.ToString(),
-                        ["VoiceTranscription:Provider"] = "fake"
+                        ["VoiceTranscription:Provider"] = "fake",
+                        ["Embedding:Enabled"] = embeddingsEnabled.ToString(),
+                        ["Embedding:Provider"] = "fake"
                     });
                     if (premiumSubjects is not null)
                     {
@@ -680,6 +726,8 @@ public sealed class DreamEndpointTests
                     services.AddScoped<GetDreamHandler>();
                     services.AddScoped<GetDreamFactsHandler>();
                     services.AddScoped<GetSimilarDreamsHandler>();
+                    services.AddScoped<SemanticMemoryService>();
+                    services.AddScoped<AskDreamsHandler>();
                     services.AddScoped<RequestDreamImageHandler>();
                     services.AddScoped<GetDreamImageHandler>();
                     services.AddScoped<ListDreamsHandler>();
@@ -830,6 +878,32 @@ public sealed class DreamEndpointTests
             using var scope = factory.Services.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<DreamLensDbContext>();
             dbContext.DreamFacts.AddRange(facts);
+            await dbContext.SaveChangesAsync();
+        }
+
+        public async Task AddSemanticDreamAsync(Guid id, string userSubject, string summary)
+        {
+            using var scope = factory.Services.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<DreamLensDbContext>();
+            dbContext.Dreams.Add(new DreamRecord
+            {
+                Id = id,
+                UserSubject = userSubject,
+                Text = summary,
+                TagsJson = "[]",
+                Status = "completed",
+                ResultJson = System.Text.Json.JsonSerializer.Serialize(new DreamResultResponse(summary, [], []))
+            });
+            dbContext.DreamEmbeddings.Add(new DreamEmbedding
+            {
+                DreamId = id,
+                UserSubject = userSubject,
+                Embedding = new Vector(new float[1024]),
+                Provider = "fake",
+                Model = "amazon.titan-embed-text-v2:0",
+                Dimensions = 1024,
+                Version = "1"
+            });
             await dbContext.SaveChangesAsync();
         }
     }

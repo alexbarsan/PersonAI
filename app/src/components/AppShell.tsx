@@ -12,6 +12,7 @@ const destinations = [
   { href: "/", label: "Today" },
   { href: "/journal", label: "Journal" },
   { href: "/insights", label: "Map" },
+  { href: "/ask", label: "Ask" },
   { href: "/profile", label: "Profile" }
 ] as const;
 

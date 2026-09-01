@@ -1,4 +1,6 @@
 import {
+  AskDreamsRequest,
+  AskDreamsResponse,
   DreamJournalResponse,
   DreamJournalFilters,
   DreamImageResponse,
@@ -32,6 +34,7 @@ export type ApiClient = {
   getProfile: () => Promise<ProfileResponse>;
   updateProfile: (request: ProfileUpdateRequest) => Promise<ProfileResponse>;
   submitDream: (request: SubmitDreamRequest) => Promise<DreamResponse>;
+  askDreams: (request: AskDreamsRequest) => Promise<AskDreamsResponse>;
   listDreams: (filters?: DreamJournalFilters) => Promise<DreamJournalResponse>;
   getDream: (id: string) => Promise<DreamResponse>;
   updateDreamJournal: (id: string, request: UpdateDreamJournalRequest) => Promise<DreamResponse>;
@@ -114,6 +117,11 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
         method: "POST",
         body: JSON.stringify(body)
     }),
+    askDreams: (body) =>
+      request<AskDreamsResponse>("/v1/dreams/ask", {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
     listDreams: (filters = {}) => request<DreamJournalResponse>(`/v1/dreams${toQueryString(filters)}`),
     getDream: (id) => request<DreamResponse>(`/v1/dreams/${id}`),
     updateDreamJournal: (id, body) =>

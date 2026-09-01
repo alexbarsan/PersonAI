@@ -1,6 +1,6 @@
 import type { ApiClient } from "@/api/client";
 import { ApiError } from "@/api/errors";
-import { mockAnonymizationRequest, mockDream, mockDreamImage, mockEntitlement, mockInsights, mockJournal, mockMe, mockProfile, mockUserDataExport } from "@/mocks/mockData";
+import { mockAnonymizationRequest, mockAskDreams, mockDream, mockDreamImage, mockEntitlement, mockInsights, mockJournal, mockMe, mockProfile, mockUserDataExport } from "@/mocks/mockData";
 
 export const mockApiClient: ApiClient = {
   getMe: async () => mockMe,
@@ -15,6 +15,7 @@ export const mockApiClient: ApiClient = {
 
     return mockDream;
   },
+  askDreams: async () => mockAskDreams,
   listDreams: async () => mockJournal,
   getDream: async () => mockDream,
   updateDreamJournal: async (_, request) => ({ ...mockDream, ...request }),

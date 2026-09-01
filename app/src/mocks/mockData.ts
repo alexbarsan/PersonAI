@@ -1,4 +1,5 @@
 import {
+  AskDreamsResponse,
   DreamJournalResponse,
   AnonymizationRequestResponse,
   DreamImageResponse,
@@ -8,6 +9,19 @@ import {
   MeResponse,
   ProfileResponse
 } from "@/api/dto";
+
+export const mockAskDreams: AskDreamsResponse = {
+  answer: "Water appears alongside moments of transition in the dreams currently indexed.",
+  observations: ["The river dream connects water with curiosity rather than immediate danger."],
+  caveat: "This is a reflective pattern from a small sample, not a diagnosis or prediction.",
+  sources: [{
+    id: "dream_mock_1",
+    summary: "The dream points to uncertainty and a wish for steadier ground.",
+    occurredAt: "2026-07-01",
+    createdAt: "2026-07-01T08:00:00Z"
+  }],
+  sampleSize: 1
+};
 
 export const mockMe: MeResponse = {
   subject: "mock-user",

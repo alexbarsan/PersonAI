@@ -1,0 +1,8 @@
+{
+  "id": "dream-history-guide",
+  "version": "1.0.0",
+  "displayName": "Dream DNA history guide",
+  "promptTemplate": "prompt.scriban",
+  "outputSchema": "output.schema.json",
+  "sectionMap": "section-map.json"
+}
