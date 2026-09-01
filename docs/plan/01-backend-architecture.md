@@ -132,7 +132,9 @@ Private user assets live in S3, separate from the public web build bucket:
 
 Store only S3 bucket/key/version metadata in PostgreSQL. Return signed URLs or proxied download endpoints, not public object URLs. Buckets must use Block Public Access, encryption at rest, lifecycle policies, and CloudTrail/S3 monitoring for sensitive operations.
 
-Voice recordings are Premium-only and opt-in. Validate accepted types, bytes, and duration before upload, cap daily transcription requests, and delete input/output objects after transcript extraction unless the user explicitly chose retention. Persist a ledger row for every attempt with provider, model, response time, status, failure category, and estimated duration-based cost.
+Server transcription is currently Premium-only and opt-in. Validate accepted types, bytes, and duration before upload, cap daily transcription requests, and delete input/output objects after transcript extraction unless the active tier policy and user-facing retention choice allow storage. Persist a ledger row for every attempt with provider, model, response time, status, failure category, and estimated duration-based cost.
+
+The planned local-first voice flow assigns a client-generated capture id before any network request. Upload and transcription commands must be idempotent so a durable client outbox can retry after timeouts without creating duplicate captures or charges. The API exposes enough state to reconcile `local-only`, `queued`, `uploading`, `transcribing`, `synced`, and `failed` client states. Free device-generated transcripts can be submitted as user-editable dream text without invoking the server transcription provider. Premium recordings continue through the private S3 and SQS path. Server retention windows are tier-specific configuration, not hard-coded client behavior.
 
 ## Context Builder
 

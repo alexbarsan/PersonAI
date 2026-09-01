@@ -1,6 +1,6 @@
 # Remaining Work
 
-Last updated after S24 voice capture and transcription on 2026-08-30.
+Last updated after S24 live voice verification on 2026-09-01.
 
 ## Planned Slices
 
@@ -19,6 +19,7 @@ The imported Catch Dreamer feature notes add several capabilities that are not f
 - Premium Deep Interpretation using a stronger model and richer retrieved context.
 - Cognito social sign-in provider setup for Google and Apple first; Facebook remains optional after product/privacy review.
 - Admin/business metrics view for MAU, conversion, revenue, AI cost, AWS cost, cost per user, and gross margin.
+- Local-first voice capture: durable native recording backup, retryable upload outbox, Free device transcription when supported, Premium server transcription, and explicit local/AWS retention windows.
 
 ## Known Gaps
 
@@ -29,10 +30,10 @@ The imported Catch Dreamer feature notes add several capabilities that are not f
 - Dev Cognito OAuth is wired to a hosted UI domain and the deployed web app is configured for real API mode. Production/QA Cognito domains, social providers, branded managed login, exact mobile callback URLs, and secure refresh-token persistence are still pending.
 - Maestro mobile flow exists, but local verification is blocked until Maestro is installed.
 - Terraform infrastructure is applied for dev. QA/prod still need remote state bootstrap, environment-specific Terraform values, GitHub environment variables, and protected `prod` approvals.
-- The dev ECS service runs Terraform task-definition revision 25 with Amazon Transcribe enabled, the same API image as the prior CI revision, and a local mock Premium grant for the confirmed dev account. Public `/health/live` and `/health/ready` checks pass. A controlled Premium-user transcription is still required to verify the end-to-end path, ledger row, and default source-audio deletion.
+- The dev ECS service runs Terraform task-definition revision 25 with Amazon Transcribe enabled, the same API image as the prior CI revision, and a local mock Premium grant for the confirmed dev account. Public `/health/live` and `/health/ready` checks pass. A controlled 29-second multilingual Premium transcription completed on 2026-09-01; CloudWatch showed the `voice.transcription` ledger write, SQS drained, and both temporary voice S3 prefixes were empty afterward. The dev WAF now counts only the managed `SizeRestrictions_BODY` subrule so bounded multipart audio reaches the API's 10 MB validation.
 - Deployment workflows are active for dev. Real QA/prod deployment still requires environment-specific ECR/ECS/S3/CloudFront outputs, EAS project setup, and final launch approvals.
 - `pgvector` foundation, SQS job wiring, embedding handler, and owner-scoped similar-dream endpoint are implemented. Titan Embeddings V2 cannot complete in dev until AWS Support resolves this account's zero on-demand RPM allocation, so the similarity endpoint correctly returns no matches until embeddings are backfilled.
-- A private KMS-encrypted S3 asset bucket and signed-access service are implemented. Voice input is private and deleted after transcription by default; explicit retention exposes it only through a short-lived signed URL. The premium dream-image handler and result UI are complete but disabled pending supported-model selection, explicit cost/quota configuration, Terraform IAM apply, and controlled dev verification. Export job generation remains future work.
+- A private KMS-encrypted S3 asset bucket and signed-access service are implemented. Voice input is private and deleted after transcription by default; explicit retention exposes it only through a short-lived signed URL. The future local-first client backup, Free device transcription, retry outbox, and tier-specific retention policy are tracked as S33. The premium dream-image handler and result UI are complete but disabled pending supported-model selection, explicit cost/quota configuration, Terraform IAM apply, and controlled dev verification. Export job generation remains future work.
 - Encrypted SQS queue/DLQ, durable job records, worker leases, retries, and backfill mechanics are implemented. Concrete image and transcription handlers are complete; export handling remains future work.
 - Local API image build verification remains blocked until Docker Desktop or another Docker daemon is running.
 - k6 smoke test script exists, but local execution is blocked until k6 is installed and a local or deployed API endpoint is available.
@@ -41,5 +42,6 @@ The imported Catch Dreamer feature notes add several capabilities that are not f
 - Monetization is mock-first: entitlement tiers, quota behavior, and paywall UI exist, but real RevenueCat/App Store/Google Play subscriptions, webhook validation, receipt verification, and store product IDs are not connected.
 - Dev DNS aliases are live for `dev.dreamdna.world` and `api.dev.dreamdna.world`. Production DNS names, CloudFront-scoped WAF ARN, and final Cognito hosted-domain settings still need final launch confirmation.
 - The AI cost ledger covers dream interpretation, dream-image attempts, and voice transcription, including operation type, model/provider, status, latency, failure category, and estimated cost. Embeddings, repair retries, Ask DreamLens, and deep interpretation still need consistent per-operation rows. S22 fact extraction does not call an AI model and therefore does not create a new ledger operation.
+- DeepSeek currently maps the configured `deepseek-chat` compatibility alias to `deepseek-v4-flash`. Validate output compatibility and move to the explicit model id before production instead of relying on the deprecated alias.
 - Dream result detail uses an in-memory submitted-result cache before falling back to `GET /v1/dreams/{id}`; Playwright covers the submit/result path, and S17+ should not depend on this cache behavior.
 - Approved anonymization is implemented using the Terraform-managed `dreamlens-admin` Cognito group or configured subject allow-list. `ai.ro.dodoloata@gmail.com` has not yet registered in the existing dev pool; run `scripts/add-cognito-privacy-admin.ps1` for each environment after registration.

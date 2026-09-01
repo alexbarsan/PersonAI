@@ -75,9 +75,12 @@ Use private S3 buckets for user-owned generated and exportable assets:
 
 - generated dream images
 - user data exports
+- transient or retained voice source assets
 - optional future upload assets
 
 These buckets are distinct from the public Expo web hosting bucket. They must use Block Public Access, encryption at rest, least-privilege IAM, lifecycle rules, and signed access. CloudFront can be added for optimized image delivery only when access control is preserved.
+
+Voice objects use separate prefixes and lifecycle rules from generated images and exports. Premium server transcription can retain audio only for the configured recovery window or when an explicit retention choice allows it. Free-tier AWS audio retention remains disabled unless product economics approve a short recovery window. Client backup lifetime and S3 lifetime are separate policies; successful API synchronization must be observable before the client removes its local recovery copy.
 
 ## Async Jobs
 
@@ -167,6 +170,7 @@ Generated images are expected to be more expensive than embeddings and should be
 ## Open Infrastructure Decisions
 
 - Backup retention period.
+- Native local voice backup window and Premium/free S3 voice retention windows.
 - Exact ECS task sizes.
 - Whether dev RDS can be single-AZ while prod is multi-AZ.
 - Whether async workers launch as ECS Fargate services or Lambda functions.
