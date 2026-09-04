@@ -1,6 +1,6 @@
 # Remaining Work
 
-Last updated during S35 Nova Multimodal Embeddings migration on 2026-09-05.
+Last updated during S29 Premium Deep Interpretation on 2026-09-05.
 
 ## Planned Slices
 
@@ -17,7 +17,7 @@ The imported Catch Dreamer feature notes add several capabilities that are not f
 - Historical fact backfill and semantic clustering: the Dream DNA overview and semantic similarity foundation are implemented, while clustering remains future work.
 - S28 Ask Dream DNA is implemented with owner-scoped semantic retrieval, safety/schema validation, quotas, cost rows, evidence links, and UI. Live Nova memory is available in dev; one authenticated response smoke test remains.
 - S34 interpretation feedback is implemented with persisted like/dislike state, controlled dislike reasons, optional details, export coverage, and anonymization cleanup.
-- Premium Deep Interpretation using a stronger model and richer retrieved context.
+- S29 Premium Deep Interpretation is implemented with persisted owner-scoped results, `deepseek-v4-pro`, Nova/pgvector related-dream context, consent and quota controls, cost/latency ledger entries, and app UI. Dev deployment and one authenticated invocation remain.
 - Cognito social sign-in provider setup for Google and Apple first; Facebook remains optional after product/privacy review.
 - Admin/business metrics view for MAU, conversion, revenue, AI cost, AWS cost, cost per user, and gross margin.
 - Local-first voice capture: durable native recording backup, retryable upload outbox, Free device transcription when supported, Premium server transcription, and explicit local/AWS retention windows.
@@ -42,7 +42,7 @@ The imported Catch Dreamer feature notes add several capabilities that are not f
 - Astra config proves PersonaKit backend reuse and app brand switching, but there is not yet a separate Astra distribution, app icon/splash set, store metadata, or dedicated UI flow beyond the shared generic renderer.
 - Monetization is mock-first: entitlement tiers, quota behavior, and paywall UI exist, but real RevenueCat/App Store/Google Play subscriptions, webhook validation, receipt verification, and store product IDs are not connected.
 - Dev DNS aliases are live for `dev.dreamdna.world` and `api.dev.dreamdna.world`. Production DNS names, CloudFront-scoped WAF ARN, and final Cognito hosted-domain settings still need final launch confirmation.
-- The AI cost ledger covers dream interpretation, query and background embeddings, S28 answers, dream-image attempts, and voice transcription, including operation type, model/provider, status, latency, failure category, and estimated cost. Interpretation repair retries and deep interpretation still need consistent per-operation rows. S22 fact extraction does not call an AI model and therefore does not create a new ledger operation.
-- DeepSeek currently maps the configured `deepseek-chat` compatibility alias to `deepseek-v4-flash`. Validate output compatibility and move to the explicit model id before production instead of relying on the deprecated alias.
+- The AI cost ledger covers base and deep interpretation, query and background embeddings, S28 answers, dream-image attempts, and voice transcription, including operation type, model/provider, status, latency, failure category, and estimated cost. Interpretation repair retries are still aggregated into their parent operation rather than stored as separate ledger rows. S22 fact extraction does not call an AI model and therefore does not create a new ledger operation.
+- DeepSeek model routing now uses explicit `deepseek-v4-flash` for base interpretation and `deepseek-v4-pro` for Premium deep interpretation. Validate both schemas with controlled dev calls and review current provider pricing before production.
 - Dream result detail uses an in-memory submitted-result cache before falling back to `GET /v1/dreams/{id}`; Playwright covers the submit/result path, and S17+ should not depend on this cache behavior.
 - Approved anonymization is implemented using the Terraform-managed `dreamlens-admin` Cognito group or configured subject allow-list. `ai.ro.dodoloata@gmail.com` has not yet registered in the existing dev pool; run `scripts/add-cognito-privacy-admin.ps1` for each environment after registration.

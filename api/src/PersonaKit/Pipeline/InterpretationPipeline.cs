@@ -53,11 +53,15 @@ public sealed class InterpretationPipeline(
             cancellationToken);
 
         var attempts = 0;
+        var chatOptions = CreateChatOptions(request.Execution);
         ChatResponse response;
         try
         {
             attempts++;
-            response = await chatClient.GetResponseAsync([new ChatMessage(ChatRole.System, prompt)], cancellationToken: cancellationToken);
+            response = await chatClient.GetResponseAsync(
+                [new ChatMessage(ChatRole.System, prompt)],
+                chatOptions,
+                cancellationToken);
         }
         catch (Exception)
         {
@@ -78,7 +82,8 @@ public sealed class InterpretationPipeline(
                         new ChatMessage(ChatRole.Assistant, outputJson),
                         new ChatMessage(ChatRole.User, BuildRepairPrompt(outputJson, schemaJson))
                     ],
-                    cancellationToken: cancellationToken);
+                    chatOptions,
+                    cancellationToken);
                 outputJson = response.Text;
                 validation = await outputValidator.ValidateAsync(persona, outputJson, cancellationToken);
             }
@@ -115,6 +120,21 @@ public sealed class InterpretationPipeline(
             Required schema:
             {schemaJson}
             """;
+    }
+
+    private static ChatOptions? CreateChatOptions(InterpretationExecutionOptions? execution)
+    {
+        if (execution is null)
+        {
+            return null;
+        }
+
+        return new ChatOptions
+        {
+            ModelId = execution.ModelId,
+            MaxOutputTokens = execution.MaxOutputTokens,
+            Temperature = execution.Temperature
+        };
     }
 
     private async Task<AiRunRecord> RecordRunAsync(

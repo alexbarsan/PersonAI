@@ -22,7 +22,10 @@ public sealed record DreamResponse(
 public sealed record DreamResultResponse(
     string Summary,
     DreamSectionResponse[] Sections,
-    string[] FollowUpQuestions);
+    string[] FollowUpQuestions,
+    DreamSafetyResponse? Safety = null);
+
+public sealed record DreamSafetyResponse(string SelfHarmRisk, string Notes);
 
 public sealed record DreamSectionResponse(string Kind, string Title, object? Content);
 
@@ -38,6 +41,26 @@ public sealed record DreamFactResponse(
 public sealed record SimilarDreamsResponse(Guid DreamId, SimilarDreamResponse[] Matches);
 
 public sealed record SimilarDreamResponse(Guid Id, string? Summary, string? OccurredAt, decimal Similarity);
+
+public sealed record DeepInterpretationResponse(
+    Guid Id,
+    Guid DreamId,
+    DreamResultResponse Result,
+    SimilarDreamResponse[] Sources,
+    string Model,
+    DateTimeOffset CreatedAt);
+
+public sealed record DeepInterpretationResult(
+    DeepInterpretationResponse? Interpretation,
+    int StatusCode,
+    IReadOnlyDictionary<string, string[]> Errors)
+{
+    public static DeepInterpretationResult Success(DeepInterpretationResponse interpretation) =>
+        new(interpretation, StatusCodes.Status200OK, new Dictionary<string, string[]>());
+
+    public static DeepInterpretationResult Failure(int statusCode, string key, string message) =>
+        new(null, statusCode, new Dictionary<string, string[]> { [key] = [message] });
+}
 
 public sealed record DreamJournalResponse(DreamJournalItemResponse[] Items);
 

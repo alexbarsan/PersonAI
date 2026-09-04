@@ -36,7 +36,16 @@ public sealed record UserDataExportDream(
     string? ErrorMessage,
     UserDataExportFact[] Facts,
     UserDataExportImage[] Images,
-    UserDataExportInterpretationFeedback? Feedback);
+    UserDataExportInterpretationFeedback? Feedback,
+    UserDataExportDeepInterpretation? DeepInterpretation);
+
+public sealed record UserDataExportDeepInterpretation(
+    string ResultJson,
+    string SourcesJson,
+    string Provider,
+    string Model,
+    string PersonaVersion,
+    DateTimeOffset CreatedAt);
 
 public sealed record UserDataExportInterpretationFeedback(
     string Rating,

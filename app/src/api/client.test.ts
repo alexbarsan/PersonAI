@@ -98,6 +98,20 @@ describe("api client", () => {
     expect(feedback.reasons).toEqual(["too-generic"]);
   });
 
+  it("creates and reads a Premium deep interpretation", async () => {
+    const client = createApiClient({
+      baseUrl: "http://localhost",
+      getAccessToken: () => "test-token",
+      mockMode: false
+    });
+
+    const created = await client.createDeepInterpretation("dream_mock_1");
+    const saved = await client.getDeepInterpretation("dream_mock_1");
+
+    expect(created.model).toBe("deepseek-v4-pro");
+    expect(saved.sources[0]?.summary).toBe("A river appeared beside an open door.");
+  });
+
   it("reads entitlement state from the API", async () => {
     const client = createApiClient({
       baseUrl: "http://localhost",

@@ -31,6 +31,108 @@ public sealed class DreamEndpointTests
     private static readonly Guid AskSourceDreamId = Guid.Parse("11111111-1111-1111-1111-111111111111");
 
     [Fact]
+    public async Task PremiumUserCanCreateAndReuseDeepInterpretationWithRelatedDreamContext()
+    {
+        var chatClient = new StaticDreamChatClient(CanonicalAiOutput);
+        using var app = CreateDreamApp(
+            chatClient,
+            premiumSubjects: ["subject-a"],
+            embeddingsEnabled: true);
+        using var client = app.CreateAuthenticatedClient("subject-a");
+        await PutProfileAsync(client);
+        var sourceId = Guid.NewGuid();
+        var relatedId = Guid.NewGuid();
+        await app.AddSemanticDreamAsync(sourceId, "subject-a", "I crossed a river while beginning a new job.");
+        await app.AddSemanticDreamAsync(relatedId, "subject-a", "A familiar river returned beside an open door.");
+        await app.AddSemanticDreamAsync(Guid.NewGuid(), "subject-b", "Another user's private dream.");
+
+        var createdResponse = await client.PostAsync($"/v1/dreams/{sourceId}/deep-interpretation", null);
+        var repeatedResponse = await client.PostAsync($"/v1/dreams/{sourceId}/deep-interpretation", null);
+        var getResponse = await client.GetAsync($"/v1/dreams/{sourceId}/deep-interpretation");
+
+        Assert.Equal(HttpStatusCode.OK, createdResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, repeatedResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
+        var created = await createdResponse.Content.ReadFromJsonAsync<DeepInterpretationResponse>();
+        Assert.NotNull(created);
+        Assert.Equal("deepseek-v4-pro", created.Model);
+        Assert.Equal(relatedId, Assert.Single(created.Sources).Id);
+        Assert.Single(chatClient.Calls);
+        Assert.Equal("deepseek-v4-pro", chatClient.Calls[0].Options?.ModelId);
+        Assert.Contains("A familiar river returned beside an open door.", chatClient.Calls[0].Messages.Single().Text);
+        Assert.DoesNotContain("Another user's private dream.", chatClient.Calls[0].Messages.Single().Text);
+        var ledger = Assert.Single(await app.GetCostLedgerRowsAsync());
+        Assert.Equal("dream.deep-interpretation", ledger.OperationType);
+        Assert.Equal("deepseek-v4-pro", ledger.Model);
+        Assert.Equal("completed", ledger.Status);
+        Assert.Equal(0.00033m, ledger.EstimatedCostUsd);
+        Assert.Equal(1, await app.CountDeepInterpretationsAsync());
+    }
+
+    [Fact]
+    public async Task DeepInterpretationRequiresPremiumAndDoesNotCallProvider()
+    {
+        var chatClient = new StaticDreamChatClient(CanonicalAiOutput);
+        using var app = CreateDreamApp(chatClient, embeddingsEnabled: true);
+        using var client = app.CreateAuthenticatedClient("subject-a");
+        await PutProfileAsync(client);
+        var dreamId = Guid.NewGuid();
+        await app.AddSemanticDreamAsync(dreamId, "subject-a", "I crossed a river while beginning a new job.");
+
+        var response = await client.PostAsync($"/v1/dreams/{dreamId}/deep-interpretation", null);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Empty(chatClient.Calls);
+        Assert.Equal(0, await app.CountDeepInterpretationsAsync());
+    }
+
+    [Fact]
+    public async Task DeepInterpretationDoesNotExposeOrProcessAnotherUsersDream()
+    {
+        var chatClient = new StaticDreamChatClient(CanonicalAiOutput);
+        using var app = CreateDreamApp(
+            chatClient,
+            premiumSubjects: ["subject-a"],
+            embeddingsEnabled: true);
+        using var client = app.CreateAuthenticatedClient("subject-a");
+        await PutProfileAsync(client);
+        var dreamId = Guid.NewGuid();
+        await app.AddSemanticDreamAsync(dreamId, "subject-b", "Another user's private dream.");
+
+        var getResponse = await client.GetAsync($"/v1/dreams/{dreamId}/deep-interpretation");
+        var createResponse = await client.PostAsync($"/v1/dreams/{dreamId}/deep-interpretation", null);
+
+        Assert.Equal(HttpStatusCode.NotFound, getResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, createResponse.StatusCode);
+        Assert.Empty(chatClient.Calls);
+        Assert.Equal(0, await app.CountDeepInterpretationsAsync());
+    }
+
+    [Fact]
+    public async Task DeepInterpretationEnforcesCompletedDailyQuota()
+    {
+        var chatClient = new StaticDreamChatClient(CanonicalAiOutput);
+        using var app = CreateDreamApp(
+            chatClient,
+            premiumSubjects: ["subject-a"],
+            embeddingsEnabled: true,
+            deepDailyLimit: 1);
+        using var client = app.CreateAuthenticatedClient("subject-a");
+        await PutProfileAsync(client);
+        var firstDreamId = Guid.NewGuid();
+        var secondDreamId = Guid.NewGuid();
+        await app.AddSemanticDreamAsync(firstDreamId, "subject-a", "I crossed a river while beginning a new job.");
+        await app.AddSemanticDreamAsync(secondDreamId, "subject-a", "I found an open door beside the same river.");
+
+        var firstResponse = await client.PostAsync($"/v1/dreams/{firstDreamId}/deep-interpretation", null);
+        var response = await client.PostAsync($"/v1/dreams/{secondDreamId}/deep-interpretation", null);
+
+        Assert.Equal(HttpStatusCode.OK, firstResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.TooManyRequests, response.StatusCode);
+        Assert.Single(chatClient.Calls);
+    }
+
+    [Fact]
     public async Task AskDreamHistoryUsesOnlyOwnedSemanticMemoryAndRecordsCosts()
     {
         var answer = $$"""
@@ -710,7 +812,8 @@ public sealed class DreamEndpointTests
         TimeSpan? rateLimitWindow = null,
         List<string>? capturedLogs = null,
         bool voiceTranscriptionEnabled = false,
-        bool embeddingsEnabled = false)
+        bool embeddingsEnabled = false,
+        int deepDailyLimit = 3)
     {
         var databaseName = $"dream-tests-{Guid.NewGuid():N}";
         var factory = new WebApplicationFactory<Program>()
@@ -733,7 +836,12 @@ public sealed class DreamEndpointTests
                         ["VoiceTranscription:Enabled"] = voiceTranscriptionEnabled.ToString(),
                         ["VoiceTranscription:Provider"] = "fake",
                         ["Embedding:Enabled"] = embeddingsEnabled.ToString(),
-                        ["Embedding:Provider"] = "fake"
+                        ["Embedding:Provider"] = "fake",
+                        ["DeepInterpretation:Enabled"] = "true",
+                        ["DeepInterpretation:Model"] = "deepseek-v4-pro",
+                        ["DeepInterpretation:DailyLimit"] = deepDailyLimit.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                        ["DeepInterpretation:InputCostPerMillionTokensUsd"] = "1.32",
+                        ["DeepInterpretation:OutputCostPerMillionTokensUsd"] = "3.96"
                     });
                     if (premiumSubjects is not null)
                     {
@@ -757,6 +865,7 @@ public sealed class DreamEndpointTests
 
                 builder.ConfigureTestServices(services =>
                 {
+                    services.PostConfigure<DeepInterpretationOptions>(configured => configured.DailyLimit = deepDailyLimit);
                     services.RemoveAll<DbContextOptions<DreamLensDbContext>>();
                     services.RemoveAll<DreamLensDbContext>();
                     services.RemoveAll<IChatClient>();
@@ -781,6 +890,7 @@ public sealed class DreamEndpointTests
                     services.AddScoped<UpdateDreamFeedbackHandler>();
                     services.AddScoped<SemanticMemoryService>();
                     services.AddScoped<AskDreamsHandler>();
+                    services.AddScoped<DeepInterpretationHandler>();
                     services.AddScoped<RequestDreamImageHandler>();
                     services.AddScoped<GetDreamImageHandler>();
                     services.AddScoped<ListDreamsHandler>();
@@ -907,6 +1017,13 @@ public sealed class DreamEndpointTests
             return await dbContext.DreamInterpretationFeedback.CountAsync();
         }
 
+        public async Task<int> CountDeepInterpretationsAsync()
+        {
+            using var scope = factory.Services.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<DreamLensDbContext>();
+            return await dbContext.DreamDeepInterpretations.CountAsync();
+        }
+
         public async Task ProcessVoiceCaptureAsync()
         {
             var message = factory.Services.GetRequiredService<RecordingAsyncJobQueue>().Messages
@@ -971,14 +1088,17 @@ public sealed class DreamEndpointTests
 
     private sealed class StaticDreamChatClient(string responseText) : IChatClient
     {
+        public List<StaticDreamChatCall> Calls { get; } = [];
+
         public Task<ChatResponse> GetResponseAsync(
             IEnumerable<ChatMessage> messages,
             ChatOptions? options = null,
             CancellationToken cancellationToken = default)
         {
+            Calls.Add(new StaticDreamChatCall(messages.ToArray(), options));
             return Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant, responseText))
             {
-                ModelId = "deepseek-chat",
+                ModelId = options?.ModelId ?? "deepseek-v4-flash",
                 Usage = new UsageDetails
                 {
                     InputTokenCount = 100,
@@ -999,6 +1119,8 @@ public sealed class DreamEndpointTests
         {
         }
     }
+
+    private sealed record StaticDreamChatCall(IReadOnlyList<ChatMessage> Messages, ChatOptions? Options);
 
     private sealed class RecordingAsyncJobQueue : IAsyncJobQueue
     {

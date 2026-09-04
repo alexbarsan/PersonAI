@@ -2,6 +2,8 @@
 
 Dream DNA is a dream-interpretation app built on PersonaKit, a reusable AI/persona pipeline for sibling apps. The product goal is to become a personal map of the user's subconscious over time, using structured dream history to surface recurring symbols, emotions, people, places, scenarios, and correlations. The current roadmap includes PostgreSQL `pgvector` semantic memory with 1,024-dimensional Amazon Nova Multimodal Embeddings, private S3 storage for generated images/exports/assets, SQS-backed async AI jobs, and per-operation AI cost/response-time tracking.
 
+Premium Deep Interpretation persists a stronger `deepseek-v4-pro` reading built from the user's profile and a bounded set of semantically related dream summaries. Normal interpretation uses `deepseek-v4-flash`; both paths keep provider routing behind PersonaKit.
+
 The planning source of truth lives in [docs/plan/readme.md](docs/plan/readme.md). Start with [docs/plan/decision-record.md](docs/plan/decision-record.md), then follow the slice workflow in [docs/plan/06-dev-orchestrator.md](docs/plan/06-dev-orchestrator.md).
 
 Current implementation status is tracked in [SLICE-STATUS.md](SLICE-STATUS.md).

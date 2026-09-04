@@ -1,0 +1,8 @@
+{
+  "id": "deep-dream-interpreter",
+  "version": "1.0.0",
+  "displayName": "Dream DNA Deep Interpretation",
+  "promptTemplate": "prompt.scriban",
+  "outputSchema": "../dream-interpreter/output.schema.json",
+  "sectionMap": "../dream-interpreter/section-map.json"
+}

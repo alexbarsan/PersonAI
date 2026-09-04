@@ -27,6 +27,9 @@ public sealed class ExportUserDataHandler(
         var interpretationFeedback = await dbContext.DreamInterpretationFeedback.AsNoTracking()
             .Where(feedback => feedback.UserSubject == subject && dreamIds.Contains(feedback.DreamId))
             .ToArrayAsync(cancellationToken);
+        var deepInterpretations = await dbContext.DreamDeepInterpretations.AsNoTracking()
+            .Where(interpretation => interpretation.UserSubject == subject && dreamIds.Contains(interpretation.DreamId))
+            .ToArrayAsync(cancellationToken);
         var facts = await dbContext.DreamFacts.AsNoTracking()
             .Where(fact => fact.UserSubject == subject && dreamIds.Contains(fact.DreamId))
             .ToArrayAsync(cancellationToken);
@@ -76,6 +79,15 @@ public sealed class ExportUserDataHandler(
                         JsonSerializer.Deserialize<string[]>(feedback.ReasonsJson) ?? [],
                         feedback.Details,
                         feedback.UpdatedAt))
+                    .SingleOrDefault(),
+                deepInterpretations.Where(interpretation => interpretation.DreamId == dream.Id)
+                    .Select(interpretation => new UserDataExportDeepInterpretation(
+                        interpretation.ResultJson,
+                        interpretation.SourcesJson,
+                        interpretation.Provider,
+                        interpretation.Model,
+                        interpretation.PersonaVersion,
+                        interpretation.CreatedAt))
                     .SingleOrDefault()))
                 .ToArray(),
             voiceCaptures.Select(capture => new UserDataExportVoiceCapture(

@@ -15,6 +15,8 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
 
     public DbSet<DreamInterpretationFeedback> DreamInterpretationFeedback => Set<DreamInterpretationFeedback>();
 
+    public DbSet<DreamDeepInterpretationRecord> DreamDeepInterpretations => Set<DreamDeepInterpretationRecord>();
+
     public DbSet<DreamFactRecord> DreamFacts => Set<DreamFactRecord>();
 
     public DbSet<DreamImageRecord> DreamImages => Set<DreamImageRecord>();
@@ -116,6 +118,25 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
             entity.HasOne<DreamRecord>()
                 .WithOne()
                 .HasForeignKey<DreamInterpretationFeedback>(feedback => feedback.DreamId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<DreamDeepInterpretationRecord>(entity =>
+        {
+            entity.ToTable("DreamDeepInterpretations");
+            entity.HasKey(interpretation => interpretation.Id);
+            entity.HasIndex(interpretation => interpretation.DreamId).IsUnique();
+            entity.HasIndex(interpretation => new { interpretation.UserSubject, interpretation.CreatedAt });
+            entity.Property(interpretation => interpretation.UserSubject).HasMaxLength(256).IsRequired();
+            entity.Property(interpretation => interpretation.ResultJson).IsRequired();
+            entity.Property(interpretation => interpretation.SourcesJson).IsRequired();
+            entity.Property(interpretation => interpretation.Provider).HasMaxLength(64).IsRequired();
+            entity.Property(interpretation => interpretation.Model).HasMaxLength(128).IsRequired();
+            entity.Property(interpretation => interpretation.PersonaVersion).HasMaxLength(32).IsRequired();
+            entity.Property(interpretation => interpretation.CreatedAt).IsRequired();
+            entity.HasOne<DreamRecord>()
+                .WithOne()
+                .HasForeignKey<DreamDeepInterpretationRecord>(interpretation => interpretation.DreamId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

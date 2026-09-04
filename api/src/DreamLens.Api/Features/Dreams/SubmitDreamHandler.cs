@@ -173,10 +173,18 @@ public sealed class SubmitDreamHandler(
 
     private static DreamResultResponse MapResult(InterpretationResult result)
     {
+        using var document = JsonDocument.Parse(result.RawJson);
+        var safety = document.RootElement.TryGetProperty("safety", out var safetyElement)
+            ? new DreamSafetyResponse(
+                safetyElement.GetProperty("selfHarmRisk").GetString() ?? "none",
+                safetyElement.GetProperty("notes").GetString() ?? "")
+            : null;
+
         return new DreamResultResponse(
             result.Summary,
             result.Sections.Select(section => new DreamSectionResponse(section.Kind, section.Title, section.Content)).ToArray(),
-            result.FollowUpQuestions);
+            result.FollowUpQuestions,
+            safety);
     }
 
     private AiCostLedgerRecord CreateLedgerRecord(

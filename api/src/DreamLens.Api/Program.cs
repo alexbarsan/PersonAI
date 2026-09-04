@@ -64,6 +64,7 @@ var dreamEndpointsEnabled = DreamEndpointsEnabled(builder.Configuration);
 if (dreamEndpointsEnabled)
 {
     builder.Services.Configure<AskDreamsOptions>(builder.Configuration.GetSection("AskDreams"));
+    builder.Services.Configure<DeepInterpretationOptions>(builder.Configuration.GetSection("DeepInterpretation"));
     builder.Services.AddScoped<IDreamQuotaService, EfDreamQuotaService>();
     builder.Services.AddScoped<SubmitDreamHandler>();
     builder.Services.AddScoped<GetDreamHandler>();
@@ -72,6 +73,7 @@ if (dreamEndpointsEnabled)
     builder.Services.AddScoped<GetDreamFeedbackHandler>();
     builder.Services.AddScoped<UpdateDreamFeedbackHandler>();
     builder.Services.AddScoped<AskDreamsHandler>();
+    builder.Services.AddScoped<DeepInterpretationHandler>();
     builder.Services.AddScoped<RequestDreamImageHandler>();
     builder.Services.AddScoped<GetDreamImageHandler>();
     builder.Services.AddScoped<ListDreamsHandler>();

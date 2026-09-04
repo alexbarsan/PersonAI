@@ -62,6 +62,8 @@ Future post-S21 routes should stay versioned and feature-sliced:
 - `GET /v1/dreams/{id}/image-jobs/{jobId}`
 - `GET /v1/dreams/{id}/similar`
 - `POST /v1/dreams/ask`
+- `GET /v1/dreams/{id}/deep-interpretation`
+- `POST /v1/dreams/{id}/deep-interpretation`
 - `POST /v1/exports`
 - `GET /v1/exports/{jobId}`
 - `POST /v1/voice-captures`
@@ -109,7 +111,7 @@ PersonaKit should expose narrow abstractions:
 - `IResultSectionMapper`
 - `IInterpretationPipeline`
 
-AI providers are accessed through Microsoft.Extensions.AI `IChatClient`. The initial provider is DeepSeek through its OpenAI-compatible endpoint with model `deepseek-chat`. `deepseek-reasoner` is reserved for premium deep analysis.
+AI providers are accessed through Microsoft.Extensions.AI `IChatClient`. DeepSeek is accessed through its OpenAI-compatible endpoint. Base interpretation uses the explicit `deepseek-v4-flash` model; Premium Deep Interpretation routes the dedicated persona and richer retrieved context to `deepseek-v4-pro`. Model IDs remain typed environment configuration so a provider change does not alter the pipeline.
 
 Embeddings use a separate abstraction, not `IChatClient`. Default launch provider is Amazon Nova Multimodal Embeddings through Bedrock. Stored dream content uses `GENERIC_INDEX`; text queries use `TEXT_RETRIEVAL`. Keep provider/model/dimension/version on every embedding record, filter retrieval to the active model/version, and replace stale vectors during a bounded backfill. Embedding operations write AI operation ledger rows with token count, response time, status, failure kind, and estimated cost.
 

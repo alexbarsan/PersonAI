@@ -25,6 +25,8 @@ test("happy path: onboarding, submit dream, view result", async ({ page }) => {
   await expect(page.getByText("Dream result")).toBeVisible();
   await expect(page.getByText("The dream points to uncertainty and a wish for steadier ground.")).toBeVisible();
   await expect(page.getByText("Guidance")).toBeVisible();
+  await expect(page.getByText("Deep Interpretation", { exact: true })).toBeVisible();
+  await expect(page.getByText("View Premium", { exact: true })).toBeVisible();
   await page.getByText("Not for me", { exact: true }).click();
   await page.getByText("Too generic", { exact: true }).click();
   await page.getByLabel("Additional interpretation feedback").fill("The answer felt too broad.");

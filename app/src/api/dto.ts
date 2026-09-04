@@ -159,6 +159,20 @@ export type DreamSafetyResponse = {
   notes: string;
 };
 
+export type DeepInterpretationResponse = {
+  id: string;
+  dreamId: string;
+  result: DreamResultResponse;
+  sources: Array<{
+    id: string;
+    summary: string | null;
+    occurredAt: string | null;
+    similarity: number;
+  }>;
+  model: string;
+  createdAt: string;
+};
+
 export type DreamJournalResponse = {
   items: DreamJournalItemResponse[];
 };

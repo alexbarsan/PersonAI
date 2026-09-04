@@ -35,7 +35,16 @@ public sealed record ContextTraits(
 
 public sealed record ContextConsent(bool AiProcessing, bool SensitiveTraits, bool HistoryUse);
 
-public sealed record ContextHistory(string[] RecentThemes, int InteractionCount, string? LastSummary);
+public sealed record ContextHistory(
+    string[] RecentThemes,
+    int InteractionCount,
+    string? LastSummary,
+    ContextHistoryItem[]? RelatedDreams = null);
+
+public sealed record ContextHistoryItem(
+    string Summary,
+    string? OccurredAt,
+    decimal Relevance);
 
 public sealed record DreamInput(
     string Text,

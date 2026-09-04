@@ -57,6 +57,14 @@ The app defaults to mock API mode through `app/app.json`.
 
 Local mock mode provides a deterministic answer. A real environment also requires enabled embeddings and indexed dream rows; it never falls back to sending full journal history.
 
+## Premium Deep Interpretation
+
+`GET /v1/dreams/{id}/deep-interpretation` returns a previously saved owner-scoped analysis. `POST /v1/dreams/{id}/deep-interpretation` creates it once and returns the same saved result on later requests. Creation requires Premium entitlement, a completed base interpretation, profile data, AI-processing consent, and history-use consent.
+
+The handler retrieves up to `DeepInterpretation:RetrievalLimit` semantically related dream summaries from the same user, renders the dedicated `deep-dream-interpreter` persona, and routes the call to `DeepInterpretation:Model`. Dev, QA, and production default to `deepseek-v4-pro` with a daily limit of three and a 4,096-token output cap. Base interpretation uses the explicit `deepseek-v4-flash` model. Keep model IDs and peak token prices explicit in environment configuration and review them before production launch.
+
+Each attempted deep interpretation writes a `dream.deep-interpretation` AI cost ledger row with model, provider, status, attempts, tokens, latency, failure category, and estimated cost. The saved result and source list are included in data export and removed when its dream is deleted or the account is anonymized.
+
 ## Interpretation Feedback
 
 `GET /v1/dreams/{id}/feedback` returns the current user's saved rating or an empty feedback response. `PUT /v1/dreams/{id}/feedback` creates or replaces one owner-scoped record. Ratings are `like` or `dislike`; dislikes require at least one controlled reason and may include up to 1,000 characters of detail. Feedback does not invoke AI. It is included in Premium data exports and removed with the dream or during approved anonymization.

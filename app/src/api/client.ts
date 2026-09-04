@@ -5,6 +5,7 @@ import {
   DreamJournalFilters,
   DreamImageResponse,
   DreamFeedbackResponse,
+  DeepInterpretationResponse,
   DreamResponse,
   EntitlementResponse,
   InsightsResponse,
@@ -40,6 +41,8 @@ export type ApiClient = {
   listDreams: (filters?: DreamJournalFilters) => Promise<DreamJournalResponse>;
   getDream: (id: string) => Promise<DreamResponse>;
   getDreamFeedback: (id: string) => Promise<DreamFeedbackResponse>;
+  getDeepInterpretation: (id: string) => Promise<DeepInterpretationResponse>;
+  createDeepInterpretation: (id: string) => Promise<DeepInterpretationResponse>;
   updateDreamFeedback: (id: string, request: UpdateDreamFeedbackRequest) => Promise<DreamFeedbackResponse>;
   updateDreamJournal: (id: string, request: UpdateDreamJournalRequest) => Promise<DreamResponse>;
   requestDreamImage: (id: string, request?: RequestDreamImageRequest) => Promise<DreamImageResponse>;
@@ -129,6 +132,8 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
     listDreams: (filters = {}) => request<DreamJournalResponse>(`/v1/dreams${toQueryString(filters)}`),
     getDream: (id) => request<DreamResponse>(`/v1/dreams/${id}`),
     getDreamFeedback: (id) => request<DreamFeedbackResponse>(`/v1/dreams/${id}/feedback`),
+    getDeepInterpretation: (id) => request<DeepInterpretationResponse>(`/v1/dreams/${id}/deep-interpretation`),
+    createDeepInterpretation: (id) => request<DeepInterpretationResponse>(`/v1/dreams/${id}/deep-interpretation`, { method: "POST" }),
     updateDreamFeedback: (id, body) =>
       request<DreamFeedbackResponse>(`/v1/dreams/${id}/feedback`, {
         method: "PUT",

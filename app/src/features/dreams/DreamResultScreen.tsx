@@ -9,6 +9,7 @@ import { DreamImageResponse, DreamResponse } from "@/api/dto";
 import { AppShell, BrandMark } from "@/components/AppShell";
 import { ResultSectionRenderer } from "@/features/dreams/ResultSectionRenderer";
 import { InterpretationFeedbackPanel } from "@/features/dreams/InterpretationFeedbackPanel";
+import { DeepInterpretationPanel } from "@/features/dreams/DeepInterpretationPanel";
 import { SafetyCard } from "@/features/dreams/SafetyCard";
 import { useDreamResultStore } from "@/state/dreamResultStore";
 import { useTheme } from "@/theme/ThemeProvider";
@@ -33,11 +34,11 @@ export function DreamResultScreen() {
     queryFn: () => api.getEntitlements(),
     enabled: Boolean(result) && !elevatedSafety
   });
-  const canGenerateImage = entitlement.data?.deepAnalysisEnabled === true;
+  const hasPremiumDreamFeatures = entitlement.data?.deepAnalysisEnabled === true;
   const image = useQuery({
     queryKey: ["dream-image", id],
     queryFn: () => api.getDreamImage(id!),
-    enabled: Boolean(id) && canGenerateImage,
+    enabled: Boolean(id) && hasPremiumDreamFeatures,
     retry: false,
     refetchInterval: (query) => {
       const status = query.state.data?.status;
@@ -93,9 +94,10 @@ export function DreamResultScreen() {
             </View>
           )}
           <InterpretationFeedbackPanel dreamId={dream.data!.id} />
+          {elevatedSafety ? null : <DeepInterpretationPanel dreamId={dream.data!.id} enabled={hasPremiumDreamFeatures} />}
           {elevatedSafety ? null : (
             <DreamImagePanel
-              canGenerateImage={canGenerateImage}
+              canGenerateImage={hasPremiumDreamFeatures}
               image={image.data}
               isRequesting={requestImage.isPending}
               onRequest={() => requestImage.mutate()}

@@ -4,6 +4,7 @@ import {
   AnonymizationRequestResponse,
   DreamImageResponse,
   DreamFeedbackResponse,
+  DeepInterpretationResponse,
   DreamResponse,
   EntitlementResponse,
   InsightsResponse,
@@ -97,6 +98,36 @@ export const mockDream: DreamResponse = {
     }
   },
   errorMessage: null
+};
+
+export const mockDeepInterpretation: DeepInterpretationResponse = {
+  id: "deep_interpretation_mock_1",
+  dreamId: mockDream.id,
+  result: {
+    summary: "Across this dream and your recent patterns, water may mark moments when change feels close but not yet settled.",
+    sections: [
+      {
+        kind: "text",
+        title: "Interpretation",
+        content: "The river and open path may hold two possibilities at once: uncertainty about change and curiosity about where it leads."
+      },
+      {
+        kind: "list",
+        title: "Alternative interpretations",
+        content: ["Water may simply reflect a vivid sensory memory rather than a recurring emotional pattern."]
+      }
+    ],
+    followUpQuestions: ["What was changing in your life when water began appearing?"],
+    safety: { selfHarmRisk: "none", notes: "" }
+  },
+  sources: [{
+    id: "dream_mock_related_1",
+    summary: "A river appeared beside an open door.",
+    occurredAt: "2026-06-21",
+    similarity: 0.82
+  }],
+  model: "deepseek-v4-pro",
+  createdAt: "2026-09-05T08:00:00Z"
 };
 
 export const mockDreamImage: DreamImageResponse = {

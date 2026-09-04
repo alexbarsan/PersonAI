@@ -101,6 +101,31 @@ public sealed class InterpretationPipelineTests
         Assert.DoesNotContain("falling into dark water", serializedRuns);
     }
 
+    [Fact]
+    public async Task ExecutionOptionsAreAppliedToInitialAndRepairCalls()
+    {
+        var chatClient = new RecordingChatClient(
+            new ChatResponse(new ChatMessage(ChatRole.Assistant, "{ invalid json")),
+            new ChatResponse(new ChatMessage(ChatRole.Assistant, CanonicalJson.AiOutput)));
+        var store = new InMemoryInterpretationStore();
+        var pipeline = CreatePipeline(chatClient, store);
+        var request = CreateRequest() with
+        {
+            Execution = new InterpretationExecutionOptions("deepseek-v4-pro", 4096, 0.8f)
+        };
+
+        var result = await pipeline.InterpretAsync(request);
+
+        Assert.Equal(InterpretationStatus.Completed, result.Status);
+        Assert.Equal(2, chatClient.Calls.Count);
+        Assert.All(chatClient.Calls, call =>
+        {
+            Assert.Equal("deepseek-v4-pro", call.Options?.ModelId);
+            Assert.Equal(4096, call.Options?.MaxOutputTokens);
+            Assert.Equal(0.8f, call.Options?.Temperature);
+        });
+    }
+
     private static InterpretationPipeline CreatePipeline(RecordingChatClient chatClient, InMemoryInterpretationStore store)
     {
         var secret = Convert.ToBase64String(Encoding.UTF8.GetBytes("12345678901234567890123456789012"));
@@ -161,7 +186,7 @@ internal sealed class RecordingChatClient(params object[] results) : IChatClient
         ChatOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        Calls.Add(new RecordingChatCall(messages.Select(message => message.Clone()).ToArray()));
+        Calls.Add(new RecordingChatCall(messages.Select(message => message.Clone()).ToArray(), options));
         var result = _results.Dequeue();
         return result switch
         {
@@ -186,4 +211,4 @@ internal sealed class RecordingChatClient(params object[] results) : IChatClient
     }
 }
 
-internal sealed record RecordingChatCall(IReadOnlyList<ChatMessage> Messages);
+internal sealed record RecordingChatCall(IReadOnlyList<ChatMessage> Messages, ChatOptions? Options);

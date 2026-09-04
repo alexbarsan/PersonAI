@@ -103,6 +103,30 @@ public static class DreamEndpoints
             .WithName("GetSimilarDreams")
             .WithSummary("Returns the current user's closest semantic dream matches when embeddings are available.");
 
+        group.MapGet("{id:guid}/deep-interpretation", async (
+            Guid id,
+            [FromServices] DeepInterpretationHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var interpretation = await handler.GetAsync(id, cancellationToken);
+            return interpretation is null ? Results.NotFound() : Results.Ok(interpretation);
+        })
+            .WithName("GetDeepInterpretation")
+            .WithSummary("Returns the persisted Premium Deep Interpretation for an owned dream.");
+
+        group.MapPost("{id:guid}/deep-interpretation", async (
+            Guid id,
+            [FromServices] DeepInterpretationHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var result = await handler.CreateAsync(id, cancellationToken);
+            return result.Interpretation is not null
+                ? Results.Ok(result.Interpretation)
+                : Results.Json(result.Errors, statusCode: result.StatusCode);
+        })
+            .WithName("CreateDeepInterpretation")
+            .WithSummary("Creates one persisted, Premium-only deep interpretation using related dream context.");
+
         group.MapGet("{id:guid}/feedback", async (
             Guid id,
             [FromServices] GetDreamFeedbackHandler handler,
