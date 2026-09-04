@@ -75,6 +75,21 @@ export type DreamResponse = {
   journalNote?: string | null;
 };
 
+export type DreamFeedbackRating = "like" | "dislike";
+
+export type DreamFeedbackResponse = {
+  rating: DreamFeedbackRating | null;
+  reasons: string[];
+  details: string | null;
+  updatedAt: string | null;
+};
+
+export type UpdateDreamFeedbackRequest = {
+  rating: DreamFeedbackRating;
+  reasons?: string[];
+  details?: string | null;
+};
+
 export type DreamJournalFilters = {
   query?: string;
   mood?: string;

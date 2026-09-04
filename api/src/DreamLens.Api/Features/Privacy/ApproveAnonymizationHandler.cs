@@ -46,6 +46,7 @@ public sealed class ApproveAnonymizationHandler(
 
         var profiles = await dbContext.UserProfiles.Where(profile => profile.UserSubject == subject).ToArrayAsync(cancellationToken);
         var dreams = await dbContext.Dreams.Where(dream => dream.UserSubject == subject).ToArrayAsync(cancellationToken);
+        var interpretationFeedback = await dbContext.DreamInterpretationFeedback.Where(feedback => feedback.UserSubject == subject).ToArrayAsync(cancellationToken);
         var facts = await dbContext.DreamFacts.Where(fact => fact.UserSubject == subject).ToArrayAsync(cancellationToken);
         var embeddings = await dbContext.DreamEmbeddings.Where(embedding => embedding.UserSubject == subject).ToArrayAsync(cancellationToken);
         var images = await dbContext.DreamImages.Where(image => image.UserSubject == subject).ToArrayAsync(cancellationToken);
@@ -55,6 +56,7 @@ public sealed class ApproveAnonymizationHandler(
 
         dbContext.UserProfiles.RemoveRange(profiles);
         dbContext.Dreams.RemoveRange(dreams);
+        dbContext.DreamInterpretationFeedback.RemoveRange(interpretationFeedback);
         dbContext.DreamFacts.RemoveRange(facts);
         dbContext.DreamEmbeddings.RemoveRange(embeddings);
         dbContext.DreamImages.RemoveRange(images);

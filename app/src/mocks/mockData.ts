@@ -3,12 +3,20 @@ import {
   DreamJournalResponse,
   AnonymizationRequestResponse,
   DreamImageResponse,
+  DreamFeedbackResponse,
   DreamResponse,
   EntitlementResponse,
   InsightsResponse,
   MeResponse,
   ProfileResponse
 } from "@/api/dto";
+
+export const mockDreamFeedback: DreamFeedbackResponse = {
+  rating: null,
+  reasons: [],
+  details: null,
+  updatedAt: null
+};
 
 export const mockAskDreams: AskDreamsResponse = {
   answer: "Water appears alongside moments of transition in the dreams currently indexed.",

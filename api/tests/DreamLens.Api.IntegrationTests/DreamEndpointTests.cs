@@ -132,6 +132,46 @@ public sealed class DreamEndpointTests
     }
 
     [Fact]
+    public async Task UserCanStoreAndReplaceOwnedInterpretationFeedback()
+    {
+        using var app = CreateDreamApp(new StaticDreamChatClient(CanonicalAiOutput));
+        using var userA = app.CreateAuthenticatedClient("subject-a");
+        using var userB = app.CreateAuthenticatedClient("subject-b");
+        await PutProfileAsync(userA);
+        var dream = await (await userA.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest()))
+            .Content.ReadFromJsonAsync<DreamResponse>();
+
+        var empty = await (await userA.GetAsync($"/v1/dreams/{dream!.Id}/feedback"))
+            .Content.ReadFromJsonAsync<DreamFeedbackResponse>();
+        var invalid = await userA.PutAsJsonAsync(
+            $"/v1/dreams/{dream.Id}/feedback",
+            new UpdateDreamFeedbackRequest("dislike", [], null));
+        var dislikedResponse = await userA.PutAsJsonAsync(
+            $"/v1/dreams/{dream.Id}/feedback",
+            new UpdateDreamFeedbackRequest("dislike", ["too-generic", "missed-details"], "It overlooked the station."));
+        var disliked = await dislikedResponse.Content.ReadFromJsonAsync<DreamFeedbackResponse>();
+        var otherUser = await userB.GetAsync($"/v1/dreams/{dream.Id}/feedback");
+        var likedResponse = await userA.PutAsJsonAsync(
+            $"/v1/dreams/{dream.Id}/feedback",
+            new UpdateDreamFeedbackRequest("like", [], null));
+        var liked = await likedResponse.Content.ReadFromJsonAsync<DreamFeedbackResponse>();
+
+        Assert.NotNull(empty);
+        Assert.Null(empty.Rating);
+        Assert.Equal(HttpStatusCode.BadRequest, invalid.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, dislikedResponse.StatusCode);
+        Assert.Equal("dislike", disliked!.Rating);
+        Assert.Equal(["too-generic", "missed-details"], disliked.Reasons);
+        Assert.Equal("It overlooked the station.", disliked.Details);
+        Assert.Equal(HttpStatusCode.NotFound, otherUser.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, likedResponse.StatusCode);
+        Assert.Equal("like", liked!.Rating);
+        Assert.Empty(liked.Reasons);
+        Assert.Null(liked.Details);
+        Assert.Equal(1, await app.CountInterpretationFeedbackAsync());
+    }
+
+    [Fact]
     public async Task UserCanFetchNormalizedFactsForOwnDream()
     {
         using var app = CreateDreamApp(new StaticDreamChatClient(CanonicalAiOutput));
@@ -281,7 +321,11 @@ public sealed class DreamEndpointTests
         using var app = CreateDreamApp(new StaticDreamChatClient(CanonicalAiOutput), premiumSubjects: ["subject-a"]);
         using var client = app.CreateAuthenticatedClient("subject-a");
         await PutProfileAsync(client);
-        await client.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest());
+        var dream = await (await client.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest()))
+            .Content.ReadFromJsonAsync<DreamResponse>();
+        await client.PutAsJsonAsync(
+            $"/v1/dreams/{dream!.Id}/feedback",
+            new UpdateDreamFeedbackRequest("dislike", ["inaccurate"], "The emotion did not fit."));
 
         var response = await client.GetAsync("/v1/privacy/export");
         var export = await response.Content.ReadFromJsonAsync<UserDataExportResponse>();
@@ -291,6 +335,9 @@ public sealed class DreamEndpointTests
         Assert.Equal(33, export.Profile.Age);
         Assert.Single(export.Dreams);
         Assert.Contains("falling into dark water", export.Dreams[0].Text, StringComparison.Ordinal);
+        var exportedFeedback = Assert.IsType<UserDataExportInterpretationFeedback>(export.Dreams[0].Feedback);
+        Assert.Equal("dislike", exportedFeedback.Rating);
+        Assert.Equal("The emotion did not fit.", exportedFeedback.Details);
         Assert.Single(export.AiOperations);
         Assert.Equal("dream.interpretation", export.AiOperations[0].OperationType);
     }
@@ -314,7 +361,11 @@ public sealed class DreamEndpointTests
         using var nonAdmin = app.CreateAuthenticatedClient("subject-b");
         using var admin = app.CreateAuthenticatedClient("privacy-admin", "dreamlens-admin");
         await PutProfileAsync(user);
-        await user.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest());
+        var dream = await (await user.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest()))
+            .Content.ReadFromJsonAsync<DreamResponse>();
+        await user.PutAsJsonAsync(
+            $"/v1/dreams/{dream!.Id}/feedback",
+            new UpdateDreamFeedbackRequest("dislike", ["not-useful"], null));
 
         var requestResponse = await user.PostAsync("/v1/privacy/anonymization-requests", null);
         var request = await requestResponse.Content.ReadFromJsonAsync<AnonymizationRequestResponse>();
@@ -726,6 +777,8 @@ public sealed class DreamEndpointTests
                     services.AddScoped<GetDreamHandler>();
                     services.AddScoped<GetDreamFactsHandler>();
                     services.AddScoped<GetSimilarDreamsHandler>();
+                    services.AddScoped<GetDreamFeedbackHandler>();
+                    services.AddScoped<UpdateDreamFeedbackHandler>();
                     services.AddScoped<SemanticMemoryService>();
                     services.AddScoped<AskDreamsHandler>();
                     services.AddScoped<RequestDreamImageHandler>();
@@ -814,6 +867,7 @@ public sealed class DreamEndpointTests
             var dbContext = scope.ServiceProvider.GetRequiredService<DreamLensDbContext>();
             Assert.Empty(await dbContext.UserProfiles.ToArrayAsync());
             Assert.Empty(await dbContext.Dreams.ToArrayAsync());
+            Assert.Empty(await dbContext.DreamInterpretationFeedback.ToArrayAsync());
             Assert.Empty(await dbContext.DreamFacts.ToArrayAsync());
             Assert.Empty(await dbContext.DreamEmbeddings.ToArrayAsync());
             Assert.Empty(await dbContext.AsyncJobs.ToArrayAsync());
@@ -844,6 +898,13 @@ public sealed class DreamEndpointTests
             using var scope = factory.Services.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<DreamLensDbContext>();
             return await dbContext.VoiceCaptures.CountAsync();
+        }
+
+        public async Task<int> CountInterpretationFeedbackAsync()
+        {
+            using var scope = factory.Services.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<DreamLensDbContext>();
+            return await dbContext.DreamInterpretationFeedback.CountAsync();
         }
 
         public async Task ProcessVoiceCaptureAsync()

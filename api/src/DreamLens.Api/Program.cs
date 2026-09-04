@@ -69,6 +69,8 @@ if (dreamEndpointsEnabled)
     builder.Services.AddScoped<GetDreamHandler>();
     builder.Services.AddScoped<GetDreamFactsHandler>();
     builder.Services.AddScoped<GetSimilarDreamsHandler>();
+    builder.Services.AddScoped<GetDreamFeedbackHandler>();
+    builder.Services.AddScoped<UpdateDreamFeedbackHandler>();
     builder.Services.AddScoped<AskDreamsHandler>();
     builder.Services.AddScoped<RequestDreamImageHandler>();
     builder.Services.AddScoped<GetDreamImageHandler>();

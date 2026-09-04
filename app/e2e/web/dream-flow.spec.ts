@@ -25,6 +25,12 @@ test("happy path: onboarding, submit dream, view result", async ({ page }) => {
   await expect(page.getByText("Dream result")).toBeVisible();
   await expect(page.getByText("The dream points to uncertainty and a wish for steadier ground.")).toBeVisible();
   await expect(page.getByText("Guidance")).toBeVisible();
+  await page.getByText("Not for me", { exact: true }).click();
+  await page.getByText("Too generic", { exact: true }).click();
+  await page.getByLabel("Additional interpretation feedback").fill("The answer felt too broad.");
+  await page.screenshot({ path: "test-results/interpretation-feedback-desktop.png", fullPage: true });
+  await page.getByTestId("save-interpretation-feedback").click();
+  await expect(page.getByText("Thanks. Your feedback was saved.", { exact: true })).toBeVisible();
 });
 
 test("error path: provider failure shows a safe message", async ({ page }) => {

@@ -8,6 +8,7 @@ import { ApiError } from "@/api/client";
 import { DreamImageResponse, DreamResponse } from "@/api/dto";
 import { AppShell, BrandMark } from "@/components/AppShell";
 import { ResultSectionRenderer } from "@/features/dreams/ResultSectionRenderer";
+import { InterpretationFeedbackPanel } from "@/features/dreams/InterpretationFeedbackPanel";
 import { SafetyCard } from "@/features/dreams/SafetyCard";
 import { useDreamResultStore } from "@/state/dreamResultStore";
 import { useTheme } from "@/theme/ThemeProvider";
@@ -91,6 +92,7 @@ export function DreamResultScreen() {
               ))}
             </View>
           )}
+          <InterpretationFeedbackPanel dreamId={dream.data!.id} />
           {elevatedSafety ? null : (
             <DreamImagePanel
               canGenerateImage={canGenerateImage}

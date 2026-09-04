@@ -103,6 +103,31 @@ public static class DreamEndpoints
             .WithName("GetSimilarDreams")
             .WithSummary("Returns the current user's closest semantic dream matches when embeddings are available.");
 
+        group.MapGet("{id:guid}/feedback", async (
+            Guid id,
+            [FromServices] GetDreamFeedbackHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var result = await handler.HandleAsync(id, cancellationToken);
+            return result.DreamExists ? Results.Ok(result.Feedback) : Results.NotFound();
+        })
+            .WithName("GetDreamFeedback")
+            .WithSummary("Returns the current user's saved interpretation feedback for one dream.");
+
+        group.MapPut("{id:guid}/feedback", async (
+            Guid id,
+            UpdateDreamFeedbackRequest request,
+            [FromServices] UpdateDreamFeedbackHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var result = await handler.HandleAsync(id, request, cancellationToken);
+            return result.Feedback is not null
+                ? Results.Ok(result.Feedback)
+                : Results.Json(result.Errors, statusCode: result.StatusCode);
+        })
+            .WithName("UpdateDreamFeedback")
+            .WithSummary("Creates or replaces like/dislike feedback for an owned dream interpretation.");
+
         group.MapPost("{id:guid}/image", async (
             Guid id,
             RequestDreamImageRequest request,

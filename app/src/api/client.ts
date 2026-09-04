@@ -4,6 +4,7 @@ import {
   DreamJournalResponse,
   DreamJournalFilters,
   DreamImageResponse,
+  DreamFeedbackResponse,
   DreamResponse,
   EntitlementResponse,
   InsightsResponse,
@@ -14,6 +15,7 @@ import {
   RequestDreamImageRequest,
   SubmitDreamRequest,
   UpdateDreamJournalRequest,
+  UpdateDreamFeedbackRequest,
   UserDataExportResponse
   ,
   VoiceCaptureResponse,
@@ -37,6 +39,8 @@ export type ApiClient = {
   askDreams: (request: AskDreamsRequest) => Promise<AskDreamsResponse>;
   listDreams: (filters?: DreamJournalFilters) => Promise<DreamJournalResponse>;
   getDream: (id: string) => Promise<DreamResponse>;
+  getDreamFeedback: (id: string) => Promise<DreamFeedbackResponse>;
+  updateDreamFeedback: (id: string, request: UpdateDreamFeedbackRequest) => Promise<DreamFeedbackResponse>;
   updateDreamJournal: (id: string, request: UpdateDreamJournalRequest) => Promise<DreamResponse>;
   requestDreamImage: (id: string, request?: RequestDreamImageRequest) => Promise<DreamImageResponse>;
   getDreamImage: (id: string) => Promise<DreamImageResponse>;
@@ -124,6 +128,12 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
       }),
     listDreams: (filters = {}) => request<DreamJournalResponse>(`/v1/dreams${toQueryString(filters)}`),
     getDream: (id) => request<DreamResponse>(`/v1/dreams/${id}`),
+    getDreamFeedback: (id) => request<DreamFeedbackResponse>(`/v1/dreams/${id}/feedback`),
+    updateDreamFeedback: (id, body) =>
+      request<DreamFeedbackResponse>(`/v1/dreams/${id}/feedback`, {
+        method: "PUT",
+        body: JSON.stringify(body)
+      }),
     updateDreamJournal: (id, body) =>
       request<DreamResponse>(`/v1/dreams/${id}/journal`, {
         method: "PUT",

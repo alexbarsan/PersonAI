@@ -1,6 +1,6 @@
 import { rest } from "msw";
 
-import { mockAnonymizationRequest, mockAskDreams, mockDream, mockDreamImage, mockEntitlement, mockInsights, mockJournal, mockMe, mockProfile, mockUserDataExport } from "@/mocks/mockData";
+import { mockAnonymizationRequest, mockAskDreams, mockDream, mockDreamFeedback, mockDreamImage, mockEntitlement, mockInsights, mockJournal, mockMe, mockProfile, mockUserDataExport } from "@/mocks/mockData";
 
 export const handlers = [
   rest.get("http://localhost/v1/me", (_, response, context) => response(context.json(mockMe))),
@@ -13,6 +13,11 @@ export const handlers = [
   rest.post("http://localhost/v1/dreams/:id/image", (_, response, context) => response(context.status(202), context.json(mockDreamImage))),
   rest.get("http://localhost/v1/dreams/:id/image", (_, response, context) => response(context.json(mockDreamImage))),
   rest.get("http://localhost/v1/dreams/:id", (_, response, context) => response(context.json(mockDream))),
+  rest.get("http://localhost/v1/dreams/:id/feedback", (_, response, context) => response(context.json(mockDreamFeedback))),
+  rest.put("http://localhost/v1/dreams/:id/feedback", async (request, response, context) => {
+    const body = await request.json() as Record<string, unknown>;
+    return response(context.json({ ...body, updatedAt: "2026-09-05T08:00:00Z" }));
+  }),
   rest.put("http://localhost/v1/dreams/:id/journal", (_, response, context) => response(context.json(mockDream))),
   rest.delete("http://localhost/v1/dreams/:id", (_, response, context) => response(context.status(204))),
   rest.get("http://localhost/v1/insights", (_, response, context) => response(context.json(mockInsights))),

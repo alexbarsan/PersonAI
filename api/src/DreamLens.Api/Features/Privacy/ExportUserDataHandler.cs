@@ -24,6 +24,9 @@ public sealed class ExportUserDataHandler(
             .OrderBy(dream => dream.CreatedAt)
             .ToArrayAsync(cancellationToken);
         var dreamIds = dreams.Select(dream => dream.Id).ToArray();
+        var interpretationFeedback = await dbContext.DreamInterpretationFeedback.AsNoTracking()
+            .Where(feedback => feedback.UserSubject == subject && dreamIds.Contains(feedback.DreamId))
+            .ToArrayAsync(cancellationToken);
         var facts = await dbContext.DreamFacts.AsNoTracking()
             .Where(fact => fact.UserSubject == subject && dreamIds.Contains(fact.DreamId))
             .ToArrayAsync(cancellationToken);
@@ -66,7 +69,14 @@ public sealed class ExportUserDataHandler(
                             ? assetStore.CreateReadUrl(image.AssetKey)
                             : null,
                         image.CreatedAt))
-                    .ToArray()))
+                    .ToArray(),
+                interpretationFeedback.Where(feedback => feedback.DreamId == dream.Id)
+                    .Select(feedback => new UserDataExportInterpretationFeedback(
+                        feedback.Rating,
+                        JsonSerializer.Deserialize<string[]>(feedback.ReasonsJson) ?? [],
+                        feedback.Details,
+                        feedback.UpdatedAt))
+                    .SingleOrDefault()))
                 .ToArray(),
             voiceCaptures.Select(capture => new UserDataExportVoiceCapture(
                 capture.Id,

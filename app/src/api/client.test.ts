@@ -81,6 +81,23 @@ describe("api client", () => {
     expect(answer.sampleSize).toBe(1);
   });
 
+  it("stores interpretation feedback", async () => {
+    const client = createApiClient({
+      baseUrl: "http://localhost",
+      getAccessToken: () => "test-token",
+      mockMode: false
+    });
+
+    const feedback = await client.updateDreamFeedback("dream_mock_1", {
+      rating: "dislike",
+      reasons: ["too-generic"],
+      details: "It needed more specificity."
+    });
+
+    expect(feedback.rating).toBe("dislike");
+    expect(feedback.reasons).toEqual(["too-generic"]);
+  });
+
   it("reads entitlement state from the API", async () => {
     const client = createApiClient({
       baseUrl: "http://localhost",

@@ -13,6 +13,8 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
 
     public DbSet<DreamRecord> Dreams => Set<DreamRecord>();
 
+    public DbSet<DreamInterpretationFeedback> DreamInterpretationFeedback => Set<DreamInterpretationFeedback>();
+
     public DbSet<DreamFactRecord> DreamFacts => Set<DreamFactRecord>();
 
     public DbSet<DreamImageRecord> DreamImages => Set<DreamImageRecord>();
@@ -97,6 +99,24 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
                 .HasMaxLength(2000);
             entity.Property(dream => dream.CreatedAt)
                 .IsRequired();
+        });
+
+        modelBuilder.Entity<DreamInterpretationFeedback>(entity =>
+        {
+            entity.ToTable("DreamInterpretationFeedback");
+            entity.HasKey(feedback => feedback.Id);
+            entity.HasIndex(feedback => feedback.DreamId).IsUnique();
+            entity.HasIndex(feedback => new { feedback.UserSubject, feedback.UpdatedAt });
+            entity.Property(feedback => feedback.UserSubject).HasMaxLength(256).IsRequired();
+            entity.Property(feedback => feedback.Rating).HasMaxLength(16).IsRequired();
+            entity.Property(feedback => feedback.ReasonsJson).IsRequired();
+            entity.Property(feedback => feedback.Details).HasMaxLength(1000);
+            entity.Property(feedback => feedback.CreatedAt).IsRequired();
+            entity.Property(feedback => feedback.UpdatedAt).IsRequired();
+            entity.HasOne<DreamRecord>()
+                .WithOne()
+                .HasForeignKey<DreamInterpretationFeedback>(feedback => feedback.DreamId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<DreamFactRecord>(entity =>

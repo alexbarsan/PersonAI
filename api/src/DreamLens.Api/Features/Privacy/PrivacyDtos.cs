@@ -35,7 +35,14 @@ public sealed record UserDataExportDream(
     string? ResultJson,
     string? ErrorMessage,
     UserDataExportFact[] Facts,
-    UserDataExportImage[] Images);
+    UserDataExportImage[] Images,
+    UserDataExportInterpretationFeedback? Feedback);
+
+public sealed record UserDataExportInterpretationFeedback(
+    string Rating,
+    string[] Reasons,
+    string? Details,
+    DateTimeOffset UpdatedAt);
 
 public sealed record UserDataExportFact(string Type, string Value, decimal? Score, decimal? ExtractionConfidence);
 

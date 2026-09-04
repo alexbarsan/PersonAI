@@ -15,6 +15,10 @@ jest.mock("expo-router", () => ({
   useLocalSearchParams: () => ({ id: "dream_mock_1" })
 }));
 
+jest.mock("@/features/dreams/InterpretationFeedbackPanel", () => ({
+  InterpretationFeedbackPanel: () => null
+}));
+
 describe("DreamResultScreen", () => {
   beforeEach(() => {
     useDreamResultStore.setState({ dreamsById: {} });
@@ -62,6 +66,7 @@ describe("DreamResultScreen", () => {
 
     expect(await screen.findByLabelText("Generated dream visual")).toBeTruthy();
   });
+
 });
 
 function renderWithProviders(ui: React.ReactElement, api: ApiClient = mockApiClient) {
