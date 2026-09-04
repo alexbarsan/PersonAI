@@ -276,7 +276,6 @@ resource "aws_iam_role_policy" "task_bedrock_models" {
       Action = ["bedrock:InvokeModel"]
       Resource = [
         "arn:aws:bedrock:${data.aws_region.current.name}::foundation-model/amazon.nova-2-multimodal-embeddings-v1:0",
-        "arn:aws:bedrock:${data.aws_region.current.name}::foundation-model/amazon.titan-embed-text-v2:0",
         "arn:aws:bedrock:${data.aws_region.current.name}::foundation-model/amazon.nova-canvas-v1:0"
       ]
     }]

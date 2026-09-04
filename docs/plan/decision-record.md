@@ -265,7 +265,7 @@ S0-S21 define the implemented baseline. The next feature wave is tracked in `13-
 - journal editing, search/filtering, and export
 - optional voice capture and transcription
 - opt-in dream image generation
-- PostgreSQL `pgvector` embeddings with 1,024-dimensional Amazon Nova Multimodal Embeddings for semantic memory, similar dreams, Dream DNA, and Ask DreamLens
+- PostgreSQL `pgvector` embeddings with 1,024-dimensional Amazon Nova Multimodal Embeddings for semantic memory, similar dreams, Dream DNA, and Ask Dream DNA
 - private S3 asset storage for generated dream images, exports, and optional assets
 - SQS-backed async jobs for image generation, embedding backfills, exports, and future batch AI work
 - longitudinal Dream DNA analytics that show recurring symbols, emotions, people, places, scenarios, timing patterns, and correlations over months
