@@ -57,6 +57,10 @@ The app defaults to mock API mode through `app/app.json`.
 
 Local mock mode provides a deterministic answer. A real environment also requires enabled embeddings and indexed dream rows; it never falls back to sending full journal history.
 
+## Interpretation Feedback
+
+`GET /v1/dreams/{id}/feedback` returns the current user's saved rating or an empty feedback response. `PUT /v1/dreams/{id}/feedback` creates or replaces one owner-scoped record. Ratings are `like` or `dislike`; dislikes require at least one controlled reason and may include up to 1,000 characters of detail. Feedback does not invoke AI. It is included in Premium data exports and removed with the dream or during approved anonymization.
+
 For AWS, use `Provider=amazon-transcribe`, a private asset bucket, SQS worker, and task-role `transcribe:StartTranscriptionJob` / `transcribe:GetTranscriptionJob` permissions. Terraform enables this only in dev; QA and production remain disabled. The controlled dev transcription completed successfully on 2026-09-01, including ledger persistence and default source-object deletion. The batch `TranscribeAudio` estimate is configured at `$0.0001` per second for `us-east-1`; verify the AWS Price List before changing regions or launching another environment.
 
 To select the Astra brand variant for a build or shell session:

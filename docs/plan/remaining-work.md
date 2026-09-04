@@ -1,6 +1,6 @@
 # Remaining Work
 
-Last updated after S28 Ask Dream DNA implementation on 2026-09-02.
+Last updated after S34 interpretation feedback implementation on 2026-09-05.
 
 ## Planned Slices
 
@@ -16,6 +16,7 @@ The imported Catch Dreamer feature notes add several capabilities that are not f
 - Embeddings and semantic memory using PostgreSQL `pgvector` and Amazon Bedrock Titan Embeddings V2 by default, not full-history prompts.
 - Historical fact backfill and semantic clustering: the Dream DNA overview is implemented, while similarity has no matches until embeddings are available and clustering remains future work.
 - S28 Ask Dream DNA is implemented with owner-scoped semantic retrieval, safety/schema validation, quotas, cost rows, evidence links, and UI. Live answers require Titan quota resolution and embedding backfill.
+- S34 interpretation feedback is implemented with persisted like/dislike state, controlled dislike reasons, optional details, export coverage, and anonymization cleanup.
 - Premium Deep Interpretation using a stronger model and richer retrieved context.
 - Cognito social sign-in provider setup for Google and Apple first; Facebook remains optional after product/privacy review.
 - Admin/business metrics view for MAU, conversion, revenue, AI cost, AWS cost, cost per user, and gross margin.

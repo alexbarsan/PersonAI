@@ -14,6 +14,7 @@ Dream DNA is a wellness and entertainment app for reflective dream interpretatio
 8. Select Transcribe recording and review the transcript inserted into Dream text.
 9. Submit the dream.
 10. Read the result sections: summary, symbols, emotions, themes, interpretation, guidance, and follow-up questions.
+11. Select **Helpful** or **Not for me** below the interpretation. A dislike asks what did not work and accepts an optional written detail. You can change previously saved feedback.
 
 ## Journal
 
