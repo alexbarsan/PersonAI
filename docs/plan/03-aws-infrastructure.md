@@ -43,7 +43,7 @@ infra/
 - S3 and CloudFront for Expo web build hosting.
 - Private S3 buckets for generated dream images, exports, and optional assets.
 - SQS queues for async image generation, embedding generation/backfill, exports, and future batch AI jobs.
-- Amazon Bedrock Titan Embeddings V2 as the default embedding provider, called through an application abstraction.
+- Amazon Nova Multimodal Embeddings as the default 1,024-dimensional embedding provider, called through an application abstraction.
 - Secrets Manager for provider keys, encryption settings, and app secrets.
 - CloudWatch and X-Ray through OpenTelemetry and ADOT.
 - GitHub Actions OIDC for deployments without long-lived AWS keys.
@@ -95,7 +95,7 @@ Each production queue should have long polling, encryption, a DLQ, alarms on age
 
 ## Embedding Provider
 
-Default to Amazon Bedrock Titan Embeddings V2 for dream vectors because it stays inside AWS IAM, billing, and observability boundaries. Keep the embedding provider abstract so Cohere Embed, OpenAI embeddings, or another provider can replace it if quality, language coverage, cost, or regional availability requires a change.
+Default to Amazon Nova Multimodal Embeddings for dream vectors because it supports more than 200 languages, future cross-modal retrieval, and remains inside AWS IAM, billing, and observability boundaries. Use 1,024 dimensions as the maximum and current fixed database size. Stored dreams use `GENERIC_INDEX`; text queries use `TEXT_RETRIEVAL`. Keep the embedding provider abstract so another model can replace it if measured quality, cost, or regional availability requires a change.
 
 Before implementation, verify current Bedrock model availability in the target region with:
 
@@ -175,4 +175,4 @@ Generated images are expected to be more expensive than embeddings and should be
 - Whether dev RDS can be single-AZ while prod is multi-AZ.
 - Whether async workers launch as ECS Fargate services or Lambda functions.
 - Whether CloudFront is needed in front of private generated-image delivery at launch.
-- Final Bedrock embedding model id and dimensions after checking current regional availability.
+- Whether retrieval quality justifies moving above the current 1,024-dimensional database contract in a future version.

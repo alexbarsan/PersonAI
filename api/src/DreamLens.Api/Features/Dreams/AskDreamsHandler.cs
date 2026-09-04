@@ -81,7 +81,10 @@ public sealed class AskDreamsHandler(
         var embeddingStarted = Stopwatch.GetTimestamp();
         try
         {
-            queryEmbedding = await embeddingProvider.CreateAsync(question, cancellationToken);
+            queryEmbedding = await embeddingProvider.CreateAsync(
+                question,
+                EmbeddingPurpose.TextRetrieval,
+                cancellationToken);
             dbContext.AiCostLedger.Add(CreateEmbeddingLedger(queryEmbedding, "completed", null, Stopwatch.GetElapsedTime(embeddingStarted)));
             await dbContext.SaveChangesAsync(cancellationToken);
         }
@@ -195,7 +198,7 @@ public sealed class AskDreamsHandler(
         InputTokens = result.InputTokens,
         TotalTokens = result.InputTokens,
         LatencyMilliseconds = Math.Max(0, (long)latency.TotalMilliseconds),
-        EstimatedCostUsd = (result.InputTokens ?? 0) * embeddingOptions.Value.InputCostPerMillionTokensUsd / 1_000_000m
+        EstimatedCostUsd = result.EstimatedCostUsd
     };
 
     private AiCostLedgerRecord CreateFailedEmbeddingLedger(Exception exception, TimeSpan latency) => new()

@@ -68,10 +68,11 @@ module "api" {
     ConnectionStrings__Database                   = module.database.database_name
     Database__ApplyMigrations                     = "true"
     Embedding__Enabled                            = "true"
-    Embedding__Provider                           = "bedrock-titan"
-    Embedding__Model                              = "amazon.titan-embed-text-v2:0"
+    Embedding__Provider                           = "bedrock-nova-multimodal"
+    Embedding__Model                              = "amazon.nova-2-multimodal-embeddings-v1:0"
     Embedding__Dimensions                         = "1024"
-    Embedding__Version                            = "1"
+    Embedding__Version                            = "2"
+    Embedding__InputCostPerMillionTokensUsd       = "0.135"
     Jobs__QueueUrl                                = module.async_jobs.queue_url
     Jobs__Worker__Enabled                         = "true"
     Jobs__EmbeddingBackfill__Enabled              = "false"

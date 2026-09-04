@@ -66,6 +66,12 @@ module "api" {
     ASPNETCORE_ENVIRONMENT                        = "Production"
     ConnectionStrings__Host                       = module.database.endpoint
     ConnectionStrings__Database                   = module.database.database_name
+    Embedding__Enabled                            = "true"
+    Embedding__Provider                           = "bedrock-nova-multimodal"
+    Embedding__Model                              = "amazon.nova-2-multimodal-embeddings-v1:0"
+    Embedding__Dimensions                         = "1024"
+    Embedding__Version                            = "2"
+    Embedding__InputCostPerMillionTokensUsd       = "0.135"
     Authentication__Cognito__Region               = var.aws_region
     Authentication__Cognito__UserPoolId           = module.cognito.user_pool_id
     Authentication__Cognito__Audience             = module.cognito.user_pool_client_id

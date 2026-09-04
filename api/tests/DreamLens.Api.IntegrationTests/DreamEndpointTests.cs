@@ -961,9 +961,9 @@ public sealed class DreamEndpointTests
                 UserSubject = userSubject,
                 Embedding = new Vector(new float[1024]),
                 Provider = "fake",
-                Model = "amazon.titan-embed-text-v2:0",
+                Model = "amazon.nova-2-multimodal-embeddings-v1:0",
                 Dimensions = 1024,
-                Version = "1"
+                Version = "2"
             });
             await dbContext.SaveChangesAsync();
         }

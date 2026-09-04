@@ -22,7 +22,7 @@ PersonaKit is the reusable engine extracted from day one. It contains provider a
 8. API persists the dream, interpretation, run metadata, and AI cost ledger entry.
 9. UI renders generic `sections[]` plus fixed disclaimers and safety handling.
 
-Post-S21 semantic features extend this flow with dream embeddings in PostgreSQL `pgvector`, private S3 storage for generated images/exports/assets, and SQS-backed jobs for image generation, embedding backfills, exports, and future batch AI work. Amazon Bedrock Titan Embeddings V2 is the default embedding provider, behind an app-owned abstraction.
+Post-S21 semantic features extend this flow with dream embeddings in PostgreSQL `pgvector`, private S3 storage for generated images/exports/assets, and SQS-backed jobs for image generation, embedding backfills, exports, and future batch AI work. Amazon Nova Multimodal Embeddings is the default embedding provider at 1,024 dimensions, behind an app-owned abstraction.
 
 Dream DNA and insights require structured extraction, not only prose interpretation. Each dream should preserve queryable metadata for symbols, emotions, people, places, scenarios, scores, tags, dates, weekdays, and model versions so future analytics can be recomputed and audited.
 

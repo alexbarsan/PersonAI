@@ -53,7 +53,7 @@ The app defaults to mock API mode through `app/app.json`.
 
 ## Ask Dream DNA
 
-`POST /v1/dreams/ask` accepts `{ "question": "..." }`. It requires an authenticated profile with AI-processing and history-use consent, embeds the question, retrieves only that user's nearest dream summaries, validates the model's JSON and referenced dream IDs, and fails with `503` if semantic memory is unavailable. `AskDreams` config controls Free/Premium daily limits and retrieval size. `Embedding:InputCostPerMillionTokensUsd` records the query-embedding estimate; the answer uses `ChatUsageCost`.
+`POST /v1/dreams/ask` accepts `{ "question": "..." }`. It requires an authenticated profile with AI-processing and history-use consent, embeds the question, retrieves only that user's nearest dream summaries, validates the model's JSON and referenced dream IDs, and fails with `503` if semantic memory is unavailable. `AskDreams` config controls Free/Premium daily limits and retrieval size. Nova uses `GENERIC_INDEX` for dream rows and `TEXT_RETRIEVAL` for questions, both fixed at 1,024 dimensions. Nova does not support Bedrock `CountTokens`, so token fields remain null and `Embedding:InputCostPerMillionTokensUsd` is applied to a conservative UTF-8-size estimate for cost reporting; the answer uses `ChatUsageCost`.
 
 Local mock mode provides a deterministic answer. A real environment also requires enabled embeddings and indexed dream rows; it never falls back to sending full journal history.
 
@@ -134,7 +134,7 @@ The reusable pipeline should not need backend code changes for a new persona whe
 
 ## Deployment
 
-See `docs/deployment.md`. Deployment uses GitHub Actions OIDC, Terraform, ECS Fargate, RDS PostgreSQL, Cognito, S3/CloudFront, and EAS placeholders for mobile. Planned post-S21 infrastructure adds PostgreSQL `pgvector`, private S3 asset buckets, SQS worker queues, and Amazon Bedrock embedding permissions.
+See `docs/deployment.md`. Deployment uses GitHub Actions OIDC, Terraform, ECS Fargate, RDS PostgreSQL with `pgvector`, Cognito, S3/CloudFront, SQS workers, Amazon Bedrock, and EAS placeholders for mobile.
 
 ## Monetization / S21
 

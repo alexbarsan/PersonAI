@@ -10,7 +10,7 @@ public sealed class SemanticMemoryService(
     IEmbeddingProvider embeddingProvider,
     IOptions<EmbeddingOptions> options)
 {
-    public async Task<DreamEmbedding?> CreateForDreamAsync(
+    public async Task<DreamEmbeddingCreation?> CreateForDreamAsync(
         DreamRecord dream,
         bool historyConsent,
         CancellationToken cancellationToken)
@@ -20,20 +20,35 @@ public sealed class SemanticMemoryService(
             return null;
         }
 
-        var result = await embeddingProvider.CreateAsync(dream.Text, cancellationToken);
-        var embedding = new DreamEmbedding
+        var result = await embeddingProvider.CreateAsync(dream.Text, EmbeddingPurpose.Index, cancellationToken);
+        var embedding = await dbContext.DreamEmbeddings.SingleOrDefaultAsync(
+            candidate => candidate.DreamId == dream.Id,
+            cancellationToken);
+        if (embedding is null)
         {
-            DreamId = dream.Id,
-            UserSubject = dream.UserSubject,
-            Embedding = new Vector(result.Values),
-            Provider = result.Provider,
-            Model = result.Model,
-            Dimensions = result.Dimensions,
-            Version = result.Version
-        };
+            embedding = new DreamEmbedding
+            {
+                DreamId = dream.Id,
+                UserSubject = dream.UserSubject,
+                Embedding = new Vector(result.Values),
+                Provider = result.Provider,
+                Model = result.Model,
+                Dimensions = result.Dimensions,
+                Version = result.Version
+            };
+            dbContext.DreamEmbeddings.Add(embedding);
+        }
+        else
+        {
+            embedding.Embedding = new Vector(result.Values);
+            embedding.Provider = result.Provider;
+            embedding.Model = result.Model;
+            embedding.Dimensions = result.Dimensions;
+            embedding.Version = result.Version;
+            embedding.CreatedAt = DateTimeOffset.UtcNow;
+        }
 
-        dbContext.DreamEmbeddings.Add(embedding);
-        return embedding;
+        return new DreamEmbeddingCreation(embedding, result);
     }
 
     public async Task<IReadOnlyList<DreamEmbedding>> FindSimilarAsync(
@@ -43,17 +58,25 @@ public sealed class SemanticMemoryService(
         CancellationToken cancellationToken)
     {
         var vector = new Vector(query);
+        var settings = options.Value;
         if (!dbContext.Database.IsNpgsql())
         {
             return await dbContext.DreamEmbeddings
                 .AsNoTracking()
-                .Where(embedding => embedding.UserSubject == userSubject)
+                .Where(embedding => embedding.UserSubject == userSubject
+                    && embedding.Model == settings.Model
+                    && embedding.Dimensions == settings.Dimensions
+                    && embedding.Version == settings.Version)
                 .ToListAsync(cancellationToken);
         }
 
         return await dbContext.DreamEmbeddings
-            .FromSqlInterpolated($"SELECT * FROM \"DreamEmbeddings\" WHERE \"UserSubject\" = {userSubject} ORDER BY \"Embedding\" <=> {vector} LIMIT {Math.Clamp(limit, 1, 20)}")
+            .FromSqlInterpolated($"SELECT * FROM \"DreamEmbeddings\" WHERE \"UserSubject\" = {userSubject} AND \"Model\" = {settings.Model} AND \"Dimensions\" = {settings.Dimensions} AND \"Version\" = {settings.Version} ORDER BY \"Embedding\" <=> {vector} LIMIT {Math.Clamp(limit, 1, 20)}")
             .AsNoTracking()
             .ToListAsync(cancellationToken);
     }
 }
+
+public sealed record DreamEmbeddingCreation(
+    DreamEmbedding Embedding,
+    EmbeddingResult ProviderResult);

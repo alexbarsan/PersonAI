@@ -20,6 +20,7 @@ public sealed class EmbeddingBackfillService(
 
         var batchSize = Math.Clamp(backfillOptions.Value.BatchSize, 1, 500);
         var maximum = Math.Clamp(backfillOptions.Value.MaxJobsPerRun, batchSize, 5000);
+        var embeddingSettings = embeddingOptions.Value;
         var enqueued = 0;
 
         while (enqueued < maximum)
@@ -31,10 +32,13 @@ public sealed class EmbeddingBackfillService(
                     && dbContext.UserProfiles.Any(profile => profile.UserSubject == dream.UserSubject
                         && profile.ConsentAiProcessing
                         && profile.ConsentHistoryUse)
-                    && !dbContext.DreamEmbeddings.Any(embedding => embedding.DreamId == dream.Id)
+                    && !dbContext.DreamEmbeddings.Any(embedding => embedding.DreamId == dream.Id
+                        && embedding.Model == embeddingSettings.Model
+                        && embedding.Dimensions == embeddingSettings.Dimensions
+                        && embedding.Version == embeddingSettings.Version)
                     && !dbContext.AsyncJobs.Any(job => job.JobType == AsyncJobTypes.DreamEmbedding
                         && job.TargetId == dream.Id
-                        && job.Status != AsyncJobStatuses.Failed))
+                        && (job.Status == AsyncJobStatuses.Pending || job.Status == AsyncJobStatuses.Processing)))
                 .OrderBy(dream => dream.CreatedAt)
                 .Take(Math.Min(batchSize, remaining))
                 .Select(dream => new { dream.Id, dream.UserSubject })

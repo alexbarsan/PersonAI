@@ -2,12 +2,14 @@ using DreamLens.Api.Infrastructure.Embeddings;
 using DreamLens.Api.Infrastructure.Identity;
 using DreamLens.Api.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace DreamLens.Api.Features.Dreams;
 
 public sealed class GetSimilarDreamsHandler(
     DreamLensDbContext dbContext,
     ICurrentUser currentUser,
+    IOptions<EmbeddingOptions> embeddingOptions,
     SemanticMemoryService? semanticMemory = null)
 {
     public async Task<SimilarDreamsResponse?> HandleAsync(Guid dreamId, int limit, CancellationToken cancellationToken)
@@ -22,7 +24,12 @@ public sealed class GetSimilarDreamsHandler(
 
         var sourceEmbedding = await dbContext.DreamEmbeddings
             .AsNoTracking()
-            .SingleOrDefaultAsync(embedding => embedding.DreamId == dreamId && embedding.UserSubject == currentUser.Subject, cancellationToken);
+            .SingleOrDefaultAsync(embedding => embedding.DreamId == dreamId
+                && embedding.UserSubject == currentUser.Subject
+                && embedding.Model == embeddingOptions.Value.Model
+                && embedding.Dimensions == embeddingOptions.Value.Dimensions
+                && embedding.Version == embeddingOptions.Value.Version,
+                cancellationToken);
         if (sourceEmbedding is null || semanticMemory is null)
         {
             return new SimilarDreamsResponse(dreamId, []);

@@ -1,37 +1,29 @@
-using System.Text;
 using System.Text.Json;
-using Amazon.BedrockRuntime;
-using Amazon.BedrockRuntime.Model;
 using Microsoft.Extensions.Options;
 
 namespace DreamLens.Api.Infrastructure.Embeddings;
 
 public sealed class TitanEmbeddingProvider(
-    IAmazonBedrockRuntime bedrockRuntime,
+    IBedrockEmbeddingRuntime bedrockRuntime,
     IOptions<EmbeddingOptions> options) : IEmbeddingProvider
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
-    public async Task<EmbeddingResult> CreateAsync(string input, CancellationToken cancellationToken)
+    public async Task<EmbeddingResult> CreateAsync(
+        string input,
+        EmbeddingPurpose purpose,
+        CancellationToken cancellationToken)
     {
         var settings = options.Value;
-        var requestJson = JsonSerializer.Serialize(new
+        var requestBody = JsonSerializer.SerializeToUtf8Bytes(new
         {
             inputText = input,
             dimensions = settings.Dimensions,
             normalize = true
         }, JsonOptions);
 
-        await using var body = new MemoryStream(Encoding.UTF8.GetBytes(requestJson));
-        var response = await bedrockRuntime.InvokeModelAsync(new InvokeModelRequest
-        {
-            ModelId = settings.Model,
-            ContentType = "application/json",
-            Accept = "application/json",
-            Body = body
-        }, cancellationToken);
-
-        using var document = await JsonDocument.ParseAsync(response.Body, cancellationToken: cancellationToken);
+        var responseBody = await bedrockRuntime.InvokeModelAsync(settings.Model, requestBody, cancellationToken);
+        using var document = JsonDocument.Parse(responseBody);
         var root = document.RootElement;
         var values = root.GetProperty("embedding")
             .EnumerateArray()
@@ -46,6 +38,14 @@ public sealed class TitanEmbeddingProvider(
             throw new InvalidOperationException($"Embedding provider returned {values.Length} dimensions; expected {settings.Dimensions}.");
         }
 
-        return new EmbeddingResult(values, tokenCount, "Amazon Bedrock", settings.Model, values.Length, settings.Version);
+        var estimatedCost = (tokenCount ?? 0) * settings.InputCostPerMillionTokensUsd / 1_000_000m;
+        return new EmbeddingResult(
+            values,
+            tokenCount,
+            "Amazon Bedrock",
+            settings.Model,
+            values.Length,
+            settings.Version,
+            estimatedCost);
     }
 }

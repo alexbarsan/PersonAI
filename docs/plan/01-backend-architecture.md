@@ -90,7 +90,7 @@ Sensitive columns are encrypted at rest. In development use a local key from con
 
 `pgvector` is the launch vector store. Keep embedding rows tied to internal dream/user ids so authorization, consent filtering, approved anonymization, and relational filters remain in one transactional store. Revisit S3 Vectors or a dedicated vector database only if pgvector becomes a measured bottleneck.
 
-Embedding dimensions must be stored in configuration and must match the pgvector index. Changing embedding provider or dimension requires a backfill plan and a versioned embedding column/table.
+Embedding dimensions must be stored in configuration and must match the pgvector index. Dream DNA fixes Nova output at 1,024 dimensions to match `vector(1024)`. Changing embedding provider or dimension requires a backfill plan and a versioned embedding column/table.
 
 ## Auth
 
@@ -111,7 +111,7 @@ PersonaKit should expose narrow abstractions:
 
 AI providers are accessed through Microsoft.Extensions.AI `IChatClient`. The initial provider is DeepSeek through its OpenAI-compatible endpoint with model `deepseek-chat`. `deepseek-reasoner` is reserved for premium deep analysis.
 
-Embeddings use a separate abstraction, not `IChatClient`. Default launch provider is Amazon Bedrock Titan Embeddings V2. Keep provider/model/dimension/version on every embedding record so vectors can be regenerated safely. Embedding operations must also write AI operation ledger rows with response time, status, failure kind, and estimated cost.
+Embeddings use a separate abstraction, not `IChatClient`. Default launch provider is Amazon Nova Multimodal Embeddings through Bedrock. Stored dream content uses `GENERIC_INDEX`; text queries use `TEXT_RETRIEVAL`. Keep provider/model/dimension/version on every embedding record, filter retrieval to the active model/version, and replace stale vectors during a bounded backfill. Embedding operations write AI operation ledger rows with token count, response time, status, failure kind, and estimated cost.
 
 Cross-cutting provider behavior is composed through decorators:
 

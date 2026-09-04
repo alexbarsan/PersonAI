@@ -6,4 +6,5 @@ public sealed record EmbeddingResult(
     string Provider,
     string Model,
     int Dimensions,
-    string Version);
+    string Version,
+    decimal EstimatedCostUsd);

@@ -5,7 +5,10 @@ namespace DreamLens.Api.Infrastructure.Embeddings;
 
 public sealed class FakeEmbeddingProvider(IOptions<EmbeddingOptions> options) : IEmbeddingProvider
 {
-    public Task<EmbeddingResult> CreateAsync(string input, CancellationToken cancellationToken)
+    public Task<EmbeddingResult> CreateAsync(
+        string input,
+        EmbeddingPurpose purpose,
+        CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         var dimensions = options.Value.Dimensions;
@@ -23,6 +26,7 @@ public sealed class FakeEmbeddingProvider(IOptions<EmbeddingOptions> options) : 
             "fake",
             options.Value.Model,
             dimensions,
-            options.Value.Version));
+            options.Value.Version,
+            0));
     }
 }
