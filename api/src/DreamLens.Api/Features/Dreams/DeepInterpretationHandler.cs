@@ -20,7 +20,8 @@ public sealed class DeepInterpretationHandler(
     IStringEncryptor encryptor,
     IInterpretationPipeline interpretationPipeline,
     GetSimilarDreamsHandler similarDreamsHandler,
-    IOptions<DeepInterpretationOptions> options)
+    IOptions<DeepInterpretationOptions> options,
+    ILogger<DeepInterpretationHandler> logger)
 {
     private const string PersonaId = "deep-dream-interpreter";
     private const string PersonaVersion = "1.0.0";
@@ -47,54 +48,61 @@ public sealed class DeepInterpretationHandler(
             return DeepInterpretationResult.Failure(StatusCodes.Status403Forbidden, "entitlement", "Deep Interpretation requires Premium.");
         }
 
-        var existing = await GetAsync(dreamId, cancellationToken);
-        if (existing is not null)
+        var stage = "load saved result";
+        try
         {
-            return DeepInterpretationResult.Success(existing);
-        }
+            var existing = await GetAsync(dreamId, cancellationToken);
+            if (existing is not null)
+            {
+                return DeepInterpretationResult.Success(existing);
+            }
 
-        var dream = await dbContext.Dreams.AsNoTracking()
+            stage = "load dream";
+            var dream = await dbContext.Dreams.AsNoTracking()
             .SingleOrDefaultAsync(
                 candidate => candidate.Id == dreamId && candidate.UserSubject == currentUser.Subject,
                 cancellationToken);
-        if (dream is null)
-        {
-            return DeepInterpretationResult.Failure(StatusCodes.Status404NotFound, "dream", "Dream was not found.");
-        }
+            if (dream is null)
+            {
+                return DeepInterpretationResult.Failure(StatusCodes.Status404NotFound, "dream", "Dream was not found.");
+            }
 
-        if (dream.Status != "completed" || string.IsNullOrWhiteSpace(dream.ResultJson))
-        {
-            return DeepInterpretationResult.Failure(StatusCodes.Status409Conflict, "dream", "A completed interpretation is required first.");
-        }
+            if (dream.Status != "completed" || string.IsNullOrWhiteSpace(dream.ResultJson))
+            {
+                return DeepInterpretationResult.Failure(StatusCodes.Status409Conflict, "dream", "A completed interpretation is required first.");
+            }
 
-        var profile = await dbContext.UserProfiles.AsNoTracking()
+            stage = "load profile";
+            var profile = await dbContext.UserProfiles.AsNoTracking()
             .SingleOrDefaultAsync(candidate => candidate.UserSubject == currentUser.Subject, cancellationToken);
-        if (profile is null)
-        {
-            return DeepInterpretationResult.Failure(StatusCodes.Status409Conflict, "profile", "Complete your profile before requesting Deep Interpretation.");
-        }
+            if (profile is null)
+            {
+                return DeepInterpretationResult.Failure(StatusCodes.Status409Conflict, "profile", "Complete your profile before requesting Deep Interpretation.");
+            }
 
-        if (!profile.ConsentAiProcessing || !profile.ConsentHistoryUse)
-        {
-            return DeepInterpretationResult.Failure(StatusCodes.Status409Conflict, "consent", "AI processing and dream history consent are required.");
-        }
+            if (!profile.ConsentAiProcessing || !profile.ConsentHistoryUse)
+            {
+                return DeepInterpretationResult.Failure(StatusCodes.Status409Conflict, "consent", "AI processing and dream history consent are required.");
+            }
 
-        var today = DateTimeOffset.UtcNow.Date;
-        var completedToday = await dbContext.AiCostLedger.AsNoTracking().CountAsync(
+            stage = "check quota";
+            var today = DateTimeOffset.UtcNow.Date;
+            var completedToday = await dbContext.AiCostLedger.AsNoTracking().CountAsync(
             row => row.UserSubject == currentUser.Subject
                 && row.OperationType == "dream.deep-interpretation"
                 && row.Status == "completed"
                 && row.CreatedAt >= today,
             cancellationToken);
-        if (completedToday >= Math.Max(0, options.Value.DailyLimit))
-        {
-            return DeepInterpretationResult.Failure(StatusCodes.Status429TooManyRequests, "quota", "You have reached today's Deep Interpretation limit.");
-        }
+            if (completedToday >= Math.Max(0, options.Value.DailyLimit))
+            {
+                return DeepInterpretationResult.Failure(StatusCodes.Status429TooManyRequests, "quota", "You have reached today's Deep Interpretation limit.");
+            }
 
-        var similar = await similarDreamsHandler.HandleAsync(dreamId, options.Value.RetrievalLimit, cancellationToken)
+            stage = "retrieve related dreams";
+            var similar = await similarDreamsHandler.HandleAsync(dreamId, options.Value.RetrievalLimit, cancellationToken)
             ?? new SimilarDreamsResponse(dreamId, []);
-        var relatedIds = similar.Matches.Select(match => match.Id).ToArray();
-        var recentThemes = await dbContext.DreamFacts.AsNoTracking()
+            var relatedIds = similar.Matches.Select(match => match.Id).ToArray();
+            var recentThemes = await dbContext.DreamFacts.AsNoTracking()
             .Where(fact => fact.UserSubject == currentUser.Subject
                 && relatedIds.Contains(fact.DreamId)
                 && fact.FactType == "theme")
@@ -103,12 +111,13 @@ public sealed class DeepInterpretationHandler(
             .Take(8)
             .Select(group => group.First().DisplayValue)
             .ToArrayAsync(cancellationToken);
-        var interactionCount = await dbContext.Dreams.AsNoTracking().CountAsync(
+            var interactionCount = await dbContext.Dreams.AsNoTracking().CountAsync(
             candidate => candidate.UserSubject == currentUser.Subject && candidate.Status == "completed",
             cancellationToken);
-        var traits = JsonSerializer.Deserialize<ProfileTraitsDto>(encryptor.Decrypt(profile.EncryptedTraitsJson), JsonOptions)
+            stage = "build context";
+            var traits = JsonSerializer.Deserialize<ProfileTraitsDto>(encryptor.Decrypt(profile.EncryptedTraitsJson), JsonOptions)
             ?? ProfileTraitsDto.Empty;
-        var history = new ContextHistory(
+            var history = new ContextHistory(
             recentThemes,
             interactionCount,
             DreamMapper.ReadSummary(dream),
@@ -117,8 +126,9 @@ public sealed class DeepInterpretationHandler(
                 match.OccurredAt,
                 match.Similarity)).ToArray());
 
-        var started = Stopwatch.GetTimestamp();
-        var interpretation = await interpretationPipeline.InterpretAsync(
+            stage = "request interpretation";
+            var started = Stopwatch.GetTimestamp();
+            var interpretation = await interpretationPipeline.InterpretAsync(
             new InterpretationRequest(
                 PersonaId,
                 new ContextBuildRequest(
@@ -157,32 +167,46 @@ public sealed class DeepInterpretationHandler(
                     Math.Clamp(options.Value.MaxOutputTokens, 512, 16_384),
                     0.8f)),
             cancellationToken);
-        var latency = Stopwatch.GetElapsedTime(started);
-        dbContext.AiCostLedger.Add(CreateLedger(dream.Id, interpretation, latency));
+            var latency = Stopwatch.GetElapsedTime(started);
+            dbContext.AiCostLedger.Add(CreateLedger(dream.Id, interpretation, latency));
 
-        if (interpretation.Status != InterpretationStatus.Completed || interpretation.Result is null)
-        {
+            if (interpretation.Status != InterpretationStatus.Completed || interpretation.Result is null)
+            {
+                await dbContext.SaveChangesAsync(cancellationToken);
+                return DeepInterpretationResult.Failure(
+                    StatusCodes.Status503ServiceUnavailable,
+                    "interpretation",
+                    interpretation.ErrorMessage ?? "Deep Interpretation could not be completed.");
+            }
+
+            stage = "persist interpretation";
+            var result = MapResult(interpretation.Result);
+            var record = new DreamDeepInterpretationRecord
+            {
+                DreamId = dream.Id,
+                UserSubject = currentUser.Subject,
+                ResultJson = JsonSerializer.Serialize(result, JsonOptions),
+                SourcesJson = JsonSerializer.Serialize(similar.Matches, JsonOptions),
+                Provider = "DeepSeek",
+                Model = options.Value.Model,
+                PersonaVersion = PersonaVersion
+            };
+            dbContext.DreamDeepInterpretations.Add(record);
             await dbContext.SaveChangesAsync(cancellationToken);
+            return DeepInterpretationResult.Success(Map(record));
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            logger.LogError(exception, "Deep Interpretation failed during {Stage}.", stage);
             return DeepInterpretationResult.Failure(
                 StatusCodes.Status503ServiceUnavailable,
                 "interpretation",
-                interpretation.ErrorMessage ?? "Deep Interpretation could not be completed.");
+                "Deep Interpretation is temporarily unavailable. Please try again.");
         }
-
-        var result = MapResult(interpretation.Result);
-        var record = new DreamDeepInterpretationRecord
-        {
-            DreamId = dream.Id,
-            UserSubject = currentUser.Subject,
-            ResultJson = JsonSerializer.Serialize(result, JsonOptions),
-            SourcesJson = JsonSerializer.Serialize(similar.Matches, JsonOptions),
-            Provider = "DeepSeek",
-            Model = options.Value.Model,
-            PersonaVersion = PersonaVersion
-        };
-        dbContext.DreamDeepInterpretations.Add(record);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return DeepInterpretationResult.Success(Map(record));
     }
 
     private DeepInterpretationResponse Map(DreamDeepInterpretationRecord record) => new(

@@ -60,6 +60,7 @@ public sealed class DeepSeekChatClientTests
         Assert.Equal("deepseek-chat", root.GetProperty("model").GetString());
         Assert.Equal(0.2, root.GetProperty("temperature").GetDouble(), precision: 3);
         Assert.Equal(256, root.GetProperty("max_tokens").GetInt32());
+        Assert.Equal("json_object", root.GetProperty("response_format").GetProperty("type").GetString());
         Assert.Equal("system", root.GetProperty("messages")[0].GetProperty("role").GetString());
         Assert.Equal("system prompt", root.GetProperty("messages")[0].GetProperty("content").GetString());
         Assert.Equal("user", root.GetProperty("messages")[1].GetProperty("role").GetString());

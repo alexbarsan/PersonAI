@@ -91,7 +91,8 @@ public sealed class DeepSeekChatClient(HttpClient httpClient, IOptions<DeepSeekO
             model,
             messages.Select(message => new DeepSeekRequestMessage(ToDeepSeekRole(message.Role), message.Text)).ToArray(),
             options?.Temperature,
-            options?.MaxOutputTokens);
+            options?.MaxOutputTokens,
+            new DeepSeekResponseFormat("json_object"));
     }
 
     private static string ToDeepSeekRole(ChatRole role)
@@ -129,7 +130,11 @@ public sealed class DeepSeekChatClient(HttpClient httpClient, IOptions<DeepSeekO
         [property: JsonPropertyName("model")] string Model,
         [property: JsonPropertyName("messages")] IReadOnlyList<DeepSeekRequestMessage> Messages,
         [property: JsonPropertyName("temperature")] float? Temperature,
-        [property: JsonPropertyName("max_tokens")] int? MaxTokens);
+        [property: JsonPropertyName("max_tokens")] int? MaxTokens,
+        [property: JsonPropertyName("response_format")] DeepSeekResponseFormat ResponseFormat);
+
+    private sealed record DeepSeekResponseFormat(
+        [property: JsonPropertyName("type")] string Type);
 
     private sealed record DeepSeekRequestMessage(
         [property: JsonPropertyName("role")] string Role,
