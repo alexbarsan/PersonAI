@@ -10,7 +10,13 @@ public sealed class EfDreamQuotaService(
 {
     public async Task<bool> CanSubmitDreamAsync(string userSubject, CancellationToken cancellationToken)
     {
-        var limit = entitlementService.GetEntitlement(userSubject).DailyDreamLimit;
+        var entitlement = entitlementService.GetEntitlement(userSubject);
+        if (entitlement.QuotaExempt)
+        {
+            return true;
+        }
+
+        var limit = entitlement.DailyDreamLimit;
         if (limit <= 0)
         {
             return false;

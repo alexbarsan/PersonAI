@@ -13,6 +13,7 @@ public sealed class GetEntitlementHandler(
         return new EntitlementResponse(
             entitlement.Tier.ToString().ToLowerInvariant(),
             entitlement.DailyDreamLimit,
-            entitlement.DeepAnalysisEnabled);
+            entitlement.DeepAnalysisEnabled,
+            entitlement.QuotaExempt);
     }
 }

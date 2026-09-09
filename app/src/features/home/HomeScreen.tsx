@@ -113,7 +113,9 @@ export function HomeScreen() {
                 </Text>
                 <Text testID="entitlement-state" style={{ ...styles.summaryLabel, color: theme.colors.mutedText }}>
                   {entitlements.data?.tier === "premium"
-                    ? `${entitlements.data.dailyDreamLimit} dreams/day`
+                    ? entitlements.data.quotaExempt
+                      ? "No daily limit"
+                      : `${entitlements.data.dailyDreamLimit} dreams/day`
                     : `Free: ${entitlements.data?.dailyDreamLimit ?? 3} dreams/day`}
                 </Text>
               </View>

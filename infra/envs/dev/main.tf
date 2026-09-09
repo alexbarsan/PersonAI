@@ -83,6 +83,7 @@ module "api" {
     DeepInterpretation__MaxOutputTokens               = "4096"
     DeepInterpretation__InputCostPerMillionTokensUsd  = "1.32"
     DeepInterpretation__OutputCostPerMillionTokensUsd = "3.96"
+    QuotaExemption__Subjects__0                       = "442854a8-0041-7070-94ac-2ed6ca4bd83d"
     Jobs__QueueUrl                                    = module.async_jobs.queue_url
     Jobs__Worker__Enabled                             = "true"
     Jobs__EmbeddingBackfill__Enabled                  = "true"

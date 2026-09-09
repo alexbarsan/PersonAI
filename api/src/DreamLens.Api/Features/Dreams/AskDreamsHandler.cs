@@ -65,16 +65,19 @@ public sealed class AskDreamsHandler(
         var dailyLimit = entitlement.Tier == EntitlementTier.Premium
             ? askOptions.Value.PremiumDailyLimit
             : askOptions.Value.FreeDailyLimit;
-        var today = DateTimeOffset.UtcNow.Date;
-        var completedToday = await dbContext.AiCostLedger.AsNoTracking().CountAsync(
-            row => row.UserSubject == currentUser.Subject
-                && row.OperationType == "dream.ask"
-                && row.Status == "completed"
-                && row.CreatedAt >= today,
-            cancellationToken);
-        if (completedToday >= dailyLimit)
+        if (!entitlement.QuotaExempt)
         {
-            return AskDreamsResult.Failure(StatusCodes.Status429TooManyRequests, "quota", "You have reached today's dream-history question limit.");
+            var today = DateTimeOffset.UtcNow.Date;
+            var completedToday = await dbContext.AiCostLedger.AsNoTracking().CountAsync(
+                row => row.UserSubject == currentUser.Subject
+                    && row.OperationType == "dream.ask"
+                    && row.Status == "completed"
+                    && row.CreatedAt >= today,
+                cancellationToken);
+            if (completedToday >= dailyLimit)
+            {
+                return AskDreamsResult.Failure(StatusCodes.Status429TooManyRequests, "quota", "You have reached today's dream-history question limit.");
+            }
         }
 
         EmbeddingResult queryEmbedding;

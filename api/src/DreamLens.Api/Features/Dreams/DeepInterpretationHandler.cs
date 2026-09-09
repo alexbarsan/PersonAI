@@ -86,16 +86,20 @@ public sealed class DeepInterpretationHandler(
             }
 
             stage = "check quota";
-            var today = DateTimeOffset.UtcNow.Date;
-            var completedToday = await dbContext.AiCostLedger.AsNoTracking().CountAsync(
-            row => row.UserSubject == currentUser.Subject
-                && row.OperationType == "dream.deep-interpretation"
-                && row.Status == "completed"
-                && row.CreatedAt >= today,
-            cancellationToken);
-            if (completedToday >= Math.Max(0, options.Value.DailyLimit))
+            var entitlement = entitlementService.GetEntitlement(currentUser.Subject);
+            if (!entitlement.QuotaExempt)
             {
-                return DeepInterpretationResult.Failure(StatusCodes.Status429TooManyRequests, "quota", "You have reached today's Deep Interpretation limit.");
+                var today = DateTimeOffset.UtcNow.Date;
+                var completedToday = await dbContext.AiCostLedger.AsNoTracking().CountAsync(
+                    row => row.UserSubject == currentUser.Subject
+                        && row.OperationType == "dream.deep-interpretation"
+                        && row.Status == "completed"
+                        && row.CreatedAt >= today,
+                    cancellationToken);
+                if (completedToday >= Math.Max(0, options.Value.DailyLimit))
+                {
+                    return DeepInterpretationResult.Failure(StatusCodes.Status429TooManyRequests, "quota", "You have reached today's Deep Interpretation limit.");
+                }
             }
 
             stage = "retrieve related dreams";

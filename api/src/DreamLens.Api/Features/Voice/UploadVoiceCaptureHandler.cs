@@ -66,13 +66,16 @@ public sealed class UploadVoiceCaptureHandler(
             return UploadVoiceCaptureResult.Invalid("language", "The requested language code is invalid.");
         }
 
-        var since = DateTimeOffset.UtcNow.Date;
-        var usedToday = await dbContext.VoiceCaptures.CountAsync(
-            capture => capture.UserSubject == currentUser.Subject && capture.CreatedAt >= since,
-            cancellationToken);
-        if (usedToday >= voiceOptions.DailyLimit)
+        if (!entitlementService.GetEntitlement(currentUser.Subject).QuotaExempt)
         {
-            return UploadVoiceCaptureResult.QuotaExceeded();
+            var since = DateTimeOffset.UtcNow.Date;
+            var usedToday = await dbContext.VoiceCaptures.CountAsync(
+                capture => capture.UserSubject == currentUser.Subject && capture.CreatedAt >= since,
+                cancellationToken);
+            if (usedToday >= voiceOptions.DailyLimit)
+            {
+                return UploadVoiceCaptureResult.QuotaExceeded();
+            }
         }
 
         var capture = new VoiceCaptureRecord

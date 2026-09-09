@@ -727,6 +727,23 @@ public sealed class DreamEndpointTests
     }
 
     [Fact]
+    public async Task QuotaExemptSubjectBypassesDailyDreamLimit()
+    {
+        using var app = CreateDreamApp(
+            new StaticDreamChatClient(CanonicalAiOutput),
+            dailyDreamQuota: 1,
+            quotaExemptSubjects: ["subject-a"]);
+        using var client = app.CreateAuthenticatedClient("subject-a");
+        await PutProfileAsync(client);
+
+        var first = await client.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest());
+        var second = await client.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest());
+
+        Assert.Equal(HttpStatusCode.OK, first.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, second.StatusCode);
+    }
+
+    [Fact]
     public async Task EntitlementsEndpointReflectsCurrentTier()
     {
         using var app = CreateDreamApp(
@@ -833,7 +850,8 @@ public sealed class DreamEndpointTests
         List<string>? capturedLogs = null,
         bool voiceTranscriptionEnabled = false,
         bool embeddingsEnabled = false,
-        int deepDailyLimit = 3)
+        int deepDailyLimit = 3,
+        string[]? quotaExemptSubjects = null)
     {
         var databaseName = $"dream-tests-{Guid.NewGuid():N}";
         var factory = new WebApplicationFactory<Program>()
@@ -872,6 +890,16 @@ public sealed class DreamEndpointTests
                             configuration.AddInMemoryCollection(new Dictionary<string, string?>
                             {
                                 [$"Monetization:PremiumSubjects:{index}"] = premiumSubjects[index]
+                            });
+                        }
+                    }
+                    if (quotaExemptSubjects is not null)
+                    {
+                        for (var index = 0; index < quotaExemptSubjects.Length; index++)
+                        {
+                            configuration.AddInMemoryCollection(new Dictionary<string, string?>
+                            {
+                                [$"QuotaExemption:Subjects:{index}"] = quotaExemptSubjects[index]
                             });
                         }
                     }

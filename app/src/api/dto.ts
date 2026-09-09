@@ -239,6 +239,7 @@ export type EntitlementResponse = {
   tier: "free" | "premium";
   dailyDreamLimit: number;
   deepAnalysisEnabled: boolean;
+  quotaExempt?: boolean;
 };
 
 export type AnonymizationRequestResponse = {

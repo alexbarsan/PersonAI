@@ -183,7 +183,8 @@ export const mockInsights: InsightsResponse = {
 export const mockEntitlement: EntitlementResponse = {
   tier: "free",
   dailyDreamLimit: 3,
-  deepAnalysisEnabled: false
+  deepAnalysisEnabled: false,
+  quotaExempt: false
 };
 
 export const mockAnonymizationRequest: AnonymizationRequestResponse = {
