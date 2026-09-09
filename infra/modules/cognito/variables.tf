@@ -25,6 +25,12 @@ variable "privacy_admin_group_name" {
   default     = "dreamlens-admin"
 }
 
+variable "metrics_admin_group_name" {
+  type        = string
+  description = "Cognito group allowed to read aggregated business metrics."
+  default     = "dreamlens-metrics-admin"
+}
+
 variable "tags" {
   type        = map(string)
   description = "Tags applied to Cognito resources."

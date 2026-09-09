@@ -7,6 +7,7 @@ using DreamLens.Api.Features.Profile;
 using DreamLens.Api.Features.Dreams;
 using DreamLens.Api.Features.Privacy;
 using DreamLens.Api.Features.Voice;
+using DreamLens.Api.Features.AdminMetrics;
 using DreamLens.Api.Infrastructure.Identity;
 using DreamLens.Api.Infrastructure.Embeddings;
 using DreamLens.Api.Infrastructure.Images;
@@ -32,6 +33,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddDreamLensObservability();
 builder.Services.AddDreamLensAuthentication(builder.Configuration, builder.Environment);
 builder.Services.AddDreamLensPrivacyAuthorization(builder.Configuration);
+builder.Services.AddDreamLensBusinessMetricsAuthorization(builder.Configuration);
 builder.Services.AddDreamLensRateLimiting(builder.Configuration);
 builder.Services.AddDreamLensPersistence(builder.Configuration);
 builder.Services.AddDreamLensEmbeddings(builder.Configuration);
@@ -51,6 +53,7 @@ if (!string.IsNullOrWhiteSpace(PersistenceServiceCollectionExtensions.ResolveCon
     builder.Services.AddScoped<IAnonymizedUserAccessService, AnonymizedUserAccessService>();
     builder.Services.AddScoped<GetJobHandler>();
     builder.Services.AddScoped<RetryJobHandler>();
+    builder.Services.AddScoped<GetAdminMetricsHandler>();
 }
 
 var profileEndpointsEnabled = ProfileEndpointsEnabled(builder.Configuration);
@@ -116,6 +119,7 @@ app.MapEntitlementEndpoints();
 app.MapProfileEndpoints();
 app.MapDreamEndpoints();
 app.MapInsightsEndpoints();
+app.MapAdminMetricsEndpoints();
 app.MapJobEndpoints();
 app.MapPrivacyEndpoints();
 app.MapVoiceEndpoints();

@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using DreamLens.Api.Features.Dreams;
+using DreamLens.Api.Features.AdminMetrics;
 using DreamLens.Api.Features.Insights;
 using DreamLens.Api.Features.Jobs;
 using DreamLens.Api.Features.Profile;
@@ -482,6 +483,25 @@ public sealed class DreamEndpointTests
     }
 
     [Fact]
+    public async Task AdminMetricsRequireDedicatedMetricsAdminGroup()
+    {
+        using var app = CreateDreamApp(new StaticDreamChatClient(CanonicalAiOutput));
+        using var nonAdmin = app.CreateAuthenticatedClient("subject-a");
+        using var metricsAdmin = app.CreateAuthenticatedClient("metrics-admin", "dreamlens-metrics-admin");
+
+        var forbidden = await nonAdmin.GetAsync("/v1/admin/metrics");
+        var response = await metricsAdmin.GetAsync("/v1/admin/metrics?from=2026-01-01&to=2026-01-31");
+        var metrics = await response.Content.ReadFromJsonAsync<AdminMetricsResponse>();
+
+        Assert.Equal(HttpStatusCode.Forbidden, forbidden.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.NotNull(metrics);
+        Assert.Equal(0, metrics.ActiveUsers);
+        Assert.Equal("unavailable", metrics.Revenue.Status);
+        Assert.Equal("unavailable", metrics.AwsCost.Status);
+    }
+
+    [Fact]
     public async Task UserCannotFetchAnotherUsersDream()
     {
         using var app = CreateDreamApp(new StaticDreamChatClient(CanonicalAiOutput));
@@ -899,6 +919,7 @@ public sealed class DreamEndpointTests
                     services.AddScoped<UpdateDreamJournalHandler>();
                     services.AddScoped<DeleteDreamHandler>();
                     services.AddScoped<GetInsightsHandler>();
+                    services.AddScoped<GetAdminMetricsHandler>();
                     services.AddScoped<RetryJobHandler>();
                     services.AddScoped<RequestAnonymizationHandler>();
                     services.AddScoped<GetAnonymizationRequestHandler>();

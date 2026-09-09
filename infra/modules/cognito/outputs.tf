@@ -13,6 +13,11 @@ output "privacy_admin_group_name" {
   description = "Cognito group allowed to approve anonymization requests."
 }
 
+output "metrics_admin_group_name" {
+  value       = aws_cognito_user_group.metrics_admin.name
+  description = "Cognito group allowed to read aggregated business metrics."
+}
+
 output "issuer_url" {
   value       = "https://cognito-idp.${data.aws_region.current.name}.amazonaws.com/${aws_cognito_user_pool.this.id}"
   description = "JWT issuer URL."

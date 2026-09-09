@@ -20,6 +20,7 @@ The imported Catch Dreamer feature notes add several capabilities that are not f
 - S29 Premium Deep Interpretation is deployed in dev with persisted owner-scoped results, `deepseek-v4-pro`, Nova/pgvector related-dream context, consent and quota controls, cost/latency ledger entries, and app UI. One authenticated invocation remains.
 - Cognito social sign-in provider setup for Google and Apple first; Facebook remains optional after product/privacy review.
 - Admin/business metrics view for MAU, conversion, revenue, AI cost, AWS cost, cost per user, and gross margin.
+- S37 sensitive-dream safety workflow: allow private adult sexual, violent, and trauma dream content while using contextual safety categories rather than keyword alerts. Notify reviewers with category, confidence, anonymized subject, dream ID, and timestamp only; raw-text access must be explicit, audited, and privacy-governed.
 - Local-first voice capture: durable native recording backup, retryable upload outbox, Free device transcription when supported, Premium server transcription, and explicit local/AWS retention windows.
 
 ## Known Gaps

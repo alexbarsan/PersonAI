@@ -48,6 +48,12 @@ resource "aws_cognito_user_group" "privacy_admin" {
   description  = "Approves DreamLens user anonymization requests."
 }
 
+resource "aws_cognito_user_group" "metrics_admin" {
+  name         = var.metrics_admin_group_name
+  user_pool_id = aws_cognito_user_pool.this.id
+  description  = "Reads aggregated Dream DNA business metrics."
+}
+
 resource "aws_cognito_user_pool_domain" "hosted_ui" {
   count = var.domain_prefix == null ? 0 : 1
 
