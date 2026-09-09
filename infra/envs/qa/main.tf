@@ -67,11 +67,11 @@ module "api" {
     ConnectionStrings__Host                           = module.database.endpoint
     ConnectionStrings__Database                       = module.database.database_name
     Embedding__Enabled                                = "true"
-    Embedding__Provider                               = "bedrock-nova-multimodal"
-    Embedding__Model                                  = "amazon.nova-2-multimodal-embeddings-v1:0"
+    Embedding__Provider                               = "bedrock-titan"
+    Embedding__Model                                  = "amazon.titan-embed-text-v2:0"
     Embedding__Dimensions                             = "1024"
-    Embedding__Version                                = "2"
-    Embedding__InputCostPerMillionTokensUsd           = "0.135"
+    Embedding__Version                                = "3"
+    Embedding__InputCostPerMillionTokensUsd           = "0.02"
     DeepSeek__Model                                   = "deepseek-v4-flash"
     ChatUsageCost__InputCostPerMillionTokens          = "0.44"
     ChatUsageCost__OutputCostPerMillionTokens         = "1.32"

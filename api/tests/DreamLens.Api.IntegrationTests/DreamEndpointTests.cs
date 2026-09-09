@@ -837,6 +837,8 @@ public sealed class DreamEndpointTests
                         ["VoiceTranscription:Provider"] = "fake",
                         ["Embedding:Enabled"] = embeddingsEnabled.ToString(),
                         ["Embedding:Provider"] = "fake",
+                        ["Embedding:Model"] = "fake-test-embedding",
+                        ["Embedding:Version"] = "test",
                         ["DeepInterpretation:Enabled"] = "true",
                         ["DeepInterpretation:Model"] = "deepseek-v4-pro",
                         ["DeepInterpretation:DailyLimit"] = deepDailyLimit.ToString(System.Globalization.CultureInfo.InvariantCulture),
@@ -1078,9 +1080,9 @@ public sealed class DreamEndpointTests
                 UserSubject = userSubject,
                 Embedding = new Vector(new float[1024]),
                 Provider = "fake",
-                Model = "amazon.nova-2-multimodal-embeddings-v1:0",
+                Model = "fake-test-embedding",
                 Dimensions = 1024,
-                Version = "2"
+                Version = "test"
             });
             await dbContext.SaveChangesAsync();
         }

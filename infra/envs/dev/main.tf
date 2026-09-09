@@ -68,11 +68,11 @@ module "api" {
     ConnectionStrings__Database                       = module.database.database_name
     Database__ApplyMigrations                         = "true"
     Embedding__Enabled                                = "true"
-    Embedding__Provider                               = "bedrock-nova-multimodal"
-    Embedding__Model                                  = "amazon.nova-2-multimodal-embeddings-v1:0"
+    Embedding__Provider                               = "bedrock-titan"
+    Embedding__Model                                  = "amazon.titan-embed-text-v2:0"
     Embedding__Dimensions                             = "1024"
-    Embedding__Version                                = "2"
-    Embedding__InputCostPerMillionTokensUsd           = "0.135"
+    Embedding__Version                                = "3"
+    Embedding__InputCostPerMillionTokensUsd           = "0.02"
     DeepSeek__Model                                   = "deepseek-v4-flash"
     ChatUsageCost__InputCostPerMillionTokens          = "0.44"
     ChatUsageCost__OutputCostPerMillionTokens         = "1.32"
@@ -85,7 +85,7 @@ module "api" {
     DeepInterpretation__OutputCostPerMillionTokensUsd = "3.96"
     Jobs__QueueUrl                                    = module.async_jobs.queue_url
     Jobs__Worker__Enabled                             = "true"
-    Jobs__EmbeddingBackfill__Enabled                  = "false"
+    Jobs__EmbeddingBackfill__Enabled                  = "true"
     Assets__BucketName                                = module.private_assets.bucket_name
     ImageGeneration__Enabled                          = "false"
     ImageGeneration__Provider                         = "bedrock-nova-canvas"
