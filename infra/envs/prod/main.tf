@@ -79,7 +79,7 @@ module "api" {
     DeepInterpretation__Model                         = "deepseek-v4-pro"
     DeepInterpretation__DailyLimit                    = "3"
     DeepInterpretation__RetrievalLimit                = "5"
-    DeepInterpretation__MaxOutputTokens               = "2048"
+    DeepInterpretation__MaxOutputTokens               = "4096"
     DeepInterpretation__InputCostPerMillionTokensUsd  = "1.32"
     DeepInterpretation__OutputCostPerMillionTokensUsd = "3.96"
     Authentication__Cognito__Region                   = var.aws_region

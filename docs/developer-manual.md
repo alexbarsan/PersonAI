@@ -53,7 +53,7 @@ The app defaults to mock API mode through `app/app.json`.
 
 ## Ask Dream DNA
 
-`POST /v1/dreams/ask` accepts `{ "question": "..." }`. It requires an authenticated profile with AI-processing and history-use consent, embeds the question, retrieves only that user's nearest dream summaries, validates the model's JSON and referenced dream IDs, and fails with `503` if semantic memory is unavailable. `AskDreams` config controls Free/Premium daily limits and retrieval size. Nova uses `GENERIC_INDEX` for dream rows and `TEXT_RETRIEVAL` for questions, both fixed at 1,024 dimensions. Nova does not support Bedrock `CountTokens`, so token fields remain null and `Embedding:InputCostPerMillionTokensUsd` is applied to a conservative UTF-8-size estimate for cost reporting; the answer uses `ChatUsageCost`.
+`POST /v1/dreams/ask` accepts `{ "question": "..." }`. It requires an authenticated profile with AI-processing and history-use consent, embeds the question, retrieves only that user's nearest dream summaries, validates the model's JSON and referenced dream IDs, and fails with `503` if semantic memory is unavailable. `AskDreams` config controls Free/Premium daily limits and retrieval size. Titan Text Embeddings V2 generates both dream and query vectors at 1,024 dimensions; provider, model, dimensions, and embedding version keep this index isolated from older Nova vectors. The answer uses `ChatUsageCost`.
 
 Local mock mode provides a deterministic answer. A real environment also requires enabled embeddings and indexed dream rows; it never falls back to sending full journal history.
 
@@ -128,6 +128,16 @@ Load smoke, when k6 is installed and an API is available:
 $env:DREAMLENS_BASE_URL = "http://localhost:5000"
 k6 run tests/load/dream-smoke.js
 ```
+
+Authenticated sensitive-dream compatibility smoke test against dev:
+
+```powershell
+$env:DREAMDNA_BEARER_TOKEN = "<short-lived Cognito ID token>"
+powershell -ExecutionPolicy Bypass -File scripts/test-sensitive-dreams.ps1
+Remove-Item Env:DREAMDNA_BEARER_TOKEN
+```
+
+The script uses adult-only, non-graphic fixtures, reuses marker-tagged dreams, and reuses a persisted Deep Interpretation when present. It can create billable base, DeepSeek, embedding, and Ask operations; use it only in a controlled environment.
 
 ## Modify PersonaKit
 
