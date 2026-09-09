@@ -10,7 +10,7 @@ public sealed class DeepInterpretationOptions
 
     public int RetrievalLimit { get; set; } = 5;
 
-    public int MaxOutputTokens { get; set; } = 4096;
+    public int MaxOutputTokens { get; set; } = 2048;
 
     public decimal InputCostPerMillionTokensUsd { get; set; } = 1.32m;
 

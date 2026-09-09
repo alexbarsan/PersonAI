@@ -102,6 +102,7 @@ resource "aws_lb" "api" {
   name               = "${var.name_prefix}-api"
   load_balancer_type = "application"
   internal           = false
+  idle_timeout       = 180
   security_groups    = [aws_security_group.alb.id]
   subnets            = var.public_subnet_ids
 
