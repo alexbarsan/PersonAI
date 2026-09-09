@@ -25,6 +25,8 @@ The imported Catch Dreamer feature notes add several capabilities that are not f
 
 ## Known Gaps
 
+- Web/native authentication now persists the Cognito session across refresh and refreshes near-expiry tokens. Complete a live dev login-refresh-renewal smoke test after deployment; a future BFF with HttpOnly cookies would further reduce browser token exposure.
+
 - Expo typed routes are disabled because the current installed Expo CLI/router pair failed during typed-route generation.
 - The Expo app is on SDK 56 locally because SDK 57 produced a `jest-expo` / React Native peer conflict during install.
 - `npm test` uses `--forceExit` because the Expo/RN Jest environment leaves an open handle after tests complete.

@@ -3,6 +3,7 @@ import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 
 import { useAuthStore, type AuthUser } from "@/auth/authStore";
+import { clearStoredAuthSession, readStoredAuthSession, writeStoredAuthSession } from "@/auth/authSessionStorage";
 import { appConfig } from "@/core/config";
 
 WebBrowser.maybeCompleteAuthSession();
@@ -57,12 +58,20 @@ export function useCognitoSignIn() {
       },
       discovery
     )
-      .then((tokenResponse) => {
+      .then(async (tokenResponse) => {
         if (!isActive) {
           return;
         }
 
         const bearerToken = tokenResponse.idToken ?? tokenResponse.accessToken;
+        if (!tokenResponse.refreshToken) {
+          throw new Error("Cognito did not return a refresh token.");
+        }
+        await writeStoredAuthSession({
+          bearerToken,
+          refreshToken: tokenResponse.refreshToken,
+          expiresAt: readTokenExpiry(bearerToken)
+        });
         setSession(bearerToken, createUserFromToken(bearerToken));
         setError(null);
       })
@@ -103,6 +112,52 @@ export function useCognitoSignIn() {
     isSigningIn,
     signIn
   };
+}
+
+export function useCognitoSessionRestoration() {
+  const setSession = useAuthStore((state) => state.setSession);
+
+  useEffect(() => {
+    if (appConfig.mockApi) return;
+    let active = true;
+
+    const restore = async () => {
+      const stored = await readStoredAuthSession();
+      if (!stored || !active) return;
+
+      if (stored.expiresAt > Date.now() + 120_000) {
+        setSession(stored.bearerToken, createUserFromToken(stored.bearerToken));
+        return;
+      }
+
+      try {
+        const discovery = createCognitoDiscovery(appConfig.cognitoDomain);
+        if (!discovery || !appConfig.cognitoClientId) throw new Error("Cognito is not configured.");
+        const refreshed = await AuthSession.refreshAsync(
+          { clientId: appConfig.cognitoClientId, refreshToken: stored.refreshToken },
+          discovery
+        );
+        const bearerToken = refreshed.idToken ?? refreshed.accessToken;
+        const next = {
+          bearerToken,
+          refreshToken: refreshed.refreshToken ?? stored.refreshToken,
+          expiresAt: readTokenExpiry(bearerToken)
+        };
+        await writeStoredAuthSession(next);
+        if (active) setSession(bearerToken, createUserFromToken(bearerToken));
+      } catch {
+        await clearStoredAuthSession();
+        if (active) useAuthStore.getState().signOut();
+      }
+    };
+
+    void restore();
+    const interval = setInterval(() => void restore(), 60_000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [setSession]);
 }
 
 export function createCognitoDiscovery(cognitoDomain: string) {
@@ -184,4 +239,9 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
 function readStringClaim(claims: Record<string, unknown> | null, key: string) {
   const value = claims?.[key];
   return typeof value === "string" && value.trim().length > 0 ? value : undefined;
+}
+
+function readTokenExpiry(token: string) {
+  const expiry = decodeJwtPayload(token)?.exp;
+  return typeof expiry === "number" ? expiry * 1000 : Date.now() + 3_600_000;
 }

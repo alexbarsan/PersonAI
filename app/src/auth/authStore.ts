@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { clearStoredAuthSession } from "@/auth/authSessionStorage";
 
 export type AuthUser = {
   subject: string;
@@ -26,7 +27,10 @@ export const useAuthStore = create<AuthState>((set) => ({
         displayName: "Mock Dreamer"
       }
     }),
-  signOut: () => set({ accessToken: null, user: null }),
+  signOut: () => {
+    void clearStoredAuthSession();
+    set({ accessToken: null, user: null });
+  },
   setSession: (accessToken, user) => set({ accessToken, user })
 }));
 

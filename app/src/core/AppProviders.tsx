@@ -3,8 +3,10 @@ import { PropsWithChildren, useState } from "react";
 
 import { ApiClientProvider } from "@/api/apiContext";
 import { ThemeProvider } from "@/theme/ThemeProvider";
+import { useCognitoSessionRestoration } from "@/auth/cognitoAuth";
 
 export function AppProviders({ children }: PropsWithChildren) {
+  useCognitoSessionRestoration();
   const [queryClient] = useState(
     () =>
       new QueryClient({
