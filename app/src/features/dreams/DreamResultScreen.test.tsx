@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react-native";
+import { fireEvent, render, screen } from "@testing-library/react-native";
 import { PropsWithChildren } from "react";
 
 import { ApiClientProvider } from "@/api/apiContext";
@@ -11,7 +11,9 @@ import { mockDream } from "@/mocks/mockData";
 import { useDreamResultStore } from "@/state/dreamResultStore";
 import { ThemeProvider } from "@/theme/ThemeProvider";
 
+const mockPush = jest.fn();
 jest.mock("expo-router", () => ({
+  router: { push: (...args: unknown[]) => mockPush(...args) },
   useLocalSearchParams: () => ({ id: "dream_mock_1" })
 }));
 
@@ -22,6 +24,7 @@ jest.mock("@/features/dreams/InterpretationFeedbackPanel", () => ({
 describe("DreamResultScreen", () => {
   beforeEach(() => {
     useDreamResultStore.setState({ dreamsById: {} });
+    mockPush.mockClear();
   });
 
   it("shows the disclaimer and rendered result", () => {
@@ -65,6 +68,19 @@ describe("DreamResultScreen", () => {
     renderWithProviders(<DreamResultScreen />, premiumApi);
 
     expect(await screen.findByLabelText("Generated dream visual")).toBeTruthy();
+  });
+
+  it("shows free users the dream visual option and routes them to Premium", async () => {
+    useDreamResultStore.getState().rememberDream(mockDream);
+    const freeApi: ApiClient = {
+      ...mockApiClient,
+      getEntitlements: async () => ({ tier: "free", dailyDreamLimit: 3, deepAnalysisEnabled: false })
+    };
+
+    renderWithProviders(<DreamResultScreen />, freeApi);
+
+    fireEvent.press(await screen.findByTestId("view-premium-dream-image"));
+    expect(mockPush).toHaveBeenCalledWith("/paywall");
   });
 
 });

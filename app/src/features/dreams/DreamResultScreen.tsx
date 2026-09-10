@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
@@ -201,7 +201,12 @@ function DreamImagePanel({
           ) : null}
         </>
       ) : (
-        <Text style={[styles.body, { color: theme.colors.mutedText }]}>Dream visuals are available with Premium.</Text>
+        <>
+          <Text style={[styles.body, { color: theme.colors.mutedText }]}>Dream visuals are available with Premium.</Text>
+          <Pressable accessibilityRole="button" onPress={() => router.push("/paywall")} style={[styles.secondaryImageButton, { borderColor: theme.colors.primary }]} testID="view-premium-dream-image">
+            <Text style={[styles.buttonText, { color: theme.colors.primary }]}>View Premium</Text>
+          </Pressable>
+        </>
       )}
     </View>
   );
@@ -296,6 +301,14 @@ const styles = StyleSheet.create({
   imageButton: {
     alignItems: "center",
     borderRadius: 8,
+    justifyContent: "center",
+    minHeight: 44,
+    paddingHorizontal: 16
+  },
+  secondaryImageButton: {
+    alignItems: "center",
+    borderRadius: 8,
+    borderWidth: 1,
     justifyContent: "center",
     minHeight: 44,
     paddingHorizontal: 16

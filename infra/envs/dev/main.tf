@@ -88,11 +88,11 @@ module "api" {
     Jobs__Worker__Enabled                             = "true"
     Jobs__EmbeddingBackfill__Enabled                  = "true"
     Assets__BucketName                                = module.private_assets.bucket_name
-    ImageGeneration__Enabled                          = "false"
+    ImageGeneration__Enabled                          = "true"
     ImageGeneration__Provider                         = "bedrock-nova-canvas"
     ImageGeneration__Model                            = "amazon.nova-canvas-v1:0"
     ImageGeneration__DefaultStyle                     = "SOFT_DIGITAL_PAINTING"
-    ImageGeneration__EstimatedCostUsd                 = "0"
+    ImageGeneration__EstimatedCostUsd                 = "0.04"
     VoiceTranscription__Enabled                       = "true"
     VoiceTranscription__Provider                      = "amazon-transcribe"
     VoiceTranscription__Model                         = "amazon-transcribe-standard"

@@ -18,8 +18,7 @@ public sealed class NovaCanvasImageGenerator(
             taskType = "TEXT_IMAGE",
             textToImageParams = new
             {
-                text = request.Prompt,
-                style = request.Style
+                text = request.Prompt
             },
             imageGenerationConfig = new
             {

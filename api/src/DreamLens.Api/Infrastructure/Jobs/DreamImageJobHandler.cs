@@ -41,7 +41,7 @@ public sealed class DreamImageJobHandler(
         try
         {
             var result = await imageGenerator.GenerateAsync(
-                new ImageGenerationRequest(BuildPrompt(dream), image.Style),
+                new ImageGenerationRequest(BuildPrompt(dream, image.Style), image.Style),
                 cancellationToken);
             var key = $"dream-images/{image.Id:N}.png";
             await using var content = new MemoryStream(result.Content, writable: false);
@@ -64,12 +64,24 @@ public sealed class DreamImageJobHandler(
         }
     }
 
-    private static string BuildPrompt(DreamRecord dream)
+    private static string BuildPrompt(DreamRecord dream, string style)
     {
         var summary = DreamMapper.ReadSummary(dream) ?? "A reflective dream scene";
-        var clippedSummary = summary.Length <= 700 ? summary : summary[..700];
-        return $"A reflective, symbolic dream-inspired scene. {clippedSummary}. Calm composition, no text or letters, no identifiable real people.";
+        var prompt = $"A reflective, symbolic dream-inspired scene in {DescribeStyle(style)}. {summary}. Calm composition, no text or letters, no identifiable real people.";
+        return prompt.Length <= 1024 ? prompt : prompt[..1024];
     }
+
+    private static string DescribeStyle(string style) => style switch
+    {
+        "3D_ANIMATED_FAMILY_FILM" => "a warm, gentle 3D animated family-film style",
+        "DESIGN_SKETCH" => "an expressive hand-drawn design sketch style",
+        "FLAT_VECTOR_ILLUSTRATION" => "a clear flat vector illustration style",
+        "GRAPHIC_NOVEL_ILLUSTRATION" => "an atmospheric graphic novel illustration style",
+        "MAXIMALISM" => "a rich, layered maximalist illustration style",
+        "MIDCENTURY_RETRO" => "a restrained midcentury retro illustration style",
+        "PHOTOREALISM" => "a cinematic photorealistic style",
+        _ => "a soft digital painting style"
+    };
 
     private AiCostLedgerRecord CreateLedger(
         AsyncJobMessage message,

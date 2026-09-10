@@ -1,5 +1,7 @@
 # Slice Status
 
+Current implementation: S42, Premium Nova Canvas dream visuals in dev. Next Step: run tests, deploy API, apply the dev setting without task-image rollback, then make one controlled Premium request and inspect the image ledger row.
+
 Status values: `Not started`, `In progress`, `Blocked`, `Done`.
 
 | Slice | Status | Date completed | Commit | Verification | Notes | Next Step |

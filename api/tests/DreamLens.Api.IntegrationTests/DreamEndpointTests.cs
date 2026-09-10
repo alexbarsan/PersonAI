@@ -317,6 +317,42 @@ public sealed class DreamEndpointTests
     }
 
     [Fact]
+    public async Task PremiumUserCanQueueDreamImageWhenImageGenerationIsEnabled()
+    {
+        using var app = CreateDreamApp(
+            new StaticDreamChatClient(CanonicalAiOutput),
+            premiumSubjects: ["subject-a"],
+            imageGenerationEnabled: true);
+        using var client = app.CreateAuthenticatedClient("subject-a");
+        await PutProfileAsync(client);
+        var dream = await (await client.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest()))
+            .Content.ReadFromJsonAsync<DreamResponse>();
+
+        var response = await client.PostAsJsonAsync($"/v1/dreams/{dream!.Id}/image", new { style = "SOFT_DIGITAL_PAINTING" });
+        var image = await response.Content.ReadFromJsonAsync<DreamImageResponse>();
+
+        Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
+        Assert.NotNull(image);
+        Assert.Equal("pending", image.Status);
+        Assert.Equal(1, app.PublishedAsyncJobCount);
+    }
+
+    [Fact]
+    public async Task FreeUserCannotQueueDreamImageWhenImageGenerationIsEnabled()
+    {
+        using var app = CreateDreamApp(new StaticDreamChatClient(CanonicalAiOutput), imageGenerationEnabled: true);
+        using var client = app.CreateAuthenticatedClient("subject-a");
+        await PutProfileAsync(client);
+        var dream = await (await client.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest()))
+            .Content.ReadFromJsonAsync<DreamResponse>();
+
+        var response = await client.PostAsJsonAsync($"/v1/dreams/{dream!.Id}/image", new { style = "SOFT_DIGITAL_PAINTING" });
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal(0, app.PublishedAsyncJobCount);
+    }
+
+    [Fact]
     public async Task VoiceUploadIsUnavailableUntilVoiceTranscriptionIsEnabled()
     {
         using var app = CreateDreamApp(new StaticDreamChatClient(CanonicalAiOutput), premiumSubjects: ["subject-a"]);
@@ -886,6 +922,7 @@ public sealed class DreamEndpointTests
         List<string>? capturedLogs = null,
         bool voiceTranscriptionEnabled = false,
         bool embeddingsEnabled = false,
+        bool imageGenerationEnabled = false,
         int deepDailyLimit = 3,
         string[]? quotaExemptSubjects = null)
     {
@@ -913,6 +950,9 @@ public sealed class DreamEndpointTests
                         ["Embedding:Provider"] = "fake",
                         ["Embedding:Model"] = "fake-test-embedding",
                         ["Embedding:Version"] = "test",
+                        ["ImageGeneration:Enabled"] = imageGenerationEnabled.ToString(),
+                        ["ImageGeneration:Provider"] = "fake",
+                        ["ImageGeneration:EstimatedCostUsd"] = "0.04",
                         ["DeepInterpretation:Enabled"] = "true",
                         ["DeepInterpretation:Model"] = "deepseek-v4-pro",
                         ["DeepInterpretation:DailyLimit"] = deepDailyLimit.ToString(System.Globalization.CultureInfo.InvariantCulture),
