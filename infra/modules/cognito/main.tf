@@ -5,7 +5,7 @@ resource "aws_cognito_user_pool" "this" {
   mfa_configuration        = "OPTIONAL"
 
   password_policy {
-    minimum_length                   = 12
+    minimum_length                   = 6
     require_lowercase                = true
     require_numbers                  = true
     require_symbols                  = true
