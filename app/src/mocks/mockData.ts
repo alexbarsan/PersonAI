@@ -10,6 +10,8 @@ import {
   InsightsResponse,
   MeResponse,
   ProfileResponse
+  ,
+  SensitiveSafetyReviewResponse
 } from "@/api/dto";
 
 export const mockDreamFeedback: DreamFeedbackResponse = {
@@ -201,3 +203,16 @@ export const mockUserDataExport = {
   dreams: [{ id: mockDream.id, text: "I was near dark water." }],
   aiOperations: [{ id: "ai_operation_mock_1", operationType: "dream.interpretation", estimatedCostUsd: 0.001 }]
 };
+
+export const mockSensitiveSafetyReviews: SensitiveSafetyReviewResponse[] = [{
+  id: "safety_mock_1",
+  dreamId: mockDream.id,
+  subjectPseudonym: "Dreamer-48Q",
+  category: "abuse-or-trauma",
+  confidence: 0.93,
+  severity: "high",
+  restrictsElaboration: true,
+  status: "open",
+  detectedAt: "2026-09-10T12:00:00Z",
+  expiresAt: "2026-10-10T12:00:00Z"
+}];

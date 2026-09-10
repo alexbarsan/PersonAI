@@ -262,3 +262,27 @@ export type UserDataExportResponse = {
   dreams: Array<{ id: string; text: string }>;
   aiOperations: Array<{ id: string; operationType: string; estimatedCostUsd: number }>;
 };
+
+export type SensitiveSafetyReviewResponse = {
+  id: string;
+  dreamId: string;
+  subjectPseudonym: string;
+  category: string;
+  confidence: number;
+  severity: "review" | "high";
+  restrictsElaboration: boolean;
+  status: string;
+  detectedAt: string;
+  expiresAt: string;
+};
+
+export type SensitiveSafetyRawAccessRequest = {
+  purpose: string;
+};
+
+export type SensitiveSafetyRawAccessResponse = {
+  safetyEventId: string;
+  dreamId: string;
+  dreamText: string;
+  expiresAt: string;
+};

@@ -14,6 +14,9 @@ import {
   ProfileResponse,
   AnonymizationRequestResponse,
   RequestDreamImageRequest,
+  SensitiveSafetyRawAccessRequest,
+  SensitiveSafetyRawAccessResponse,
+  SensitiveSafetyReviewResponse,
   SubmitDreamRequest,
   UpdateDreamJournalRequest,
   UpdateDreamFeedbackRequest,
@@ -54,6 +57,9 @@ export type ApiClient = {
   requestAnonymization: () => Promise<AnonymizationRequestResponse>;
   uploadVoiceCapture: (capture: VoiceCaptureUpload) => Promise<VoiceCaptureResponse>;
   getVoiceCapture: (id: string) => Promise<VoiceCaptureResponse>;
+  listSensitiveSafetyReviews: (status?: string) => Promise<SensitiveSafetyReviewResponse[]>;
+  acknowledgeSensitiveSafetyReview: (id: string) => Promise<SensitiveSafetyReviewResponse>;
+  accessSensitiveSafetyReviewRawText: (id: string, request: SensitiveSafetyRawAccessRequest) => Promise<SensitiveSafetyRawAccessResponse>;
 };
 
 export { ApiError };
@@ -174,7 +180,13 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
 
       return requestForm<VoiceCaptureResponse>("/v1/voice-captures", form);
     },
-    getVoiceCapture: (id) => request<VoiceCaptureResponse>(`/v1/voice-captures/${id}`)
+    getVoiceCapture: (id) => request<VoiceCaptureResponse>(`/v1/voice-captures/${id}`),
+    listSensitiveSafetyReviews: (status = "open") => request<SensitiveSafetyReviewResponse[]>(`/v1/safety/admin/reviews?status=${encodeURIComponent(status)}`),
+    acknowledgeSensitiveSafetyReview: (id) => request<SensitiveSafetyReviewResponse>(`/v1/safety/admin/reviews/${id}/acknowledge`, { method: "POST" }),
+    accessSensitiveSafetyReviewRawText: (id, body) => request<SensitiveSafetyRawAccessResponse>(`/v1/safety/admin/reviews/${id}/raw-access`, {
+      method: "POST",
+      body: JSON.stringify(body)
+    })
   };
 }
 
