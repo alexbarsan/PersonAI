@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react-nativ
 import { PropsWithChildren } from "react";
 
 import { ApiClientProvider } from "@/api/apiContext";
+import { ApiError } from "@/api/errors";
 import { DreamCaptureScreen } from "@/features/dreams/DreamCaptureScreen";
 import { mockApiClient } from "@/mocks/mockApi";
 import { mockDream } from "@/mocks/mockData";
@@ -46,6 +47,21 @@ describe("DreamCaptureScreen", () => {
     );
     await waitFor(() => expect(onSubmitted).toHaveBeenCalledWith(mockDream.id));
     expect(useDreamResultStore.getState().getDream(mockDream.id)).toEqual(mockDream);
+  });
+
+  it("explains when a profile is required before interpretation", async () => {
+    renderWithProviders(<DreamCaptureScreen />, {
+      submitDream: async () => {
+        throw new ApiError("API request failed", 400, {
+          profile: ["Profile must be completed before submitting dreams."]
+        });
+      }
+    });
+
+    fireEvent.changeText(screen.getByLabelText("Dream text"), "I was walking through a quiet station.");
+    fireEvent.press(screen.getByText("Interpret dream"));
+
+    expect(await screen.findByText("Profile must be completed before submitting dreams.")).toBeTruthy();
   });
 });
 

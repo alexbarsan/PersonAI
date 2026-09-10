@@ -1,8 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
+import { useEffect } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { useApiClient } from "@/api/apiContext";
+import { ApiError } from "@/api/errors";
 import { useAuthStore } from "@/auth/authStore";
 import { useCognitoSignIn } from "@/auth/cognitoAuth";
 import { AppShell, BrandMark } from "@/components/AppShell";
@@ -34,6 +36,17 @@ export function HomeScreen() {
     queryFn: () => api.getEntitlements(),
     enabled: Boolean(user)
   });
+  const profile = useQuery({
+    queryKey: ["profile", user?.subject],
+    queryFn: () => api.getProfile(),
+    enabled: Boolean(user)
+  });
+
+  useEffect(() => {
+    if (profile.error instanceof ApiError && profile.error.status === 404) {
+      router.replace("/onboarding");
+    }
+  }, [profile.error]);
 
   return (
     <AppShell showNavigation={Boolean(user)}>
@@ -51,7 +64,11 @@ export function HomeScreen() {
           ) : null}
         </View>
 
-        {user ? (
+        {user && profile.isLoading ? (
+          <View style={[styles.setupState, { backgroundColor: theme.colors.lavender }]}>
+            <Text style={[styles.setupTitle, { color: theme.colors.text }]}>Preparing your private journal</Text>
+          </View>
+        ) : user ? (
           <>
             <View style={{ ...styles.captureCard, backgroundColor: theme.colors.primary }}>
               <Text style={{ ...styles.eyebrow, color: theme.colors.primaryText }}>Today&apos;s dream</Text>
@@ -208,6 +225,8 @@ const styles = StyleSheet.create({
   welcome: { gap: 20, paddingTop: 54 },
   welcomeTitle: { fontSize: 32, fontWeight: "700", lineHeight: 39 },
   welcomeBody: { fontSize: 17, lineHeight: 25, maxWidth: 430 },
+  setupState: { borderRadius: 8, padding: 18 },
+  setupTitle: { fontSize: 16, fontWeight: "800", lineHeight: 22 },
   hiddenStatus: { fontSize: 12, opacity: 0.75 },
   error: { fontSize: 14, lineHeight: 20 }
 });
