@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text.Json;
 using DreamLens.Api.Features.Profile;
+using DreamLens.Api.Features.Safety;
 using DreamLens.Api.Infrastructure.Embeddings;
 using DreamLens.Api.Infrastructure.Identity;
 using DreamLens.Api.Infrastructure.Monetization;
@@ -21,6 +22,7 @@ public sealed class DeepInterpretationHandler(
     IInterpretationPipeline interpretationPipeline,
     GetSimilarDreamsHandler similarDreamsHandler,
     IOptions<DeepInterpretationOptions> options,
+    IOptions<SensitiveSafetyOptions> sensitiveSafetyOptions,
     ILogger<DeepInterpretationHandler> logger)
 {
     private const string PersonaId = "deep-dream-interpreter";
@@ -70,6 +72,21 @@ public sealed class DeepInterpretationHandler(
             if (dream.Status != "completed" || string.IsNullOrWhiteSpace(dream.ResultJson))
             {
                 return DeepInterpretationResult.Failure(StatusCodes.Status409Conflict, "dream", "A completed interpretation is required first.");
+            }
+
+            stage = "check safety restriction";
+            var restricted = await dbContext.SensitiveDreamSafetyEvents.AsNoTracking().AnyAsync(
+                safetyEvent => safetyEvent.DreamId == dreamId
+                    && safetyEvent.UserSubject == currentUser.Subject
+                    && safetyEvent.RestrictsElaboration
+                    && safetyEvent.ExpiresAt > DateTimeOffset.UtcNow,
+                cancellationToken);
+            if (restricted)
+            {
+                return DeepInterpretationResult.Failure(
+                    StatusCodes.Status409Conflict,
+                    "safety",
+                    "Deep Interpretation is unavailable for this dream. Your original reflection is still available.");
             }
 
             stage = "load profile";
@@ -246,7 +263,7 @@ public sealed class DeepInterpretationHandler(
         };
     }
 
-    private static DreamResultResponse MapResult(InterpretationResult result)
+    private DreamResultResponse MapResult(InterpretationResult result)
     {
         using var document = JsonDocument.Parse(result.RawJson);
         var safetyElement = document.RootElement.GetProperty("safety");
@@ -254,9 +271,7 @@ public sealed class DeepInterpretationHandler(
             result.Summary,
             result.Sections.Select(section => new DreamSectionResponse(section.Kind, section.Title, section.Content)).ToArray(),
             result.FollowUpQuestions,
-            new DreamSafetyResponse(
-                safetyElement.GetProperty("selfHarmRisk").GetString() ?? "none",
-                safetyElement.GetProperty("notes").GetString() ?? ""));
+            SensitiveSafetyParser.Parse(safetyElement, sensitiveSafetyOptions.Value));
     }
 
     private static string NormalizeLocale(string language) =>

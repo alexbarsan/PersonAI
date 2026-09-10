@@ -44,6 +44,10 @@ public sealed class ExportUserDataHandler(
             .Where(row => row.UserSubject == subject)
             .OrderBy(row => row.CreatedAt)
             .ToArrayAsync(cancellationToken);
+        var safetyEvents = await dbContext.SensitiveDreamSafetyEvents.AsNoTracking()
+            .Where(review => review.UserSubject == subject)
+            .OrderBy(review => review.DetectedAt)
+            .ToArrayAsync(cancellationToken);
 
         return new UserDataExportResponse(
             DateTimeOffset.UtcNow,
@@ -112,6 +116,16 @@ public sealed class ExportUserDataHandler(
                 row.LatencyMilliseconds,
                 row.EstimatedCostUsd,
                 row.CreatedAt))
+                .ToArray(),
+            safetyEvents.Select(review => new UserDataExportSensitiveSafetyEvent(
+                review.DreamId,
+                review.Category,
+                review.Confidence,
+                review.Severity,
+                review.RestrictsElaboration,
+                review.Status,
+                review.DetectedAt,
+                review.ExpiresAt))
                 .ToArray());
     }
 }

@@ -63,7 +63,7 @@ export function DreamCaptureScreen({ onSubmitted }: DreamCaptureScreenProps) {
             <Text style={[styles.buttonText, { color: theme.colors.primaryText }]}>{submitDream.isPending ? "Interpreting" : "Interpret dream"}</Text>
           </Pressable>
         </View>
-        <Text style={[styles.disclaimer, { color: theme.colors.mutedText }]}>Dream DNA is for reflection and entertainment. It is not medical, mental health, or safety advice.</Text>
+        <Text style={[styles.disclaimer, { color: theme.colors.mutedText }]}>Dream DNA is for reflection and entertainment. It is not medical, mental health, or safety advice. Dreams stay private; high-risk context may create a text-free safety review event.</Text>
       </ScrollView>
     </AppShell>
   );

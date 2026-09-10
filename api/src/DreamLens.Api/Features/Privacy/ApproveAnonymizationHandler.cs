@@ -53,6 +53,10 @@ public sealed class ApproveAnonymizationHandler(
         var images = await dbContext.DreamImages.Where(image => image.UserSubject == subject).ToArrayAsync(cancellationToken);
         var voiceCaptures = await dbContext.VoiceCaptures.Where(capture => capture.UserSubject == subject).ToArrayAsync(cancellationToken);
         var jobs = await dbContext.AsyncJobs.Where(job => job.UserSubject == subject).ToArrayAsync(cancellationToken);
+        var safetyEvents = await dbContext.SensitiveDreamSafetyEvents.Where(review => review.UserSubject == subject).ToArrayAsync(cancellationToken);
+        var safetyEventIds = safetyEvents.Select(review => review.Id).ToArray();
+        var safetyNotifications = await dbContext.SensitiveReviewNotifications.Where(notification => safetyEventIds.Contains(notification.SafetyEventId)).ToArrayAsync(cancellationToken);
+        var safetyAudits = await dbContext.SensitiveReviewAccessAudits.Where(audit => safetyEventIds.Contains(audit.SafetyEventId)).ToArrayAsync(cancellationToken);
         var ledgerRows = await dbContext.AiCostLedger.Where(row => row.UserSubject == subject).ToArrayAsync(cancellationToken);
 
         dbContext.UserProfiles.RemoveRange(profiles);
@@ -64,6 +68,9 @@ public sealed class ApproveAnonymizationHandler(
         dbContext.DreamImages.RemoveRange(images);
         dbContext.VoiceCaptures.RemoveRange(voiceCaptures);
         dbContext.AsyncJobs.RemoveRange(jobs);
+        dbContext.SensitiveReviewNotifications.RemoveRange(safetyNotifications);
+        dbContext.SensitiveReviewAccessAudits.RemoveRange(safetyAudits);
+        dbContext.SensitiveDreamSafetyEvents.RemoveRange(safetyEvents);
         var anonymizedLedgerSubject = $"anon_{request.Id:N}";
         foreach (var row in ledgerRows)
         {

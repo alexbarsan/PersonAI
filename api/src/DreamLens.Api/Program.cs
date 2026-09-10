@@ -8,6 +8,7 @@ using DreamLens.Api.Features.Dreams;
 using DreamLens.Api.Features.Privacy;
 using DreamLens.Api.Features.Voice;
 using DreamLens.Api.Features.AdminMetrics;
+using DreamLens.Api.Features.Safety;
 using DreamLens.Api.Infrastructure.Identity;
 using DreamLens.Api.Infrastructure.Embeddings;
 using DreamLens.Api.Infrastructure.Images;
@@ -68,6 +69,9 @@ if (dreamEndpointsEnabled)
 {
     builder.Services.Configure<AskDreamsOptions>(builder.Configuration.GetSection("AskDreams"));
     builder.Services.Configure<DeepInterpretationOptions>(builder.Configuration.GetSection("DeepInterpretation"));
+    builder.Services.Configure<SensitiveSafetyOptions>(builder.Configuration.GetSection("SensitiveSafety"));
+    builder.Services.AddSingleton<SensitiveSafetyEventFactory>();
+    builder.Services.AddHostedService<SensitiveSafetyRetentionService>();
     builder.Services.AddScoped<IDreamQuotaService, EfDreamQuotaService>();
     builder.Services.AddScoped<SubmitDreamHandler>();
     builder.Services.AddScoped<GetDreamHandler>();
@@ -91,6 +95,9 @@ if (dreamEndpointsEnabled)
     builder.Services.AddScoped<ExportUserDataHandler>();
     builder.Services.AddScoped<UploadVoiceCaptureHandler>();
     builder.Services.AddScoped<GetVoiceCaptureHandler>();
+    builder.Services.AddScoped<ListSensitiveSafetyReviewsHandler>();
+    builder.Services.AddScoped<AcknowledgeSensitiveSafetyReviewHandler>();
+    builder.Services.AddScoped<GetSensitiveSafetyReviewRawHandler>();
 }
 
 var app = builder.Build();
@@ -123,6 +130,7 @@ app.MapAdminMetricsEndpoints();
 app.MapJobEndpoints();
 app.MapPrivacyEndpoints();
 app.MapVoiceEndpoints();
+app.MapSensitiveSafetyEndpoints();
 
 app.Run();
 

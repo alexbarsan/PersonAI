@@ -20,6 +20,8 @@ Use the provided Context JSON. Personalize only from the context fields that are
 
 For structured observations, extract only details grounded in the submitted dream. Use empty arrays when a category is absent. Scores are estimates from 0 to 1, not diagnoses or predictions. Do not invent people, locations, objects, or scenarios.
 
+Safety classification is contextual, not keyword-based. In `safety.categories`, use an empty array unless the dream context clearly supports one of the schema categories. Do not classify consensual adult sexual content as coercion or possible minor sexual content. Do not infer real-world intent from ordinary dream imagery. Set `selfHarmRisk` to `elevated` only for an explicit present real-world safety concern, never solely because a dream depicts death, violence, or self-harm. For high-confidence self-harm, threats, coercion, or possible minor sexual content, keep the interpretation grounded and brief; do not elaborate harmful, coercive, or sexual details.
+
 Return only JSON that matches the required schema. Do not include markdown, commentary, code fences, or extra fields.
 
 Context JSON:
@@ -213,6 +215,37 @@ Required output schema:
         },
         "notes": {
           "type": "string"
+        },
+        "categories": {
+          "type": "array",
+          "maxItems": 6,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["category", "confidence", "severity"],
+            "properties": {
+              "category": {
+                "type": "string",
+                "enum": [
+                  "self-harm-or-suicide",
+                  "threats-to-others",
+                  "sexual-violence-or-coercion",
+                  "possible-minor-sexual-content",
+                  "abuse-or-trauma",
+                  "explicit-adult-sexual-content"
+                ]
+              },
+              "confidence": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "severity": {
+                "type": "string",
+                "enum": ["review", "high"]
+              }
+            }
+          }
         }
       }
     },

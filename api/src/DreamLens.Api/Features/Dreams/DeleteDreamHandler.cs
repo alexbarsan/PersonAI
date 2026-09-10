@@ -30,6 +30,19 @@ public sealed class DeleteDreamHandler(DreamLensDbContext dbContext, ICurrentUse
             .Where(row => row.DreamId == dream.Id && row.UserSubject == currentUser.Subject)
             .ToArrayAsync(cancellationToken);
         dbContext.DreamDeepInterpretations.RemoveRange(deepInterpretations);
+        var safetyEvents = await dbContext.SensitiveDreamSafetyEvents
+            .Where(row => row.DreamId == dream.Id && row.UserSubject == currentUser.Subject)
+            .ToArrayAsync(cancellationToken);
+        var safetyEventIds = safetyEvents.Select(row => row.Id).ToArray();
+        var reviewNotifications = await dbContext.SensitiveReviewNotifications
+            .Where(row => safetyEventIds.Contains(row.SafetyEventId))
+            .ToArrayAsync(cancellationToken);
+        var reviewAudits = await dbContext.SensitiveReviewAccessAudits
+            .Where(row => safetyEventIds.Contains(row.SafetyEventId))
+            .ToArrayAsync(cancellationToken);
+        dbContext.SensitiveReviewNotifications.RemoveRange(reviewNotifications);
+        dbContext.SensitiveReviewAccessAudits.RemoveRange(reviewAudits);
+        dbContext.SensitiveDreamSafetyEvents.RemoveRange(safetyEvents);
         dbContext.Dreams.Remove(dream);
         await dbContext.SaveChangesAsync(cancellationToken);
         return true;

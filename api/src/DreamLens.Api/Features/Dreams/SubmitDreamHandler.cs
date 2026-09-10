@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text.Json;
 using DreamLens.Api.Features.Profile;
+using DreamLens.Api.Features.Safety;
 using DreamLens.Api.Infrastructure.Identity;
 using DreamLens.Api.Infrastructure.Embeddings;
 using DreamLens.Api.Infrastructure.Observability;
@@ -26,6 +27,8 @@ public sealed class SubmitDreamHandler(
     IOptions<EmbeddingOptions> embeddingOptions,
     IOptions<DeepSeekOptions> deepSeekOptions,
     IOptions<UsageCostOptions> usageCostOptions,
+    IOptions<SensitiveSafetyOptions> sensitiveSafetyOptions,
+    SensitiveSafetyEventFactory sensitiveSafetyEventFactory,
     AsyncJobService? asyncJobService = null)
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -128,6 +131,22 @@ public sealed class SubmitDreamHandler(
         if (record.Status == "completed" && interpretation.Result is not null)
         {
             dbContext.DreamFacts.AddRange(DreamFactExtractor.Extract(record, interpretation.Result.RawJson));
+            var safetyEvents = sensitiveSafetyEventFactory.Create(record, dreamText, result?.Safety);
+            dbContext.SensitiveDreamSafetyEvents.AddRange(safetyEvents);
+            var notifications = safetyEvents
+                .Where(safetyEvent => safetyEvent.ReviewRequired)
+                .Select(safetyEvent => new SensitiveReviewNotification
+                {
+                    SafetyEventId = safetyEvent.Id,
+                    DreamId = safetyEvent.DreamId,
+                    SubjectPseudonym = safetyEvent.SubjectPseudonym,
+                    Category = safetyEvent.Category,
+                    Confidence = safetyEvent.Confidence,
+                    Route = "privacy-review"
+                })
+                .ToArray();
+            dbContext.SensitiveReviewNotifications.AddRange(notifications);
+            DreamLensMeters.SensitiveSafetyReviewsPending.Add(notifications.Length);
         }
         dbContext.AiCostLedger.Add(CreateLedgerRecord(record, interpretation, latency));
         if (record.Status == "failed")
@@ -171,13 +190,11 @@ public sealed class SubmitDreamHandler(
         return errors;
     }
 
-    private static DreamResultResponse MapResult(InterpretationResult result)
+    private DreamResultResponse MapResult(InterpretationResult result)
     {
         using var document = JsonDocument.Parse(result.RawJson);
         var safety = document.RootElement.TryGetProperty("safety", out var safetyElement)
-            ? new DreamSafetyResponse(
-                safetyElement.GetProperty("selfHarmRisk").GetString() ?? "none",
-                safetyElement.GetProperty("notes").GetString() ?? "")
+            ? SensitiveSafetyParser.Parse(safetyElement, sensitiveSafetyOptions.Value)
             : null;
 
         return new DreamResultResponse(

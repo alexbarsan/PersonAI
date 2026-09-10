@@ -33,6 +33,12 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
 
     public DbSet<AnonymizedUserTombstone> AnonymizedUserTombstones => Set<AnonymizedUserTombstone>();
 
+    public DbSet<SensitiveDreamSafetyEvent> SensitiveDreamSafetyEvents => Set<SensitiveDreamSafetyEvent>();
+
+    public DbSet<SensitiveReviewNotification> SensitiveReviewNotifications => Set<SensitiveReviewNotification>();
+
+    public DbSet<SensitiveReviewAccessAudit> SensitiveReviewAccessAudits => Set<SensitiveReviewAccessAudit>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasPostgresExtension("vector");
@@ -286,6 +292,59 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
             entity.HasIndex(tombstone => tombstone.SubjectPseudonym).IsUnique();
             entity.Property(tombstone => tombstone.SubjectPseudonym).HasMaxLength(64).IsRequired();
             entity.Property(tombstone => tombstone.AnonymizedAt).IsRequired();
+        });
+
+        modelBuilder.Entity<SensitiveDreamSafetyEvent>(entity =>
+        {
+            entity.ToTable("SensitiveDreamSafetyEvents");
+            entity.HasKey(review => review.Id);
+            entity.HasIndex(review => new { review.Status, review.ExpiresAt });
+            entity.HasIndex(review => new { review.UserSubject, review.DreamId });
+            entity.Property(review => review.UserSubject).HasMaxLength(256).IsRequired();
+            entity.Property(review => review.SubjectPseudonym).HasMaxLength(64).IsRequired();
+            entity.Property(review => review.Category).HasMaxLength(64).IsRequired();
+            entity.Property(review => review.Confidence).HasPrecision(5, 4);
+            entity.Property(review => review.Severity).HasMaxLength(32).IsRequired();
+            entity.Property(review => review.EncryptedDreamText).IsRequired();
+            entity.Property(review => review.Status).HasMaxLength(32).IsRequired();
+            entity.Property(review => review.DetectedAt).IsRequired();
+            entity.Property(review => review.ExpiresAt).IsRequired();
+            entity.HasOne<DreamRecord>()
+                .WithMany()
+                .HasForeignKey(review => review.DreamId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<SensitiveReviewNotification>(entity =>
+        {
+            entity.ToTable("SensitiveReviewNotifications");
+            entity.HasKey(notification => notification.Id);
+            entity.HasIndex(notification => new { notification.Status, notification.CreatedAt });
+            entity.HasIndex(notification => notification.SafetyEventId).IsUnique();
+            entity.Property(notification => notification.SubjectPseudonym).HasMaxLength(64).IsRequired();
+            entity.Property(notification => notification.Category).HasMaxLength(64).IsRequired();
+            entity.Property(notification => notification.Confidence).HasPrecision(5, 4);
+            entity.Property(notification => notification.Route).HasMaxLength(64).IsRequired();
+            entity.Property(notification => notification.Status).HasMaxLength(32).IsRequired();
+            entity.Property(notification => notification.CreatedAt).IsRequired();
+            entity.HasOne<SensitiveDreamSafetyEvent>()
+                .WithMany()
+                .HasForeignKey(notification => notification.SafetyEventId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<SensitiveReviewAccessAudit>(entity =>
+        {
+            entity.ToTable("SensitiveReviewAccessAudits");
+            entity.HasKey(audit => audit.Id);
+            entity.HasIndex(audit => new { audit.SafetyEventId, audit.AccessedAt });
+            entity.Property(audit => audit.ReviewerSubject).HasMaxLength(256).IsRequired();
+            entity.Property(audit => audit.Purpose).HasMaxLength(200).IsRequired();
+            entity.Property(audit => audit.AccessedAt).IsRequired();
+            entity.HasOne<SensitiveDreamSafetyEvent>()
+                .WithMany()
+                .HasForeignKey(audit => audit.SafetyEventId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 

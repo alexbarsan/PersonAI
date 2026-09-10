@@ -140,6 +140,37 @@
         },
         "notes": {
           "type": "string"
+        },
+        "categories": {
+          "type": "array",
+          "maxItems": 6,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["category", "confidence", "severity"],
+            "properties": {
+              "category": {
+                "type": "string",
+                "enum": [
+                  "self-harm-or-suicide",
+                  "threats-to-others",
+                  "sexual-violence-or-coercion",
+                  "possible-minor-sexual-content",
+                  "abuse-or-trauma",
+                  "explicit-adult-sexual-content"
+                ]
+              },
+              "confidence": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "severity": {
+                "type": "string",
+                "enum": ["review", "high"]
+              }
+            }
+          }
         }
       }
     },

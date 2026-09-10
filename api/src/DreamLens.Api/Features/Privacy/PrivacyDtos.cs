@@ -20,7 +20,8 @@ public sealed record UserDataExportResponse(
     ProfileResponse Profile,
     UserDataExportDream[] Dreams,
     UserDataExportVoiceCapture[] VoiceCaptures,
-    UserDataExportCost[] AiOperations);
+    UserDataExportCost[] AiOperations,
+    UserDataExportSensitiveSafetyEvent[] SensitiveSafetyEvents);
 
 public sealed record UserDataExportDream(
     Guid Id,
@@ -77,3 +78,13 @@ public sealed record UserDataExportCost(
     long LatencyMilliseconds,
     decimal EstimatedCostUsd,
     DateTimeOffset CreatedAt);
+
+public sealed record UserDataExportSensitiveSafetyEvent(
+    Guid DreamId,
+    string Category,
+    decimal Confidence,
+    string Severity,
+    bool RestrictsElaboration,
+    string Status,
+    DateTimeOffset DetectedAt,
+    DateTimeOffset ExpiresAt);

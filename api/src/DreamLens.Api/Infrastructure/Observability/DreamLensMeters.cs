@@ -23,6 +23,11 @@ public static class DreamLensMeters
         unit: "calls",
         description: "AI provider calls that failed or returned invalid output.");
 
+    public static readonly Counter<long> SensitiveSafetyReviewsPending = Meter.CreateCounter<long>(
+        "dreamlens.sensitive_safety_reviews.pending",
+        unit: "events",
+        description: "Privacy-preserving sensitive safety review events awaiting reviewer attention.");
+
     public static readonly Counter<long> AsyncJobsCompleted = Meter.CreateCounter<long>(
         "dreamlens.async_jobs.completed",
         unit: "jobs",

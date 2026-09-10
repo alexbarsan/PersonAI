@@ -6,6 +6,7 @@ using DreamLens.Api.Features.Insights;
 using DreamLens.Api.Features.Jobs;
 using DreamLens.Api.Features.Profile;
 using DreamLens.Api.Features.Privacy;
+using DreamLens.Api.Features.Safety;
 using DreamLens.Api.Features.Voice;
 using DreamLens.Api.Infrastructure.Assets;
 using DreamLens.Api.Infrastructure.Embeddings;
@@ -744,6 +745,41 @@ public sealed class DreamEndpointTests
     }
 
     [Fact]
+    public async Task RestrictedSafetyReviewStoresMetadataOnlyAndAuditsExplicitRawAccess()
+    {
+        const string rawDreamText = "I dreamed that someone threatened me in a locked room and I could not leave.";
+        using var app = CreateDreamApp(new StaticDreamChatClient(RestrictedSafetyAiOutput), premiumSubjects: ["subject-a"]);
+        using var owner = app.CreateAuthenticatedClient("subject-a");
+        using var reviewer = app.CreateAuthenticatedClient("reviewer-a", "dreamlens-admin");
+        await PutProfileAsync(owner);
+
+        var submitted = await owner.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest() with { Text = rawDreamText });
+        var dream = await submitted.Content.ReadFromJsonAsync<DreamResponse>();
+        var listResponse = await reviewer.GetAsync("/v1/safety/admin/reviews?status=open");
+        var serializedList = await listResponse.Content.ReadAsStringAsync();
+        var reviews = await listResponse.Content.ReadFromJsonAsync<SensitiveSafetyReviewResponse[]>();
+
+        Assert.Equal(HttpStatusCode.OK, submitted.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, listResponse.StatusCode);
+        Assert.DoesNotContain(rawDreamText, serializedList, StringComparison.Ordinal);
+        var review = Assert.Single(reviews!);
+        Assert.Equal(SensitiveSafetyCategories.ThreatsToOthers, review.Category);
+        Assert.True(review.RestrictsElaboration);
+
+        var blockedDeep = await owner.PostAsync($"/v1/dreams/{dream!.Id}/deep-interpretation", null);
+        var missingPurpose = await reviewer.PostAsJsonAsync($"/v1/safety/admin/reviews/{review.Id}/raw-access", new SensitiveSafetyRawAccessRequest("short"));
+        var rawResponse = await reviewer.PostAsJsonAsync($"/v1/safety/admin/reviews/{review.Id}/raw-access", new SensitiveSafetyRawAccessRequest("Assess whether a privacy review requires follow-up."));
+        var raw = await rawResponse.Content.ReadFromJsonAsync<SensitiveSafetyRawAccessResponse>();
+
+        Assert.Equal(HttpStatusCode.Conflict, blockedDeep.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, missingPurpose.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, rawResponse.StatusCode);
+        Assert.Equal(rawDreamText, raw!.DreamText);
+        Assert.Equal(1, await app.CountSensitiveSafetyEventsAsync());
+        Assert.Equal(1, await app.CountSensitiveSafetyAccessAuditsAsync());
+    }
+
+    [Fact]
     public async Task EntitlementsEndpointReflectsCurrentTier()
     {
         using var app = CreateDreamApp(
@@ -916,6 +952,7 @@ public sealed class DreamEndpointTests
                 builder.ConfigureTestServices(services =>
                 {
                     services.PostConfigure<DeepInterpretationOptions>(configured => configured.DailyLimit = deepDailyLimit);
+                    services.Configure<SensitiveSafetyOptions>(_ => { });
                     services.RemoveAll<DbContextOptions<DreamLensDbContext>>();
                     services.RemoveAll<DreamLensDbContext>();
                     services.RemoveAll<IChatClient>();
@@ -956,6 +993,10 @@ public sealed class DreamEndpointTests
                     services.AddScoped<ExportUserDataHandler>();
                     services.AddScoped<UploadVoiceCaptureHandler>();
                     services.AddScoped<GetVoiceCaptureHandler>();
+                    services.AddSingleton<SensitiveSafetyEventFactory>();
+                    services.AddScoped<ListSensitiveSafetyReviewsHandler>();
+                    services.AddScoped<AcknowledgeSensitiveSafetyReviewHandler>();
+                    services.AddScoped<GetSensitiveSafetyReviewRawHandler>();
                 });
             });
 
@@ -1073,6 +1114,20 @@ public sealed class DreamEndpointTests
             using var scope = factory.Services.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<DreamLensDbContext>();
             return await dbContext.DreamDeepInterpretations.CountAsync();
+        }
+
+        public async Task<int> CountSensitiveSafetyEventsAsync()
+        {
+            using var scope = factory.Services.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<DreamLensDbContext>();
+            return await dbContext.SensitiveDreamSafetyEvents.CountAsync();
+        }
+
+        public async Task<int> CountSensitiveSafetyAccessAuditsAsync()
+        {
+            using var scope = factory.Services.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<DreamLensDbContext>();
+            return await dbContext.SensitiveReviewAccessAudits.CountAsync();
         }
 
         public async Task ProcessVoiceCaptureAsync()
@@ -1399,4 +1454,8 @@ public sealed class DreamEndpointTests
       "confidence": 0.74
     }
     """;
+
+    private static readonly string RestrictedSafetyAiOutput = CanonicalAiOutput.Replace(
+        "\"notes\": \"\"",
+        "\"notes\": \"\", \"categories\": [{\"category\": \"threats-to-others\", \"confidence\": 0.94, \"severity\": \"high\"}]");
 }

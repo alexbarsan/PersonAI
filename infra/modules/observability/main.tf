@@ -58,7 +58,8 @@ resource "aws_cloudwatch_dashboard" "operations" {
           metrics = [
             ["DreamLens", "dreamlens.quota.rejections", { stat = "Sum" }],
             ["DreamLens", "dreamlens.rate_limit.rejections", { stat = "Sum" }],
-            ["DreamLens", "dreamlens.provider.failures", { stat = "Sum" }]
+            ["DreamLens", "dreamlens.provider.failures", { stat = "Sum" }],
+            ["DreamLens", "dreamlens.sensitive_safety_reviews.pending", { stat = "Sum" }]
           ]
         }
       }
@@ -107,6 +108,22 @@ resource "aws_cloudwatch_metric_alarm" "provider_failures" {
   period              = 300
   statistic           = "Sum"
   threshold           = 5
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+
+  tags = var.tags
+}
+
+resource "aws_cloudwatch_metric_alarm" "sensitive_safety_reviews" {
+  alarm_name          = "${var.name_prefix}-sensitive-safety-reviews"
+  alarm_description   = "A privacy-preserving sensitive safety review event is pending. Use the protected review API for metadata; notifications contain no dream text."
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 1
+  metric_name         = "dreamlens.sensitive_safety_reviews.pending"
+  namespace           = "DreamLens"
+  period              = 60
+  statistic           = "Sum"
+  threshold           = 0
+  treat_missing_data  = "notBreaching"
   alarm_actions       = [aws_sns_topic.alerts.arn]
 
   tags = var.tags

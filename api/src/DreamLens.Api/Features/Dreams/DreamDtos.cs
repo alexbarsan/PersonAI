@@ -1,3 +1,5 @@
+using DreamLens.Api.Features.Safety;
+
 namespace DreamLens.Api.Features.Dreams;
 
 public sealed record SubmitDreamRequest(
@@ -25,7 +27,11 @@ public sealed record DreamResultResponse(
     string[] FollowUpQuestions,
     DreamSafetyResponse? Safety = null);
 
-public sealed record DreamSafetyResponse(string SelfHarmRisk, string Notes);
+public sealed record DreamSafetyResponse(
+    string SelfHarmRisk,
+    string Notes,
+    SensitiveSafetyCategory[]? Categories = null,
+    bool IsRestricted = false);
 
 public sealed record DreamSectionResponse(string Kind, string Title, object? Content);
 

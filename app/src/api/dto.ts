@@ -157,6 +157,12 @@ export type DreamSectionResponse = {
 export type DreamSafetyResponse = {
   selfHarmRisk: "none" | "elevated";
   notes: string;
+  categories?: Array<{
+    category: string;
+    confidence: number;
+    severity: "review" | "high";
+  }>;
+  isRestricted?: boolean;
 };
 
 export type DeepInterpretationResponse = {

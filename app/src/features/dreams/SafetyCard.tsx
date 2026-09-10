@@ -6,18 +6,21 @@ import { useTheme } from "@/theme/ThemeProvider";
 export function SafetyCard({ safety }: { safety?: DreamSafetyResponse | null }) {
   const theme = useTheme();
 
-  if (safety?.selfHarmRisk !== "elevated") {
+  if (safety?.selfHarmRisk !== "elevated" && !safety?.isRestricted) {
     return null;
   }
 
+  const supportFirst = safety.selfHarmRisk === "elevated";
+
   return (
     <View style={[styles.card, { backgroundColor: theme.colors.lavender, borderColor: theme.colors.warning }]}>
-      <Text style={[styles.title, { color: theme.colors.text }]}>Support first</Text>
+      <Text style={[styles.title, { color: theme.colors.text }]}>{supportFirst ? "Support first" : "Sensitive content care"}</Text>
       <Text style={[styles.body, { color: theme.colors.mutedText }]}>
-        This result is limited because the dream may include safety concerns. Consider reaching out to someone
-        you trust or a qualified local support service.
+        {supportFirst
+          ? "This result is limited because the dream may include safety concerns. Consider reaching out to someone you trust or a qualified local support service."
+          : "Some details are handled with extra care, so deeper analysis is not available for this dream. Your original reflection remains private and available to you."}
       </Text>
-      {safety.notes ? <Text style={[styles.body, { color: theme.colors.mutedText }]}>{safety.notes}</Text> : null}
+      {supportFirst && safety.notes ? <Text style={[styles.body, { color: theme.colors.mutedText }]}>{safety.notes}</Text> : null}
     </View>
   );
 }
