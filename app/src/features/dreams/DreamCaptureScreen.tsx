@@ -37,10 +37,14 @@ export function DreamCaptureScreen({ onSubmitted }: DreamCaptureScreenProps) {
   });
   const submitDream = useMutation({ mutationFn: (values: DreamCaptureValues) => api.submitDream(toSubmitDreamRequest(values)) });
   const onSubmit = form.handleSubmit(async (values) => {
-    const dream = await submitDream.mutateAsync(values);
-    rememberDream(dream);
-    if (onSubmitted) return onSubmitted(dream.id);
-    router.push(`/dreams/${dream.id}`);
+    try {
+      const dream = await submitDream.mutateAsync(values);
+      rememberDream(dream);
+      if (onSubmitted) return onSubmitted(dream.id);
+      router.push(`/dreams/${dream.id}`);
+    } catch {
+      // The mutation state renders the actionable API error in the form.
+    }
   });
 
   return (
