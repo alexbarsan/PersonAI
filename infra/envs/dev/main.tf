@@ -88,7 +88,7 @@ module "api" {
     Jobs__Worker__Enabled                             = "true"
     Jobs__EmbeddingBackfill__Enabled                  = "true"
     Assets__BucketName                                = module.private_assets.bucket_name
-    ImageGeneration__Enabled                          = "true"
+    ImageGeneration__Enabled                          = "false"
     ImageGeneration__Provider                         = "bedrock-nova-canvas"
     ImageGeneration__Model                            = "amazon.nova-canvas-v1:0"
     ImageGeneration__DefaultStyle                     = "SOFT_DIGITAL_PAINTING"

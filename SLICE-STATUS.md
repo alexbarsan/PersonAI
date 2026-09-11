@@ -1,6 +1,6 @@
 # Slice Status
 
-Current implementation: S42, Premium Nova Canvas dream visuals in dev. API/web commit `03fcc30` is deployed, ECS revision 52 is configured with the Nova Canvas setting, and public readiness returns 200. Next Step: request one visual as a Premium user, then confirm its completed private S3 asset and `dream.image` cost/latency ledger row. Nova Canvas remains dev-only because AWS publishes its EOL as 2026-09-30.
+Current implementation: S42, Premium dream visual plumbing is complete, but Nova Canvas is disabled in dev. A controlled request reached Bedrock and failed because the model is legacy and the account had not actively used it before the provider cutoff; this account has no active Bedrock text-to-image alternative. Next Step: select and integrate a supported text-to-image provider, then run one controlled Premium request and confirm its private S3 asset and `dream.image` cost/latency ledger row.
 
 Status values: `Not started`, `In progress`, `Blocked`, `Done`.
 
