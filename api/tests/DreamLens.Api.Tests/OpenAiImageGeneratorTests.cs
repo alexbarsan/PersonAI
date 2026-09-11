@@ -54,6 +54,27 @@ public sealed class OpenAiImageGeneratorTests
         Assert.False(handler.WasCalled);
     }
 
+    [Fact]
+    public async Task GenerateAsyncClassifiesOpenAiModerationBlocksAsNonRetryable()
+    {
+        var handler = new RecordingHandler(HttpStatusCode.BadRequest, """{"error":{"code":"moderation_blocked"}}""");
+        using var client = new HttpClient(handler);
+        var generator = new OpenAiImageGenerator(client, Options.Create(new OpenAiImageOptions
+        {
+            BaseUrl = new Uri("https://openai.test/v1/"),
+            ApiKey = "test-key"
+        }));
+        var route = new ImageGenerationRoute(EntitlementTier.Free, true, OpenAiImageGenerator.ProviderName,
+            "gpt-image-1-mini", 1024, 1024, 0.005m, "low");
+
+        var exception = await Assert.ThrowsAsync<ImageGenerationException>(() => generator.GenerateAsync(
+            new ImageGenerationRequest("moonlit water", "SOFT_DIGITAL_PAINTING", route), CancellationToken.None));
+
+        Assert.False(exception.IsRetryable);
+        Assert.Equal("ProviderPolicy", exception.FailureKind);
+        Assert.Equal("This dream cannot be visualized by the selected image provider.", exception.Message);
+    }
+
     private sealed class RecordingHandler(HttpStatusCode statusCode, string responseBody) : HttpMessageHandler
     {
         public string? Body { get; private set; }

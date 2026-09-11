@@ -49,7 +49,18 @@ public sealed class OpenAiImageGenerator(
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
-            throw new InvalidOperationException($"OpenAI image generation failed with {(int)response.StatusCode}: {Truncate(body)}");
+            if (IsModerationBlocked(body))
+            {
+                throw new ImageGenerationException(
+                    "This dream cannot be visualized by the selected image provider.",
+                    isRetryable: false,
+                    failureKind: "ProviderPolicy");
+            }
+
+            throw new ImageGenerationException(
+                "The image provider could not create this visual. Please try again later.",
+                response.StatusCode == System.Net.HttpStatusCode.TooManyRequests || (int)response.StatusCode >= 500,
+                failureKind: "ProviderRequest");
         }
 
         using var document = JsonDocument.Parse(body);
@@ -69,5 +80,23 @@ public sealed class OpenAiImageGenerator(
             request.Route.Model);
     }
 
-    private static string Truncate(string value) => value[..Math.Min(value.Length, 1000)];
+    private static bool IsModerationBlocked(string body)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(body);
+            return string.Equals(
+                document.RootElement.GetProperty("error").GetProperty("code").GetString(),
+                "moderation_blocked",
+                StringComparison.Ordinal);
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
+        catch (KeyNotFoundException)
+        {
+            return false;
+        }
+    }
 }

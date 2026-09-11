@@ -35,10 +35,11 @@ export function DreamResultScreen() {
     enabled: Boolean(result) && !elevatedSafety
   });
   const hasPremiumDreamFeatures = entitlement.data?.deepAnalysisEnabled === true;
+  const canGenerateImage = entitlement.data !== undefined;
   const image = useQuery({
     queryKey: ["dream-image", id],
     queryFn: () => api.getDreamImage(id!),
-    enabled: Boolean(id) && hasPremiumDreamFeatures,
+    enabled: Boolean(id) && canGenerateImage,
     retry: false,
     refetchInterval: (query) => {
       const status = query.state.data?.status;
@@ -97,7 +98,7 @@ export function DreamResultScreen() {
           {elevatedSafety ? null : <DeepInterpretationPanel dreamId={dream.data!.id} enabled={hasPremiumDreamFeatures} />}
           {elevatedSafety ? null : (
             <DreamImagePanel
-              canGenerateImage={hasPremiumDreamFeatures}
+              canGenerateImage={canGenerateImage}
               image={image.data}
               isRequesting={requestImage.isPending}
               onRequest={() => requestImage.mutate()}
@@ -215,6 +216,10 @@ function DreamImagePanel({
 function mapImageError(error: Error) {
   if (error instanceof ApiError && error.status === 503) {
     return "Dream visuals are not available yet. Please try again later.";
+  }
+
+  if (error.message === "This dream cannot be visualized by the selected image provider." || error.message.includes("moderation_blocked")) {
+    return "This dream cannot be visualized by the selected image provider.";
   }
 
   return "Dream visual could not be created. Please try again.";

@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Diagnostics;
 using Amazon.SQS;
 using Amazon.SQS.Model;
+using DreamLens.Api.Infrastructure.Images;
 using DreamLens.Api.Infrastructure.Observability;
 using DreamLens.Api.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -106,7 +107,8 @@ public sealed class AsyncJobWorker(
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            var retryable = job.AttemptCount < Math.Max(1, workerOptions.Value.MaxAttempts);
+            var retryable = exception is not ImageGenerationException imageFailure || imageFailure.IsRetryable;
+            retryable &= job.AttemptCount < Math.Max(1, workerOptions.Value.MaxAttempts);
             var retryDelay = GetRetryDelay(job.AttemptCount);
             job.Status = retryable
                 ? AsyncJobStatuses.Pending

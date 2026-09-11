@@ -70,17 +70,49 @@ describe("DreamResultScreen", () => {
     expect(await screen.findByLabelText("Generated dream visual")).toBeTruthy();
   });
 
-  it("shows free users the dream visual option and routes them to Premium", async () => {
+  it("lets free users request a dream visual", async () => {
     useDreamResultStore.getState().rememberDream(mockDream);
     const freeApi: ApiClient = {
       ...mockApiClient,
-      getEntitlements: async () => ({ tier: "free", dailyDreamLimit: 3, deepAnalysisEnabled: false })
+      getEntitlements: async () => ({ tier: "free", dailyDreamLimit: 3, deepAnalysisEnabled: false }),
+      getDreamImage: async () => ({
+        id: "image_free_1",
+        dreamId: mockDream.id,
+        status: "failed",
+        style: "SOFT_DIGITAL_PAINTING",
+        jobId: "job_free_1",
+        downloadUrl: null,
+        errorMessage: null,
+        createdAt: "2026-09-11T00:00:00Z"
+      })
     };
 
     renderWithProviders(<DreamResultScreen />, freeApi);
 
-    fireEvent.press(await screen.findByTestId("view-premium-dream-image"));
-    expect(mockPush).toHaveBeenCalledWith("/paywall");
+    expect(await screen.findByTestId("request-dream-image")).toBeTruthy();
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it("explains image-provider policy blocks without exposing the raw provider error", async () => {
+    useDreamResultStore.getState().rememberDream(mockDream);
+    const blockedApi: ApiClient = {
+      ...mockApiClient,
+      getDreamImage: async () => ({
+        id: "image_1",
+        dreamId: mockDream.id,
+        status: "failed",
+        style: "SOFT_DIGITAL_PAINTING",
+        jobId: "job_1",
+        downloadUrl: null,
+        errorMessage: "OpenAI image generation failed with 400: moderation_blocked",
+        createdAt: "2026-09-11T00:00:00Z"
+      })
+    };
+
+    renderWithProviders(<DreamResultScreen />, blockedApi);
+
+    expect(await screen.findByText("This dream cannot be visualized by the selected image provider.")).toBeTruthy();
+    expect(screen.queryByText(/moderation_blocked/)).toBeNull();
   });
 
 });

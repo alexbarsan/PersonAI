@@ -68,7 +68,14 @@ public sealed class DreamImageJobHandler(
             image.Status = DreamImageStatuses.Failed;
             image.ErrorMessage = exception.Message[..Math.Min(exception.Message.Length, 2000)];
             image.UpdatedAt = DateTimeOffset.UtcNow;
-            dbContext.AiCostLedger.Add(CreateLedger(message, image, image.Provider, image.Model, "failed", exception.GetType().Name, Stopwatch.GetElapsedTime(started)));
+            dbContext.AiCostLedger.Add(CreateLedger(
+                message,
+                image,
+                image.Provider,
+                image.Model,
+                "failed",
+                exception is ImageGenerationException imageFailure ? imageFailure.FailureKind : exception.GetType().Name,
+                Stopwatch.GetElapsedTime(started)));
             await dbContext.SaveChangesAsync(cancellationToken);
             throw;
         }
