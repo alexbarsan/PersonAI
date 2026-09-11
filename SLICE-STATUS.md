@@ -1,6 +1,6 @@
 # Slice Status
 
-Current implementation: S42, Premium dream visual plumbing is complete, but Nova Canvas is disabled in dev. A controlled request reached Bedrock and failed because the model is legacy and the account had not actively used it before the provider cutoff; this account has no active Bedrock text-to-image alternative. Next Step: select and integrate a supported text-to-image provider, then run one controlled Premium request and confirm its private S3 asset and `dream.image` cost/latency ledger row.
+Current implementation: S42, model-neutral dream-image request preparation. Every enabled request now composes and encrypts a bounded, symbolic versioned prompt before it is queued, then snapshots the tier, provider, model, dimensions, and cost for reproducible work and retries. Separate Free and Premium routes are ready but disabled while Nova Canvas remains unavailable. Next Step: select and integrate a supported text-to-image provider, configure Free/Premium routes and quotas, apply the migration, then run controlled requests for each enabled tier and confirm private S3 assets plus `dream.image` ledger rows.
 
 Status values: `Not started`, `In progress`, `Blocked`, `Done`.
 

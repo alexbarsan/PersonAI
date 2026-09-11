@@ -335,12 +335,18 @@ public sealed class DreamEndpointTests
         Assert.NotNull(image);
         Assert.Equal("pending", image.Status);
         Assert.Equal(1, app.PublishedAsyncJobCount);
+        var snapshot = await app.GetOnlyDreamImageAsync();
+        Assert.Equal("dream-image-v1", snapshot.PromptVersion);
+        Assert.Equal("fake-premium-image-v1", snapshot.Model);
+        Assert.Equal("premium", snapshot.Tier);
+        Assert.NotEmpty(snapshot.EncryptedPrompt);
+        Assert.DoesNotContain("soft digital painting", snapshot.EncryptedPrompt, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
-    public async Task FreeUserCannotQueueDreamImageWhenImageGenerationIsEnabled()
+    public async Task FreeUserCanQueueDreamImageWhenFreeRouteIsEnabled()
     {
-        using var app = CreateDreamApp(new StaticDreamChatClient(CanonicalAiOutput), imageGenerationEnabled: true);
+        using var app = CreateDreamApp(new StaticDreamChatClient(CanonicalAiOutput), freeImageGenerationEnabled: true);
         using var client = app.CreateAuthenticatedClient("subject-a");
         await PutProfileAsync(client);
         var dream = await (await client.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest()))
@@ -348,8 +354,11 @@ public sealed class DreamEndpointTests
 
         var response = await client.PostAsJsonAsync($"/v1/dreams/{dream!.Id}/image", new { style = "SOFT_DIGITAL_PAINTING" });
 
-        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
-        Assert.Equal(0, app.PublishedAsyncJobCount);
+        Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
+        Assert.Equal(1, app.PublishedAsyncJobCount);
+        var snapshot = await app.GetOnlyDreamImageAsync();
+        Assert.Equal("fake-free-image-v1", snapshot.Model);
+        Assert.Equal("free", snapshot.Tier);
     }
 
     [Fact]
@@ -923,6 +932,7 @@ public sealed class DreamEndpointTests
         bool voiceTranscriptionEnabled = false,
         bool embeddingsEnabled = false,
         bool imageGenerationEnabled = false,
+        bool freeImageGenerationEnabled = false,
         int deepDailyLimit = 3,
         string[]? quotaExemptSubjects = null)
     {
@@ -950,9 +960,15 @@ public sealed class DreamEndpointTests
                         ["Embedding:Provider"] = "fake",
                         ["Embedding:Model"] = "fake-test-embedding",
                         ["Embedding:Version"] = "test",
-                        ["ImageGeneration:Enabled"] = imageGenerationEnabled.ToString(),
-                        ["ImageGeneration:Provider"] = "fake",
-                        ["ImageGeneration:EstimatedCostUsd"] = "0.04",
+                        ["ImageGeneration:PromptVersion"] = "dream-image-v1",
+                        ["ImageGeneration:Premium:Enabled"] = imageGenerationEnabled.ToString(),
+                        ["ImageGeneration:Premium:Provider"] = "fake",
+                        ["ImageGeneration:Premium:Model"] = "fake-premium-image-v1",
+                        ["ImageGeneration:Premium:EstimatedCostUsd"] = "0.04",
+                        ["ImageGeneration:Free:Enabled"] = freeImageGenerationEnabled.ToString(),
+                        ["ImageGeneration:Free:Provider"] = "fake",
+                        ["ImageGeneration:Free:Model"] = "fake-free-image-v1",
+                        ["ImageGeneration:Free:EstimatedCostUsd"] = "0.004",
                         ["DeepInterpretation:Enabled"] = "true",
                         ["DeepInterpretation:Model"] = "deepseek-v4-pro",
                         ["DeepInterpretation:DailyLimit"] = deepDailyLimit.ToString(System.Globalization.CultureInfo.InvariantCulture),
@@ -1018,6 +1034,7 @@ public sealed class DreamEndpointTests
                     services.AddScoped<SemanticMemoryService>();
                     services.AddScoped<AskDreamsHandler>();
                     services.AddScoped<DeepInterpretationHandler>();
+                    services.AddSingleton<IDreamImagePromptComposer, DreamImagePromptComposer>();
                     services.AddScoped<RequestDreamImageHandler>();
                     services.AddScoped<GetDreamImageHandler>();
                     services.AddScoped<ListDreamsHandler>();
@@ -1140,6 +1157,13 @@ public sealed class DreamEndpointTests
             using var scope = factory.Services.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<DreamLensDbContext>();
             return await dbContext.VoiceCaptures.CountAsync();
+        }
+
+        public async Task<DreamImageRecord> GetOnlyDreamImageAsync()
+        {
+            using var scope = factory.Services.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<DreamLensDbContext>();
+            return Assert.Single(await dbContext.DreamImages.ToArrayAsync());
         }
 
         public async Task<int> CountInterpretationFeedbackAsync()

@@ -10,7 +10,9 @@ public static class ImageGenerationServiceCollectionExtensions
     {
         services.Configure<ImageGenerationOptions>(configuration.GetSection("ImageGeneration"));
         var settings = configuration.GetSection("ImageGeneration").Get<ImageGenerationOptions>() ?? new ImageGenerationOptions();
-        if (settings.Enabled && string.Equals(settings.Provider, "bedrock-nova-canvas", StringComparison.OrdinalIgnoreCase))
+        var needsBedrock = new[] { settings.Free.Provider, settings.Premium.Provider }
+            .Any(provider => string.Equals(provider, "bedrock-nova-canvas", StringComparison.OrdinalIgnoreCase));
+        if (needsBedrock)
         {
             var region = configuration["AWS:Region"]
                 ?? configuration["Authentication:Cognito:Region"]
@@ -19,10 +21,9 @@ public static class ImageGenerationServiceCollectionExtensions
             services.TryAddSingleton<IAmazonBedrockRuntime>(_ => new AmazonBedrockRuntimeClient(RegionEndpoint.GetBySystemName(region)));
             services.AddScoped<IImageGenerator, NovaCanvasImageGenerator>();
         }
-        else
-        {
-            services.AddScoped<IImageGenerator, FakeImageGenerator>();
-        }
+        services.AddScoped<IImageGenerator, FakeImageGenerator>();
+        services.AddScoped<IImageGeneratorRegistry, ImageGeneratorRegistry>();
+        services.AddSingleton<IImageGenerationRouteResolver, ConfiguredImageGenerationRouteResolver>();
 
         return services;
     }

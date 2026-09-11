@@ -12,6 +12,22 @@ public sealed class DreamImageRecord
 
     public required string Style { get; set; }
 
+    public string EncryptedPrompt { get; set; } = string.Empty;
+
+    public string PromptVersion { get; set; } = string.Empty;
+
+    public string Provider { get; set; } = string.Empty;
+
+    public string Model { get; set; } = string.Empty;
+
+    public string Tier { get; set; } = string.Empty;
+
+    public int Width { get; set; }
+
+    public int Height { get; set; }
+
+    public decimal EstimatedCostUsd { get; set; }
+
     public string? AssetKey { get; set; }
 
     public string? ErrorMessage { get; set; }

@@ -2,17 +2,18 @@ using System.Diagnostics;
 using DreamLens.Api.Features.Dreams;
 using DreamLens.Api.Infrastructure.Assets;
 using DreamLens.Api.Infrastructure.Images;
+using DreamLens.Api.Infrastructure.Monetization;
 using DreamLens.Api.Infrastructure.Persistence;
+using DreamLens.Api.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 
 namespace DreamLens.Api.Infrastructure.Jobs;
 
 public sealed class DreamImageJobHandler(
     DreamLensDbContext dbContext,
-    IImageGenerator imageGenerator,
+    IImageGeneratorRegistry imageGenerators,
     IPrivateAssetStore assetStore,
-    IOptions<ImageGenerationOptions> options) : IAsyncJobHandler
+    IStringEncryptor encryptor) : IAsyncJobHandler
 {
     public string JobType => AsyncJobTypes.DreamImage;
 
@@ -29,10 +30,10 @@ public sealed class DreamImageJobHandler(
             return;
         }
 
-        var dream = await dbContext.Dreams.AsNoTracking().SingleOrDefaultAsync(
-            candidate => candidate.Id == image.DreamId && candidate.UserSubject == message.UserSubject,
-            cancellationToken)
-            ?? throw new InvalidOperationException("Dream for image generation was not found.");
+        if (string.IsNullOrWhiteSpace(image.EncryptedPrompt) || string.IsNullOrWhiteSpace(image.Provider) || string.IsNullOrWhiteSpace(image.Model))
+        {
+            throw new InvalidOperationException("Dream image request does not contain a generation snapshot.");
+        }
         var started = Stopwatch.GetTimestamp();
         image.Status = DreamImageStatuses.Generating;
         image.UpdatedAt = DateTimeOffset.UtcNow;
@@ -40,8 +41,16 @@ public sealed class DreamImageJobHandler(
 
         try
         {
-            var result = await imageGenerator.GenerateAsync(
-                new ImageGenerationRequest(BuildPrompt(dream, image.Style), image.Style),
+            var route = new ImageGenerationRoute(
+                Enum.TryParse<EntitlementTier>(image.Tier, true, out var tier) ? tier : EntitlementTier.Premium,
+                true,
+                image.Provider,
+                image.Model,
+                image.Width,
+                image.Height,
+                image.EstimatedCostUsd);
+            var result = await imageGenerators.GetRequired(image.Provider).GenerateAsync(
+                new ImageGenerationRequest(encryptor.Decrypt(image.EncryptedPrompt), image.Style, route),
                 cancellationToken);
             var key = $"dream-images/{image.Id:N}.png";
             await using var content = new MemoryStream(result.Content, writable: false);
@@ -50,7 +59,7 @@ public sealed class DreamImageJobHandler(
             image.AssetKey = key;
             image.ErrorMessage = null;
             image.UpdatedAt = DateTimeOffset.UtcNow;
-            dbContext.AiCostLedger.Add(CreateLedger(message, image.DreamId, result.Provider, result.Model, "completed", null, Stopwatch.GetElapsedTime(started)));
+            dbContext.AiCostLedger.Add(CreateLedger(message, image, result.Provider, result.Model, "completed", null, Stopwatch.GetElapsedTime(started)));
             await dbContext.SaveChangesAsync(cancellationToken);
         }
         catch (Exception exception)
@@ -58,34 +67,15 @@ public sealed class DreamImageJobHandler(
             image.Status = DreamImageStatuses.Failed;
             image.ErrorMessage = exception.Message[..Math.Min(exception.Message.Length, 2000)];
             image.UpdatedAt = DateTimeOffset.UtcNow;
-            dbContext.AiCostLedger.Add(CreateLedger(message, image.DreamId, "Amazon Bedrock", options.Value.Model, "failed", exception.GetType().Name, Stopwatch.GetElapsedTime(started)));
+            dbContext.AiCostLedger.Add(CreateLedger(message, image, image.Provider, image.Model, "failed", exception.GetType().Name, Stopwatch.GetElapsedTime(started)));
             await dbContext.SaveChangesAsync(cancellationToken);
             throw;
         }
     }
 
-    private static string BuildPrompt(DreamRecord dream, string style)
-    {
-        var summary = DreamMapper.ReadSummary(dream) ?? "A reflective dream scene";
-        var prompt = $"A reflective, symbolic dream-inspired scene in {DescribeStyle(style)}. {summary}. Calm composition, no text or letters, no identifiable real people.";
-        return prompt.Length <= 1024 ? prompt : prompt[..1024];
-    }
-
-    private static string DescribeStyle(string style) => style switch
-    {
-        "3D_ANIMATED_FAMILY_FILM" => "a warm, gentle 3D animated family-film style",
-        "DESIGN_SKETCH" => "an expressive hand-drawn design sketch style",
-        "FLAT_VECTOR_ILLUSTRATION" => "a clear flat vector illustration style",
-        "GRAPHIC_NOVEL_ILLUSTRATION" => "an atmospheric graphic novel illustration style",
-        "MAXIMALISM" => "a rich, layered maximalist illustration style",
-        "MIDCENTURY_RETRO" => "a restrained midcentury retro illustration style",
-        "PHOTOREALISM" => "a cinematic photorealistic style",
-        _ => "a soft digital painting style"
-    };
-
     private AiCostLedgerRecord CreateLedger(
         AsyncJobMessage message,
-        Guid dreamId,
+        DreamImageRecord image,
         string provider,
         string model,
         string status,
@@ -95,7 +85,7 @@ public sealed class DreamImageJobHandler(
         return new AiCostLedgerRecord
         {
             UserSubject = message.UserSubject,
-            DreamId = dreamId,
+            DreamId = image.DreamId,
             Provider = provider,
             Model = model,
             PersonaId = "dream-image",
@@ -104,7 +94,7 @@ public sealed class DreamImageJobHandler(
             FailureKind = failureKind,
             AttemptCount = 1,
             LatencyMilliseconds = Math.Max(0, (long)latency.TotalMilliseconds),
-            EstimatedCostUsd = options.Value.EstimatedCostUsd
+            EstimatedCostUsd = image.EstimatedCostUsd
         };
     }
 

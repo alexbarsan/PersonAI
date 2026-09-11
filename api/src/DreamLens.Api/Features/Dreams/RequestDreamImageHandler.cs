@@ -3,6 +3,7 @@ using DreamLens.Api.Infrastructure.Identity;
 using DreamLens.Api.Infrastructure.Jobs;
 using DreamLens.Api.Infrastructure.Monetization;
 using DreamLens.Api.Infrastructure.Persistence;
+using DreamLens.Api.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -13,6 +14,9 @@ public sealed class RequestDreamImageHandler(
     ICurrentUser currentUser,
     IEntitlementService entitlementService,
     IOptions<ImageGenerationOptions> imageOptions,
+    IImageGenerationRouteResolver routeResolver,
+    IDreamImagePromptComposer promptComposer,
+    IStringEncryptor encryptor,
     AsyncJobService? asyncJobService = null)
 {
     public async Task<RequestDreamImageResult> HandleAsync(
@@ -20,14 +24,11 @@ public sealed class RequestDreamImageHandler(
         RequestDreamImageRequest request,
         CancellationToken cancellationToken)
     {
-        if (!imageOptions.Value.Enabled || asyncJobService is null)
+        var entitlement = entitlementService.GetEntitlement(currentUser.Subject);
+        var route = routeResolver.Resolve(entitlement.Tier);
+        if (!route.Enabled || asyncJobService is null)
         {
             return RequestDreamImageResult.Unavailable();
-        }
-
-        if (!entitlementService.GetEntitlement(currentUser.Subject).DeepAnalysisEnabled)
-        {
-            return RequestDreamImageResult.NotEntitled();
         }
 
         var dream = await dbContext.Dreams
@@ -48,7 +49,8 @@ public sealed class RequestDreamImageHandler(
             return RequestDreamImageResult.InvalidStyle();
         }
 
-        var idempotencyKey = $"{AsyncJobTypes.DreamImage}:{dreamId}:{style}";
+        var prompt = promptComposer.Compose(dream, style, imageOptions.Value.PromptVersion);
+        var idempotencyKey = $"{AsyncJobTypes.DreamImage}:{dreamId}:{style}:{route.Tier}:{route.Provider}:{route.Model}:{prompt.Version}";
         var existingJob = await dbContext.AsyncJobs
             .AsNoTracking()
             .SingleOrDefaultAsync(job => job.IdempotencyKey == idempotencyKey, cancellationToken);
@@ -67,7 +69,15 @@ public sealed class RequestDreamImageHandler(
             DreamId = dreamId,
             UserSubject = currentUser.Subject,
             Status = DreamImageStatuses.Pending,
-            Style = style
+            Style = style,
+            EncryptedPrompt = encryptor.Encrypt(prompt.Text),
+            PromptVersion = prompt.Version,
+            Provider = route.Provider,
+            Model = route.Model,
+            Tier = route.Tier.ToString().ToLowerInvariant(),
+            Width = route.Width,
+            Height = route.Height,
+            EstimatedCostUsd = route.EstimatedCostUsd
         };
         dbContext.DreamImages.Add(image);
         await dbContext.SaveChangesAsync(cancellationToken);

@@ -83,6 +83,7 @@ if (dreamEndpointsEnabled)
     builder.Services.AddScoped<DeepInterpretationHandler>();
     builder.Services.AddScoped<RequestDreamImageHandler>();
     builder.Services.AddScoped<GetDreamImageHandler>();
+    builder.Services.AddSingleton<IDreamImagePromptComposer, DreamImagePromptComposer>();
     builder.Services.AddScoped<ListDreamsHandler>();
     builder.Services.AddScoped<UpdateDreamJournalHandler>();
     builder.Services.AddScoped<DeleteDreamHandler>();

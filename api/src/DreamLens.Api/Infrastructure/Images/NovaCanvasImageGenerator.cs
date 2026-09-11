@@ -7,12 +7,12 @@ using Microsoft.Extensions.Options;
 namespace DreamLens.Api.Infrastructure.Images;
 
 public sealed class NovaCanvasImageGenerator(
-    IAmazonBedrockRuntime bedrockRuntime,
-    IOptions<ImageGenerationOptions> options) : IImageGenerator
+    IAmazonBedrockRuntime bedrockRuntime) : IImageGenerator
 {
+    public string Provider => "bedrock-nova-canvas";
+
     public async Task<ImageGenerationResult> GenerateAsync(ImageGenerationRequest request, CancellationToken cancellationToken)
     {
-        var settings = options.Value;
         var payload = JsonSerializer.Serialize(new
         {
             taskType = "TEXT_IMAGE",
@@ -23,8 +23,8 @@ public sealed class NovaCanvasImageGenerator(
             imageGenerationConfig = new
             {
                 quality = "standard",
-                width = Math.Clamp(settings.Width, 320, 4096),
-                height = Math.Clamp(settings.Height, 320, 4096),
+                width = request.Route.Width,
+                height = request.Route.Height,
                 numberOfImages = 1,
                 seed = Random.Shared.Next(0, 858_993_460)
             }
@@ -32,7 +32,7 @@ public sealed class NovaCanvasImageGenerator(
         using var body = new MemoryStream(Encoding.UTF8.GetBytes(payload));
         var response = await bedrockRuntime.InvokeModelAsync(new InvokeModelRequest
         {
-            ModelId = settings.Model,
+            ModelId = request.Route.Model,
             ContentType = "application/json",
             Accept = "application/json",
             Body = body
@@ -48,6 +48,6 @@ public sealed class NovaCanvasImageGenerator(
             Convert.FromBase64String(base64Image),
             "image/png",
             "Amazon Bedrock",
-            settings.Model);
+            request.Route.Model);
     }
 }
