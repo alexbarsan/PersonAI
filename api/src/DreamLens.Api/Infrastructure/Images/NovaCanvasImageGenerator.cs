@@ -2,8 +2,6 @@ using System.Text;
 using System.Text.Json;
 using Amazon.BedrockRuntime;
 using Amazon.BedrockRuntime.Model;
-using Microsoft.Extensions.Options;
-
 namespace DreamLens.Api.Infrastructure.Images;
 
 public sealed class NovaCanvasImageGenerator(

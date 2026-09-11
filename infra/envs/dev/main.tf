@@ -29,6 +29,7 @@ module "security" {
   github_repository = var.github_repository
   secret_names = [
     "deepseek-api-key",
+    "openai-api-key",
     "app-encryption-key",
     "pseudonym-hmac-key"
   ]
@@ -90,14 +91,16 @@ module "api" {
     Assets__BucketName                                = module.private_assets.bucket_name
     ImageGeneration__PromptVersion                    = "dream-image-v1"
     ImageGeneration__DefaultStyle                     = "SOFT_DIGITAL_PAINTING"
-    ImageGeneration__Free__Enabled                    = "false"
-    ImageGeneration__Free__Provider                   = ""
-    ImageGeneration__Free__Model                      = ""
-    ImageGeneration__Free__EstimatedCostUsd           = "0"
-    ImageGeneration__Premium__Enabled                 = "false"
-    ImageGeneration__Premium__Provider                = "bedrock-nova-canvas"
-    ImageGeneration__Premium__Model                   = "amazon.nova-canvas-v1:0"
-    ImageGeneration__Premium__EstimatedCostUsd        = "0.04"
+    ImageGeneration__Free__Enabled                    = "true"
+    ImageGeneration__Free__Provider                   = "openai-gpt-image"
+    ImageGeneration__Free__Model                      = "gpt-image-1-mini"
+    ImageGeneration__Free__Quality                    = "low"
+    ImageGeneration__Free__EstimatedCostUsd           = "0.005"
+    ImageGeneration__Premium__Enabled                 = "true"
+    ImageGeneration__Premium__Provider                = "openai-gpt-image"
+    ImageGeneration__Premium__Model                   = "gpt-image-1-mini"
+    ImageGeneration__Premium__Quality                 = "medium"
+    ImageGeneration__Premium__EstimatedCostUsd        = "0.011"
     VoiceTranscription__Enabled                       = "true"
     VoiceTranscription__Provider                      = "amazon-transcribe"
     VoiceTranscription__Model                         = "amazon-transcribe-standard"
@@ -117,6 +120,7 @@ module "api" {
 
   secret_arns = {
     DeepSeek__ApiKey           = module.security.secret_arns["deepseek-api-key"]
+    OpenAI__ApiKey             = module.security.secret_arns["openai-api-key"]
     Encryption__LocalKeyBase64 = module.security.secret_arns["app-encryption-key"]
     Pseudonym__SecretBase64    = module.security.secret_arns["pseudonym-hmac-key"]
     Database__MasterUserJson   = module.database.master_user_secret_arn

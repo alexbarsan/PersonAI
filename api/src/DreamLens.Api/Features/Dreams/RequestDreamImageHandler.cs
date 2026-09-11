@@ -50,7 +50,7 @@ public sealed class RequestDreamImageHandler(
         }
 
         var prompt = promptComposer.Compose(dream, style, imageOptions.Value.PromptVersion);
-        var idempotencyKey = $"{AsyncJobTypes.DreamImage}:{dreamId}:{style}:{route.Tier}:{route.Provider}:{route.Model}:{prompt.Version}";
+        var idempotencyKey = $"{AsyncJobTypes.DreamImage}:{dreamId}:{style}:{route.Tier}:{route.Provider}:{route.Model}:{route.Quality}:{prompt.Version}";
         var existingJob = await dbContext.AsyncJobs
             .AsNoTracking()
             .SingleOrDefaultAsync(job => job.IdempotencyKey == idempotencyKey, cancellationToken);
@@ -77,7 +77,8 @@ public sealed class RequestDreamImageHandler(
             Tier = route.Tier.ToString().ToLowerInvariant(),
             Width = route.Width,
             Height = route.Height,
-            EstimatedCostUsd = route.EstimatedCostUsd
+            EstimatedCostUsd = route.EstimatedCostUsd,
+            Quality = route.Quality
         };
         dbContext.DreamImages.Add(image);
         await dbContext.SaveChangesAsync(cancellationToken);

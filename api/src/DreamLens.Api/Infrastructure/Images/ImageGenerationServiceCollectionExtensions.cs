@@ -21,6 +21,14 @@ public static class ImageGenerationServiceCollectionExtensions
             services.TryAddSingleton<IAmazonBedrockRuntime>(_ => new AmazonBedrockRuntimeClient(RegionEndpoint.GetBySystemName(region)));
             services.AddScoped<IImageGenerator, NovaCanvasImageGenerator>();
         }
+        var needsOpenAi = new[] { settings.Free.Provider, settings.Premium.Provider }
+            .Any(provider => string.Equals(provider, OpenAiImageGenerator.ProviderName, StringComparison.OrdinalIgnoreCase));
+        if (needsOpenAi)
+        {
+            services.Configure<OpenAiImageOptions>(configuration.GetSection("OpenAI"));
+            services.AddHttpClient<OpenAiImageGenerator>(client => client.Timeout = TimeSpan.FromMinutes(2));
+            services.AddScoped<IImageGenerator>(serviceProvider => serviceProvider.GetRequiredService<OpenAiImageGenerator>());
+        }
         services.AddScoped<IImageGenerator, FakeImageGenerator>();
         services.AddScoped<IImageGeneratorRegistry, ImageGeneratorRegistry>();
         services.AddSingleton<IImageGenerationRouteResolver, ConfiguredImageGenerationRouteResolver>();

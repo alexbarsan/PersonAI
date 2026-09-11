@@ -48,7 +48,8 @@ public sealed class DreamImageJobHandler(
                 image.Model,
                 image.Width,
                 image.Height,
-                image.EstimatedCostUsd);
+                image.EstimatedCostUsd,
+                image.Quality);
             var result = await imageGenerators.GetRequired(image.Provider).GenerateAsync(
                 new ImageGenerationRequest(encryptor.Decrypt(image.EncryptedPrompt), image.Style, route),
                 cancellationToken);

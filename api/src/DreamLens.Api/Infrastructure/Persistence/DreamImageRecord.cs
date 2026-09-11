@@ -28,6 +28,8 @@ public sealed class DreamImageRecord
 
     public decimal EstimatedCostUsd { get; set; }
 
+    public string Quality { get; set; } = string.Empty;
+
     public string? AssetKey { get; set; }
 
     public string? ErrorMessage { get; set; }

@@ -1,6 +1,6 @@
 # Slice Status
 
-Current implementation: S42, model-neutral dream-image request preparation. Every enabled request now composes and encrypts a bounded, symbolic versioned prompt before it is queued, then snapshots the tier, provider, model, dimensions, and cost for reproducible work and retries. Separate Free and Premium routes are ready but disabled while Nova Canvas remains unavailable. Next Step: select and integrate a supported text-to-image provider, configure Free/Premium routes and quotas, apply the migration, then run controlled requests for each enabled tier and confirm private S3 assets plus `dream.image` ledger rows.
+Current implementation: S43, OpenAI GPT Image Mini dream visuals. Every request composes and encrypts a bounded, symbolic versioned prompt before it is queued, then snapshots the tier, provider, model, dimensions, quality, and cost for reproducible work and retries. Dev routes Free to `gpt-image-1-mini` Low and Premium to Medium through the model-neutral provider registry. Next Step: import the manually created dev OpenAI secret into Terraform state, apply the dev task definition, run controlled Free and Premium requests, and confirm private S3 assets plus `dream.image` ledger rows. Add explicit per-tier image quotas before public availability.
 
 Status values: `Not started`, `In progress`, `Blocked`, `Done`.
 

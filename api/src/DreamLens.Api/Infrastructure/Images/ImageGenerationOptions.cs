@@ -27,6 +27,8 @@ public sealed class ImageGenerationTierOptions
     public int Height { get; set; } = 1024;
 
     public decimal EstimatedCostUsd { get; set; }
+
+    public string Quality { get; set; } = "medium";
 }
 
 public sealed record ImageGenerationRoute(
@@ -36,7 +38,8 @@ public sealed record ImageGenerationRoute(
     string Model,
     int Width,
     int Height,
-    decimal EstimatedCostUsd);
+    decimal EstimatedCostUsd,
+    string Quality);
 
 public interface IImageGenerationRouteResolver
 {
@@ -55,6 +58,7 @@ public sealed class ConfiguredImageGenerationRouteResolver(IOptions<ImageGenerat
             selected.Model,
             Math.Clamp(selected.Width, 320, 4096),
             Math.Clamp(selected.Height, 320, 4096),
-            selected.EstimatedCostUsd);
+            selected.EstimatedCostUsd,
+            selected.Quality);
     }
 }

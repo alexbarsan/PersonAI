@@ -29,6 +29,7 @@ module "security" {
   github_repository = var.github_repository
   secret_names = [
     "deepseek-api-key",
+    "openai-api-key",
     "app-encryption-key",
     "pseudonym-hmac-key"
   ]
@@ -91,6 +92,8 @@ module "api" {
     Jobs__Worker__Enabled                             = "true"
     Jobs__EmbeddingBackfill__Enabled                  = "false"
     Assets__BucketName                                = module.private_assets.bucket_name
+    ImageGeneration__Free__Enabled                    = "false"
+    ImageGeneration__Premium__Enabled                 = "false"
     VoiceTranscription__Enabled                       = "false"
     VoiceTranscription__Provider                      = "amazon-transcribe"
     VoiceTranscription__Model                         = "amazon-transcribe-standard"
@@ -102,6 +105,7 @@ module "api" {
 
   secret_arns = {
     DeepSeek__ApiKey           = module.security.secret_arns["deepseek-api-key"]
+    OpenAI__ApiKey             = module.security.secret_arns["openai-api-key"]
     Encryption__LocalKeyBase64 = module.security.secret_arns["app-encryption-key"]
     Pseudonym__SecretBase64    = module.security.secret_arns["pseudonym-hmac-key"]
     Database__MasterUserJson   = module.database.master_user_secret_arn
