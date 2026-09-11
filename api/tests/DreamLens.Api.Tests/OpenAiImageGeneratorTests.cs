@@ -17,7 +17,7 @@ public sealed class OpenAiImageGeneratorTests
         var generator = new OpenAiImageGenerator(client, Options.Create(new OpenAiImageOptions
         {
             BaseUrl = new Uri("https://openai.test/v1/"),
-            ApiKey = "test-key"
+            ApiKey = "\r\ntest-key\r\n"
         }));
         var route = new ImageGenerationRoute(EntitlementTier.Free, true, OpenAiImageGenerator.ProviderName,
             "gpt-image-1-mini", 1024, 1024, 0.005m, "low");

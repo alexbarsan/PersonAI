@@ -25,13 +25,14 @@ public sealed class OpenAiImageGenerator(
 
     public async Task<ImageGenerationResult> GenerateAsync(ImageGenerationRequest request, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(_options.ApiKey))
+        var apiKey = _options.ApiKey.Trim();
+        if (string.IsNullOrWhiteSpace(apiKey))
         {
             throw new InvalidOperationException("OpenAI:ApiKey must be configured.");
         }
 
         using var message = new HttpRequestMessage(HttpMethod.Post, new Uri(_options.BaseUrl, "images/generations"));
-        message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _options.ApiKey);
+        message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
         message.Content = new StringContent(JsonSerializer.Serialize(new
         {
             model = request.Route.Model,
