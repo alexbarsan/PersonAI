@@ -1,6 +1,6 @@
 # Slice Status
 
-Current implementation: S42, Premium Nova Canvas dream visuals in dev. Next Step: run tests, deploy API, apply the dev setting without task-image rollback, then make one controlled Premium request and inspect the image ledger row.
+Current implementation: S42, Premium Nova Canvas dream visuals in dev. API/web commit `03fcc30` is deployed, ECS revision 52 is configured with the Nova Canvas setting, and public readiness returns 200. Next Step: request one visual as a Premium user, then confirm its completed private S3 asset and `dream.image` cost/latency ledger row. Nova Canvas remains dev-only because AWS publishes its EOL as 2026-09-30.
 
 Status values: `Not started`, `In progress`, `Blocked`, `Done`.
 
