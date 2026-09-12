@@ -41,6 +41,8 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
 
     public DbSet<SensitiveReviewAccessAudit> SensitiveReviewAccessAudits => Set<SensitiveReviewAccessAudit>();
 
+    public DbSet<OperationsActionAuditRecord> OperationsActionAudits => Set<OperationsActionAuditRecord>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasPostgresExtension("vector");
@@ -302,6 +304,20 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
             entity.Property(job => job.LastError).HasMaxLength(2000);
             entity.Property(job => job.CreatedAt).IsRequired();
             entity.Property(job => job.UpdatedAt).IsRequired();
+        });
+
+        modelBuilder.Entity<OperationsActionAuditRecord>(entity =>
+        {
+            entity.ToTable("OperationsActionAudits");
+            entity.HasKey(audit => audit.Id);
+            entity.HasIndex(audit => new { audit.Source, audit.TargetId, audit.CreatedAt });
+            entity.HasIndex(audit => new { audit.AdministratorSubject, audit.CreatedAt });
+            entity.Property(audit => audit.Source).HasMaxLength(32).IsRequired();
+            entity.Property(audit => audit.OperationType).HasMaxLength(64).IsRequired();
+            entity.Property(audit => audit.Action).HasMaxLength(32).IsRequired();
+            entity.Property(audit => audit.AdministratorSubject).HasMaxLength(256).IsRequired();
+            entity.Property(audit => audit.Reason).HasMaxLength(500).IsRequired();
+            entity.Property(audit => audit.CreatedAt).IsRequired();
         });
 
         modelBuilder.Entity<AnonymizationRequest>(entity =>

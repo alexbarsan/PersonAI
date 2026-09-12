@@ -194,11 +194,13 @@ export function createUserFromToken(token: string): AuthUser {
   const subject = readStringClaim(claims, "sub") ?? "cognito-user";
   const email = readStringClaim(claims, "email");
   const displayName = readStringClaim(claims, "name") ?? email;
+  const groups = readStringArrayClaim(claims, "cognito:groups");
 
   return {
     subject,
     email,
-    displayName
+    displayName,
+    groups
   };
 }
 
@@ -239,6 +241,11 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
 function readStringClaim(claims: Record<string, unknown> | null, key: string) {
   const value = claims?.[key];
   return typeof value === "string" && value.trim().length > 0 ? value : undefined;
+}
+
+function readStringArrayClaim(claims: Record<string, unknown> | null, key: string) {
+  const value = claims?.[key];
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
 }
 
 function readTokenExpiry(token: string) {

@@ -154,6 +154,13 @@ The reusable pipeline should not need backend code changes for a new persona whe
 
 See `docs/deployment.md`. Deployment uses GitHub Actions OIDC, Terraform, ECS Fargate, RDS PostgreSQL with `pgvector`, Cognito, S3/CloudFront, SQS workers, Amazon Bedrock, and EAS placeholders for mobile.
 
+## Admin Operations
+
+- `GET /v1/admin/operations` requires `dreamlens-metrics-admin` and returns application job health, SQS/DLQ counts, workload aging, recent provider failures, latency, and estimated cost.
+- `POST /v1/admin/operations/jobs/{id}/requeue` and `POST /v1/admin/operations/issues/{source}/{id}/acknowledge` require a 10-500 character reason and persist an operations audit row.
+- `GET /v1/admin/dreams` and `POST /v1/admin/dreams/{id}/access` require the stronger `dreamlens-admin` privacy role. Detail access requires a reason and audits original-text, interpretation, and signed-image access.
+- The web route is `/admin/operations`; authenticated group claims determine whether the Profile administration entry is visible.
+
 ## Monetization / S21
 
 S21 can start without subscribing to third-party payment services if the work is limited to local entitlement models, mock paywall UI, quota behavior by tier, and provider abstractions.

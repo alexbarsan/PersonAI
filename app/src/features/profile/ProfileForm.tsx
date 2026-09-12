@@ -16,6 +16,7 @@ import {
 } from "@/features/profile/profileSchema";
 import { useOnboardingDraftStore } from "@/state/onboardingDraftStore";
 import { useTheme } from "@/theme/ThemeProvider";
+import { useAuthStore } from "@/auth/authStore";
 
 type ProfileFormProps = {
   mode: "onboarding" | "profile";
@@ -42,6 +43,8 @@ const sleepPatternOptions: ChoiceOption[] = [
   { label: "Shift work", value: "shift-work" }
 ];
 
+const noGroups: string[] = [];
+
 export function ProfileForm({ mode }: ProfileFormProps) {
   const api = useApiClient();
   const theme = useTheme();
@@ -49,6 +52,7 @@ export function ProfileForm({ mode }: ProfileFormProps) {
   const draft = useOnboardingDraftStore((state) => state.values);
   const setDraft = useOnboardingDraftStore((state) => state.setValues);
   const resetDraft = useOnboardingDraftStore((state) => state.reset);
+  const groups = useAuthStore((state) => state.user?.groups) ?? noGroups;
   const profile = useQuery({
     queryKey: ["profile"],
     queryFn: () => api.getProfile(),
@@ -126,9 +130,23 @@ export function ProfileForm({ mode }: ProfileFormProps) {
         </Pressable>
       </View>
       {mode === "profile" ? <PrivacyActions /> : null}
+      {mode === "profile" && groups.some((group) => group === "dreamlens-metrics-admin" || group === "dreamlens-admin") ? <AdminTools /> : null}
       </ScrollView>
     </AppShell>
   );
+}
+
+function AdminTools() {
+  const theme = useTheme();
+  return <View style={[styles.panel, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+    <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Administration</Text>
+    <Pressable accessibilityRole="button" onPress={() => router.push("/admin/operations")} style={[styles.secondaryButton, { borderColor: theme.colors.primary }]}>
+      <Text style={[styles.secondaryButtonText, { color: theme.colors.primary }]}>Open operations</Text>
+    </Pressable>
+    <Pressable accessibilityRole="button" onPress={() => router.push("/safety-review")} style={[styles.secondaryButton, { borderColor: theme.colors.border }]}>
+      <Text style={[styles.secondaryButtonText, { color: theme.colors.text }]}>Open safety review</Text>
+    </Pressable>
+  </View>;
 }
 
 function PrivacyActions() {

@@ -140,3 +140,7 @@ Support Dynamic Type where practical, accessible labels for controls, keyboard-f
 ## Testing
 
 RNTL covers component behavior, form validation, and renderer variants. Maestro covers mobile happy paths. Playwright covers web happy paths and at least one error flow. MSW supplies deterministic network responses.
+
+## Admin Console
+
+The web-first `/admin/operations` route has separate Health and Dreams views. Health presents queue state, workload age, actionable incidents, and provider latency/cost without exposing dream content. Dreams requires privacy-admin authorization; opening original text, interpretations, and generated images requires an explicit purpose. React Native Testing Library covers recovery and access gating, while Playwright covers the complete mock administrator flow.

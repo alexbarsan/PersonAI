@@ -5,6 +5,7 @@ export type AuthUser = {
   subject: string;
   email?: string;
   displayName?: string;
+  groups?: string[];
 };
 
 type AuthState = {
@@ -24,7 +25,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       user: {
         subject: "mock-user",
         email: "mock@dreamlens.local",
-        displayName: "Mock Dreamer"
+        displayName: "Mock Dreamer",
+        groups: ["dreamlens-metrics-admin", "dreamlens-admin"]
       }
     }),
   signOut: () => {

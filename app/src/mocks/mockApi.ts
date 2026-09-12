@@ -1,6 +1,6 @@
 import type { ApiClient } from "@/api/client";
 import { ApiError } from "@/api/errors";
-import { mockAnonymizationRequest, mockAskDreams, mockDeepInterpretation, mockDream, mockDreamFeedback, mockDreamImage, mockEntitlement, mockInsights, mockJournal, mockMe, mockProfile, mockSensitiveSafetyReviews, mockUserDataExport } from "@/mocks/mockData";
+import { mockAdminOperations, mockAnonymizationRequest, mockAskDreams, mockDeepInterpretation, mockDream, mockDreamFeedback, mockDreamImage, mockEntitlement, mockInsights, mockJournal, mockMe, mockProfile, mockSensitiveSafetyReviews, mockUserDataExport } from "@/mocks/mockData";
 
 export const mockApiClient: ApiClient = {
   getMe: async () => mockMe,
@@ -64,6 +64,30 @@ export const mockApiClient: ApiClient = {
     dreamId: mockDream.id,
     dreamText: "A mock sensitive dream is available only to test the explicit access path.",
     expiresAt: mockSensitiveSafetyReviews[0].expiresAt
+  }),
+  getAdminOperations: async () => mockAdminOperations,
+  requeueAdminJob: async (id) => ({ targetId: id, jobId: id, action: "requeue", status: "pending", createdAt: new Date().toISOString() }),
+  acknowledgeAdminIssue: async (source, id) => ({ targetId: id, jobId: source === "job" ? id : null, action: "acknowledge", status: "acknowledged", createdAt: new Date().toISOString() }),
+  searchAdminDreams: async () => ({
+    page: 1,
+    pageSize: 50,
+    total: 1,
+    items: [{ id: mockDream.id, subjectPseudonym: "dreamer_mock", createdAt: mockDream.createdAt, occurredAt: mockDream.occurredAt ?? null, status: mockDream.status, mood: "curious", tags: ["river"], summary: mockDream.result?.summary ?? null, imageCount: 1, latestImageStatus: "completed" }]
+  }),
+  accessAdminDream: async () => ({
+    id: mockDream.id,
+    subjectPseudonym: "dreamer_mock",
+    createdAt: mockDream.createdAt,
+    occurredAt: mockDream.occurredAt ?? null,
+    status: mockDream.status,
+    text: "I followed a river through a quiet city at dawn.",
+    mood: "curious",
+    sleepQuality: 4,
+    tags: ["river"],
+    journalNote: null,
+    interpretation: mockDream.result,
+    deepInterpretation: mockDeepInterpretation.result,
+    images: [{ id: mockDreamImage.id, status: mockDreamImage.status, style: mockDreamImage.style, downloadUrl: mockDreamImage.downloadUrl, createdAt: mockDreamImage.createdAt }]
   })
 };
 

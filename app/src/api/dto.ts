@@ -286,3 +286,106 @@ export type SensitiveSafetyRawAccessResponse = {
   dreamText: string;
   expiresAt: string;
 };
+
+export type AdminOperationsResponse = {
+  generatedAt: string;
+  queue: {
+    status: string;
+    available: number;
+    inFlight: number;
+    delayed: number;
+    deadLetter: number;
+    error: string | null;
+  };
+  jobs: {
+    pending: number;
+    processing: number;
+    failed: number;
+    oldestPendingSeconds: number | null;
+  };
+  workloads: AdminOperationsWorkloadResponse[];
+  issues: AdminOperationsIssueResponse[];
+  providers: AdminOperationsProviderResponse[];
+};
+
+export type AdminOperationsWorkloadResponse = {
+  source: string;
+  pending: number;
+  processing: number;
+  failed: number;
+  oldestActiveSeconds: number | null;
+};
+
+export type AdminOperationsIssueResponse = {
+  id: string;
+  jobId: string | null;
+  source: string;
+  operationType: string;
+  status: string;
+  attemptCount: number;
+  ageSeconds: number;
+  failure: string | null;
+  acknowledged: boolean;
+  canRequeue: boolean;
+  updatedAt: string;
+};
+
+export type AdminOperationsProviderResponse = {
+  provider: string;
+  operationType: string;
+  operations: number;
+  failed: number;
+  estimatedCostUsd: number;
+  averageLatencyMilliseconds: number;
+  p95LatencyMilliseconds: number;
+};
+
+export type AdminOperationsActionResponse = {
+  targetId: string;
+  jobId: string | null;
+  action: string;
+  status: string;
+  createdAt: string;
+};
+
+export type AdminDreamSearchResponse = {
+  page: number;
+  pageSize: number;
+  total: number;
+  items: AdminDreamSearchItemResponse[];
+};
+
+export type AdminDreamSearchItemResponse = {
+  id: string;
+  subjectPseudonym: string;
+  createdAt: string;
+  occurredAt: string | null;
+  status: string;
+  mood: string | null;
+  tags: string[];
+  summary: string | null;
+  imageCount: number;
+  latestImageStatus: string | null;
+};
+
+export type AdminDreamDetailResponse = {
+  id: string;
+  subjectPseudonym: string;
+  createdAt: string;
+  occurredAt: string | null;
+  status: string;
+  text: string;
+  mood: string | null;
+  sleepQuality: number | null;
+  tags: string[];
+  journalNote: string | null;
+  interpretation: DreamResultResponse | null;
+  deepInterpretation: DreamResultResponse | null;
+  images: Array<{
+    id: string;
+    status: string;
+    style: string;
+    downloadUrl: string | null;
+    createdAt: string;
+  }>;
+};

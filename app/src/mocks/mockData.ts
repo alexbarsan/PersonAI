@@ -9,9 +9,9 @@ import {
   EntitlementResponse,
   InsightsResponse,
   MeResponse,
-  ProfileResponse
-  ,
-  SensitiveSafetyReviewResponse
+  ProfileResponse,
+  SensitiveSafetyReviewResponse,
+  AdminOperationsResponse
 } from "@/api/dto";
 
 export const mockDreamFeedback: DreamFeedbackResponse = {
@@ -216,3 +216,36 @@ export const mockSensitiveSafetyReviews: SensitiveSafetyReviewResponse[] = [{
   detectedAt: "2026-09-10T12:00:00Z",
   expiresAt: "2026-10-10T12:00:00Z"
 }];
+
+export const mockAdminOperations: AdminOperationsResponse = {
+  generatedAt: "2026-09-12T12:00:00Z",
+  queue: { status: "available", available: 2, inFlight: 1, delayed: 0, deadLetter: 1, error: null },
+  jobs: { pending: 2, processing: 1, failed: 1, oldestPendingSeconds: 420 },
+  workloads: [
+    { source: "image-safety", pending: 1, processing: 0, failed: 1, oldestActiveSeconds: 420 },
+    { source: "dream-image", pending: 1, processing: 1, failed: 0, oldestActiveSeconds: 95 },
+    { source: "voice", pending: 0, processing: 0, failed: 0, oldestActiveSeconds: null }
+  ],
+  issues: [{
+    id: "00000000-0000-0000-0000-000000000001",
+    jobId: "00000000-0000-0000-0000-000000000001",
+    source: "job",
+    operationType: "dream.image",
+    status: "failed",
+    attemptCount: 3,
+    ageSeconds: 720,
+    failure: "Provider timeout",
+    acknowledged: false,
+    canRequeue: true,
+    updatedAt: "2026-09-12T11:48:00Z"
+  }],
+  providers: [{
+    provider: "OpenAI",
+    operationType: "dream.image",
+    operations: 12,
+    failed: 1,
+    estimatedCostUsd: 0.118,
+    averageLatencyMilliseconds: 12140,
+    p95LatencyMilliseconds: 14800
+  }]
+};

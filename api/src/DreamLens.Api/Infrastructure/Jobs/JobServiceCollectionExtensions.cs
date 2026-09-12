@@ -20,6 +20,7 @@ public static class JobServiceCollectionExtensions
 
         services.AddSingleton<IAmazonSQS>(_ => new AmazonSQSClient(RegionEndpoint.GetBySystemName(region)));
         services.AddScoped<IAsyncJobQueue, SqsAsyncJobQueue>();
+        services.AddScoped<IOperationsQueueMonitor, SqsOperationsQueueMonitor>();
 
         if (!string.IsNullOrWhiteSpace(PersistenceServiceCollectionExtensions.ResolveConnectionString(configuration)))
         {

@@ -17,13 +17,14 @@ describe("cognito auth helpers", () => {
   });
 
   it("creates a user snapshot from JWT claims", () => {
-    const payload = btoa(JSON.stringify({ sub: "user-123", email: "dreamer@example.com", name: "Dreamer" }));
+    const payload = btoa(JSON.stringify({ sub: "user-123", email: "dreamer@example.com", name: "Dreamer", "cognito:groups": ["dreamlens-metrics-admin"] }));
     const token = `header.${payload}.signature`;
 
     expect(createUserFromToken(token)).toEqual({
       subject: "user-123",
       email: "dreamer@example.com",
-      displayName: "Dreamer"
+      displayName: "Dreamer",
+      groups: ["dreamlens-metrics-admin"]
     });
   });
 });

@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using DreamLens.Api.Features.Dreams;
 using DreamLens.Api.Features.AdminMetrics;
+using DreamLens.Api.Features.AdminOperations;
 using DreamLens.Api.Features.Insights;
 using DreamLens.Api.Features.Jobs;
 using DreamLens.Api.Features.Profile;
@@ -623,6 +624,82 @@ public sealed class DreamEndpointTests
     }
 
     [Fact]
+    public async Task OperationsConsoleRequiresMetricsAdminAndAuditsRecoveryActions()
+    {
+        using var app = CreateDreamApp(new StaticDreamChatClient(CanonicalAiOutput));
+        using var nonAdmin = app.CreateAuthenticatedClient("subject-a");
+        using var admin = app.CreateAuthenticatedClient("metrics-admin", "dreamlens-metrics-admin");
+        var job = new AsyncJobRecord
+        {
+            IdempotencyKey = $"test.failed:{Guid.NewGuid():N}",
+            JobType = AsyncJobTypes.Export,
+            UserSubject = "subject-a",
+            PayloadJson = "{}",
+            Status = AsyncJobStatuses.Failed,
+            AttemptCount = 3,
+            LastError = "Provider timeout",
+            UpdatedAt = DateTimeOffset.UtcNow.AddMinutes(-10)
+        };
+        await app.AddAsyncJobAsync(job);
+
+        Assert.Equal(HttpStatusCode.Forbidden, (await nonAdmin.GetAsync("/v1/admin/operations")).StatusCode);
+        var overviewResponse = await admin.GetAsync("/v1/admin/operations");
+        var overview = await overviewResponse.Content.ReadFromJsonAsync<AdminOperationsResponse>();
+
+        Assert.Equal(HttpStatusCode.OK, overviewResponse.StatusCode);
+        Assert.NotNull(overview);
+        Assert.Equal("available", overview.Queue.Status);
+        Assert.Contains(overview.Issues, issue => issue.JobId == job.Id && issue.CanRequeue);
+
+        var acknowledgement = await admin.PostAsJsonAsync(
+            $"/v1/admin/operations/issues/job/{job.Id}/acknowledge",
+            new AdminOperationsActionRequest("Reviewed provider timeout incident."));
+        var requeue = await admin.PostAsJsonAsync(
+            $"/v1/admin/operations/jobs/{job.Id}/requeue",
+            new AdminOperationsActionRequest("Retry after reviewing provider health."));
+
+        Assert.Equal(HttpStatusCode.OK, acknowledgement.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, requeue.StatusCode);
+        Assert.Equal(2, await app.CountOperationsAuditsAsync());
+        Assert.Contains(app.PublishedJobs, message => message.JobId == job.Id);
+    }
+
+    [Fact]
+    public async Task PrivacyAdminCanSearchAndAuditDreamDetailAccess()
+    {
+        using var app = CreateDreamApp(new StaticDreamChatClient(CanonicalAiOutput));
+        using var user = app.CreateAuthenticatedClient("subject-a");
+        using var metricsOnly = app.CreateAuthenticatedClient("metrics-admin", "dreamlens-metrics-admin");
+        using var privacyAdmin = app.CreateAuthenticatedClient("privacy-admin", "dreamlens-admin");
+        await PutProfileAsync(user);
+        var submitted = await (await user.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest()))
+            .Content.ReadFromJsonAsync<DreamResponse>();
+        await app.AddCompletedDreamImageAsync(submitted!.Id, "subject-a");
+
+        Assert.Equal(HttpStatusCode.Forbidden, (await metricsOnly.GetAsync("/v1/admin/dreams?query=falling")).StatusCode);
+        var searchResponse = await privacyAdmin.GetAsync("/v1/admin/dreams?query=falling&page=1&pageSize=20");
+        var search = await searchResponse.Content.ReadFromJsonAsync<AdminDreamSearchResponse>();
+
+        Assert.Equal(HttpStatusCode.OK, searchResponse.StatusCode);
+        Assert.NotNull(search);
+        var result = Assert.Single(search.Items);
+        Assert.Equal(submitted.Id, result.Id);
+        Assert.Equal(1, result.ImageCount);
+
+        var accessResponse = await privacyAdmin.PostAsJsonAsync(
+            $"/v1/admin/dreams/{submitted.Id}/access",
+            new AdminDreamAccessRequest("Investigating a reported interpretation issue."));
+        var detail = await accessResponse.Content.ReadFromJsonAsync<AdminDreamDetailResponse>();
+
+        Assert.Equal(HttpStatusCode.OK, accessResponse.StatusCode);
+        Assert.NotNull(detail);
+        Assert.Contains("falling", detail.Text, StringComparison.OrdinalIgnoreCase);
+        Assert.NotNull(detail.Interpretation);
+        Assert.Contains(detail.Images, image => image.DownloadUrl == $"https://assets.invalid/dream-images/{submitted.Id:N}.png");
+        Assert.Equal(1, await app.CountOperationsAuditsAsync());
+    }
+
+    [Fact]
     public async Task UserCannotFetchAnotherUsersDream()
     {
         using var app = CreateDreamApp(new StaticDreamChatClient(CanonicalAiOutput));
@@ -1096,11 +1173,13 @@ public sealed class DreamEndpointTests
                     services.RemoveAll<IChatClient>();
                     services.RemoveAll<IAsyncJobQueue>();
                     services.RemoveAll<IPrivateAssetStore>();
+                    services.RemoveAll<IOperationsQueueMonitor>();
                     services.AddDbContext<DreamLensDbContext>(options => options.UseInMemoryDatabase(databaseName));
                     services.AddSingleton(chatClient);
                     services.AddSingleton<RecordingAsyncJobQueue>();
                     services.AddSingleton<IAsyncJobQueue>(serviceProvider => serviceProvider.GetRequiredService<RecordingAsyncJobQueue>());
                     services.AddSingleton<IPrivateAssetStore, InMemoryPrivateAssetStore>();
+                    services.AddSingleton<IOperationsQueueMonitor, TestOperationsQueueMonitor>();
                     services.AddScoped<AsyncJobService>();
                     services.AddScoped<IAsyncJobHandler, VoiceTranscriptionJobHandler>();
                     services.AddScoped<IAsyncJobHandler, DreamImageSafetyJobHandler>();
@@ -1125,6 +1204,11 @@ public sealed class DreamEndpointTests
                     services.AddScoped<DeleteDreamHandler>();
                     services.AddScoped<GetInsightsHandler>();
                     services.AddScoped<GetAdminMetricsHandler>();
+                    services.AddScoped<GetAdminOperationsHandler>();
+                    services.AddScoped<RequeueAdminJobHandler>();
+                    services.AddScoped<AcknowledgeAdminIssueHandler>();
+                    services.AddScoped<SearchAdminDreamsHandler>();
+                    services.AddScoped<AccessAdminDreamHandler>();
                     services.AddScoped<RetryJobHandler>();
                     services.AddScoped<RequestAnonymizationHandler>();
                     services.AddScoped<GetAnonymizationRequestHandler>();
@@ -1314,11 +1398,35 @@ public sealed class DreamEndpointTests
 
         public int PublishedAsyncJobCount => factory.Services.GetRequiredService<RecordingAsyncJobQueue>().Messages.Count;
 
+        public IReadOnlyList<AsyncJobMessage> PublishedJobs => factory.Services.GetRequiredService<RecordingAsyncJobQueue>().Messages;
+
+        public async Task<int> CountOperationsAuditsAsync()
+        {
+            using var scope = factory.Services.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<DreamLensDbContext>();
+            return await dbContext.OperationsActionAudits.CountAsync();
+        }
+
         public async Task AddAsyncJobAsync(AsyncJobRecord job)
         {
             using var scope = factory.Services.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<DreamLensDbContext>();
             dbContext.AsyncJobs.Add(job);
+            await dbContext.SaveChangesAsync();
+        }
+
+        public async Task AddCompletedDreamImageAsync(Guid dreamId, string userSubject)
+        {
+            using var scope = factory.Services.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<DreamLensDbContext>();
+            dbContext.DreamImages.Add(new DreamImageRecord
+            {
+                DreamId = dreamId,
+                UserSubject = userSubject,
+                Status = DreamImageStatuses.Completed,
+                Style = "SOFT_DIGITAL_PAINTING",
+                AssetKey = $"dream-images/{dreamId:N}.png"
+            });
             await dbContext.SaveChangesAsync();
         }
 
@@ -1402,6 +1510,12 @@ public sealed class DreamEndpointTests
             Messages.Add(message);
             return Task.CompletedTask;
         }
+    }
+
+    private sealed class TestOperationsQueueMonitor : IOperationsQueueMonitor
+    {
+        public Task<OperationsQueueSnapshot> GetSnapshotAsync(CancellationToken cancellationToken) =>
+            Task.FromResult(new OperationsQueueSnapshot("available", 2, 1, 0, 0, null));
     }
 
     private sealed class InMemoryPrivateAssetStore : IPrivateAssetStore

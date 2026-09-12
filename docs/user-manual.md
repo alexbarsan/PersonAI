@@ -42,6 +42,12 @@ Premium users can select **Go deeper** on a completed dream. Deep Interpretation
 
 Dream DNA sends a pseudonymized context snapshot to the AI provider. It does not send your name, email, device id, IP address, or Cognito subject. Sensitive traits are included only when consent allows it.
 
+## Administration
+
+Authorized administrators can open **Profile**, then **Open operations**. The Health view shows queue state, delayed or failed work, provider latency, and estimated AI cost. Requeue and acknowledgement actions require a written reason and are audited.
+
+The Dreams view is available only to privacy administrators. Search results show bounded metadata. Opening original dream text, interpretations, or generated images requires a case-specific reason and creates an immutable access audit.
+
 ## Local Mock Mode
 
 The Expo app defaults to mock mode for local development. Mock mode lets you use the app without AWS, Cognito, PostgreSQL, or DeepSeek.

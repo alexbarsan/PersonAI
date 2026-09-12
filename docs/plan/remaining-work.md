@@ -1,6 +1,6 @@
 # Remaining Work
 
-Last updated during S46 precomputed image-safety classification on 2026-09-12.
+Last updated during S47 admin operations and dream inspection on 2026-09-12.
 
 ## Planned Slices
 
@@ -22,7 +22,8 @@ The imported Catch Dreamer feature notes add several capabilities that are not f
 - Cognito social sign-in provider setup for Google and Apple first; Facebook remains optional after product/privacy review.
 - Cognito password policy: dev now permits six-character passwords while retaining lowercase, uppercase, number, and symbol requirements. Apply and verify the same policy in QA and production before public launch.
 - S31 provides an aggregate-only admin metrics API for active users, conversion, dream completion, AI cost, cost per active user, and operation latency. RevenueCat revenue and AWS Cost Explorer ingestion remain before gross margin can be calculated; an internal dashboard remains optional.
-- S47 must add an in-app admin operations console. It should unify durable job and domain statuses, oldest-pending age, retries, provider failures, DLQ depth, costs, latency percentiles, and audited recovery actions so routine operations do not require AWS or log access. List views must not expose raw dream text; any content access remains purpose-gated and audited.
+- S47 is implemented in code. Operations health and recovery use `dreamlens-metrics-admin`; cross-user dream search and detail use the stronger `dreamlens-admin` privacy role. Opening original dream text, interpretations, and signed images requires a case-specific purpose and writes an immutable access audit. Dev deployment and authenticated verification remain.
+- S48 image latency optimization is a separate planned slice. Measure queue wait independently from provider generation, move workers into a separately scalable ECS service, scale on SQS backlog age/depth, add bounded concurrency, benchmark tier routes, and use live completion updates with polling fallback. Keep image generation explicitly on request; do not spend on speculative images.
 - S37 sensitive-dream safety workflow: allow private adult sexual, violent, and trauma dream content while using contextual safety categories rather than keyword alerts. Notify reviewers with category, confidence, anonymized subject, dream ID, and timestamp only; raw-text access must be explicit, audited, and privacy-governed.
 - Local-first voice capture: durable native recording backup, retryable upload outbox, Free device transcription when supported, Premium server transcription, and explicit local/AWS retention windows.
 

@@ -92,7 +92,7 @@ Sensitive columns are encrypted at rest. In development use a local key from con
 
 `pgvector` is the launch vector store. Keep embedding rows tied to internal dream/user ids so authorization, consent filtering, approved anonymization, and relational filters remain in one transactional store. Revisit S3 Vectors or a dedicated vector database only if pgvector becomes a measured bottleneck.
 
-Embedding dimensions must be stored in configuration and must match the pgvector index. Dream DNA fixes Nova output at 1,024 dimensions to match `vector(1024)`. Changing embedding provider or dimension requires a backfill plan and a versioned embedding column/table.
+Embedding dimensions must be stored in configuration and must match the pgvector index. Dream DNA fixes Titan Text Embeddings V2 output at 1,024 dimensions to match `vector(1024)`. Changing embedding provider or dimension requires a backfill plan and a versioned embedding column/table.
 
 ## Auth
 
@@ -113,7 +113,7 @@ PersonaKit should expose narrow abstractions:
 
 AI providers are accessed through Microsoft.Extensions.AI `IChatClient`. DeepSeek is accessed through its OpenAI-compatible endpoint. Base interpretation uses the explicit `deepseek-v4-flash` model; Premium Deep Interpretation routes the dedicated persona and richer retrieved context to `deepseek-v4-pro`. Model IDs remain typed environment configuration so a provider change does not alter the pipeline.
 
-Embeddings use a separate abstraction, not `IChatClient`. Default launch provider is Amazon Nova Multimodal Embeddings through Bedrock. Stored dream content uses `GENERIC_INDEX`; text queries use `TEXT_RETRIEVAL`. Keep provider/model/dimension/version on every embedding record, filter retrieval to the active model/version, and replace stale vectors during a bounded backfill. Embedding operations write AI operation ledger rows with token count, response time, status, failure kind, and estimated cost.
+Embeddings use a separate abstraction, not `IChatClient`. The default dream-text provider is Amazon Titan Text Embeddings V2 through Bedrock with normalized 1,024-dimensional vectors. Amazon Nova Multimodal Embeddings remains available for a future separate multimodal index. Keep provider/model/dimension/version on every embedding record, filter retrieval to the active model/version, and replace stale vectors during a bounded backfill. Embedding operations write AI operation ledger rows with token count, response time, status, failure kind, and estimated cost.
 
 Cross-cutting provider behavior is composed through decorators:
 
@@ -175,6 +175,10 @@ Secrets must come from user secrets in local development and AWS Secrets Manager
 ## Logging And Telemetry
 
 Use structured logs and OpenTelemetry. Never log raw dream text, full context JSON, profile traits, tokens, secrets, auth headers, or provider request bodies. Log request ids, persona ids, model ids, operation types, status, latency, token counts where available, cost estimates, and sanitized error categories.
+
+## Application Operations Console
+
+Operational control is exposed through authenticated application APIs rather than requiring routine AWS console access. `dreamlens-metrics-admin` can inspect queue/DLQ state, durable job and workload aging, provider failures, latency, and cost, then acknowledge or requeue recoverable work with an immutable audit reason. Cross-user dream search and original-content access require the stronger `dreamlens-admin` privacy role. Search results remain bounded, detail access is purpose-gated and audited, and generated assets are returned only through signed S3 URLs.
 
 ## Testing
 
