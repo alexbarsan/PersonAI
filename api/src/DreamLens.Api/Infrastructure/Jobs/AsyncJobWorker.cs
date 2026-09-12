@@ -30,18 +30,17 @@ public sealed class AsyncJobWorker(
 
         while (!stoppingToken.IsCancellationRequested)
         {
+            var concurrency = Math.Clamp(workerOptions.Value.MaxConcurrentMessages, 1, 10);
             var response = await sqs.ReceiveMessageAsync(new ReceiveMessageRequest
             {
                 QueueUrl = queueUrl,
                 WaitTimeSeconds = Math.Clamp(workerOptions.Value.PollWaitSeconds, 1, 20),
                 VisibilityTimeout = Math.Clamp(queueOptions.Value.VisibilityTimeoutSeconds, 30, 43200),
-                MaxNumberOfMessages = 1
+                MaxNumberOfMessages = concurrency
             }, stoppingToken);
 
-            foreach (var message in response.Messages ?? Enumerable.Empty<Message>())
-            {
-                await ProcessMessageAsync(queueUrl, message, stoppingToken);
-            }
+            await Task.WhenAll((response.Messages ?? [])
+                .Select(message => ProcessMessageAsync(queueUrl, message, stoppingToken)));
         }
     }
 
@@ -99,6 +98,7 @@ public sealed class AsyncJobWorker(
             await handler.HandleAsync(jobMessage, cancellationToken);
             job.Status = AsyncJobStatuses.Completed;
             job.CompletedAt = DateTimeOffset.UtcNow;
+            job.ProcessingDurationMilliseconds += ElapsedMilliseconds(started);
             job.UpdatedAt = DateTimeOffset.UtcNow;
             await db.SaveChangesAsync(cancellationToken);
             await sqs.DeleteMessageAsync(queueUrl, message.ReceiptHandle, cancellationToken);
@@ -115,6 +115,7 @@ public sealed class AsyncJobWorker(
                 : AsyncJobStatuses.Failed;
             job.AvailableAt = DateTimeOffset.UtcNow.Add(retryDelay);
             job.LockedUntil = null;
+            job.ProcessingDurationMilliseconds += ElapsedMilliseconds(started);
             job.LastError = exception.Message[..Math.Min(exception.Message.Length, 2000)];
             job.UpdatedAt = DateTimeOffset.UtcNow;
             await db.SaveChangesAsync(cancellationToken);
@@ -152,9 +153,26 @@ public sealed class AsyncJobWorker(
                 .SetProperty(job => job.LockedUntil, now.AddSeconds(300))
                 .SetProperty(job => job.UpdatedAt, now), cancellationToken);
 
-        return updated == 0
-            ? null
-            : await db.AsyncJobs.SingleAsync(job => job.Id == jobId, cancellationToken);
+        if (updated == 0)
+        {
+            return null;
+        }
+
+        var claimed = await db.AsyncJobs.SingleAsync(job => job.Id == jobId, cancellationToken);
+        if (claimed.FirstStartedAt is null)
+        {
+            claimed.FirstStartedAt = now;
+        }
+
+        if (claimed.QueueWaitMilliseconds is null)
+        {
+            claimed.QueueWaitMilliseconds = Math.Max(0, (long)(claimed.FirstStartedAt.Value - claimed.CreatedAt).TotalMilliseconds);
+            DreamLensMeters.AsyncJobQueueWaitDuration.Record(
+                claimed.QueueWaitMilliseconds.Value,
+                JobTypeTag(claimed.JobType));
+        }
+
+        return claimed;
     }
 
     private static KeyValuePair<string, object?> JobTypeTag(string jobType) => new("job.type", jobType);
@@ -189,4 +207,7 @@ public sealed class AsyncJobWorker(
             new KeyValuePair<string, object?>("job.outcome", outcome),
             JobTypeTag(jobType));
     }
+
+    private static long ElapsedMilliseconds(long started) =>
+        Math.Max(0, (long)Stopwatch.GetElapsedTime(started).TotalMilliseconds);
 }

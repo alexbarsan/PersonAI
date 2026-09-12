@@ -186,6 +186,7 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
             entity.Property(image => image.Tier).HasMaxLength(32).IsRequired();
             entity.Property(image => image.Quality).HasMaxLength(32).IsRequired();
             entity.Property(image => image.EstimatedCostUsd).HasPrecision(12, 6);
+            entity.Property(image => image.ProviderLatencyMilliseconds);
             entity.Property(image => image.AssetKey).HasMaxLength(512);
             entity.Property(image => image.ErrorMessage).HasMaxLength(2000);
             entity.Property(image => image.CreatedAt).IsRequired();
@@ -302,6 +303,8 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
             entity.Property(job => job.PayloadJson).IsRequired();
             entity.Property(job => job.Status).HasMaxLength(32).IsRequired();
             entity.Property(job => job.LastError).HasMaxLength(2000);
+            entity.Property(job => job.QueueWaitMilliseconds);
+            entity.Property(job => job.ProcessingDurationMilliseconds).IsRequired();
             entity.Property(job => job.CreatedAt).IsRequired();
             entity.Property(job => job.UpdatedAt).IsRequired();
         });

@@ -52,4 +52,9 @@ public static class DreamLensMeters
         "dreamlens.async_jobs.processing.duration",
         unit: "ms",
         description: "End-to-end processing duration for an asynchronous job message.");
+
+    public static readonly Histogram<double> AsyncJobQueueWaitDuration = Meter.CreateHistogram<double>(
+        "dreamlens.async_jobs.queue_wait.duration",
+        unit: "ms",
+        description: "Time from asynchronous job creation until its first processing lease.");
 }

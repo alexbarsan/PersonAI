@@ -20,7 +20,11 @@ public sealed record AdminOperationsJobSummaryResponse(
     int Pending,
     int Processing,
     int Failed,
-    long? OldestPendingSeconds);
+    long? OldestPendingSeconds,
+    long AverageQueueWaitMilliseconds,
+    long P95QueueWaitMilliseconds,
+    long AverageProcessingMilliseconds,
+    long P95ProcessingMilliseconds);
 
 public sealed record AdminOperationsWorkloadResponse(
     string Source,

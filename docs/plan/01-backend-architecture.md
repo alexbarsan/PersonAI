@@ -122,7 +122,7 @@ Cross-cutting provider behavior is composed through decorators:
 - circuit breaker
 - usage logging: tokens, latency, estimated cost
 
-Async AI work is queued through SQS-backed job handlers. Image generation, transcription, embedding backfills, exports, and future batch analysis should not run inside the interactive request unless a slice explicitly decides that latency is acceptable.
+Async AI work is queued through SQS-backed job handlers. Image generation, transcription, embedding backfills, exports, and future batch analysis should not run inside the interactive request unless a slice explicitly decides that latency is acceptable. S48 runs queue consumers in a separate ECS worker service, while the API service publishes and observes jobs only. Workers use bounded concurrent SQS receives, durable lease/idempotency checks, a 60-second graceful stop window, and SQS depth plus oldest-message-age target tracking. `AsyncJobs` records first-claim queue wait and cumulative processing time; image records store provider generation latency separately from queue and S3 time.
 
 ## Asset Storage
 

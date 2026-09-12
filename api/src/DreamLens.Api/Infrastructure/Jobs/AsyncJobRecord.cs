@@ -22,6 +22,12 @@ public sealed class AsyncJobRecord
 
     public DateTimeOffset? LockedUntil { get; set; }
 
+    public DateTimeOffset? FirstStartedAt { get; set; }
+
+    public long? QueueWaitMilliseconds { get; set; }
+
+    public long ProcessingDurationMilliseconds { get; set; }
+
     public DateTimeOffset? CompletedAt { get; set; }
 
     public string? LastError { get; set; }

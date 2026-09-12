@@ -134,9 +134,11 @@ describe("api client", () => {
 
     const requested = await client.requestDreamImage("dream_mock_1", { style: "SOFT_DIGITAL_PAINTING" });
     const image = await client.getDreamImage("dream_mock_1");
+    const changed = await client.waitForDreamImage("dream_mock_1", image.updatedAt);
 
     expect(requested.status).toBe("completed");
     expect(image.downloadUrl).toContain("data:image/png");
+    expect(changed.status).toBe("completed");
   });
 
   it("updates journal metadata and prepares privacy actions", async () => {

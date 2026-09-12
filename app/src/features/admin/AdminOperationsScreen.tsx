@@ -73,6 +73,14 @@ export function AdminOperationsScreen() {
           </View>
           {operations.data.queue.error ? <Text style={[styles.error, { color: theme.colors.warning }]}>{operations.data.queue.error}</Text> : null}
 
+          <SectionTitle title="Job latency, last 24 hours" detail="Queue wait separated from processing" />
+          <View style={styles.metricGrid}>
+            <Metric label="Queue average" value={formatDuration(operations.data.jobs.averageQueueWaitMilliseconds)} tone="neutral" />
+            <Metric label="Queue p95" value={formatDuration(operations.data.jobs.p95QueueWaitMilliseconds)} tone={operations.data.jobs.p95QueueWaitMilliseconds > 30_000 ? "warning" : "good"} />
+            <Metric label="Processing average" value={formatDuration(operations.data.jobs.averageProcessingMilliseconds)} tone="neutral" />
+            <Metric label="Processing p95" value={formatDuration(operations.data.jobs.p95ProcessingMilliseconds)} tone="neutral" />
+          </View>
+
           <SectionTitle title="Workloads" detail={`Updated ${formatTimestamp(operations.data.generatedAt)}`} />
           <View style={[styles.table, { borderColor: theme.colors.border }]}>
             {operations.data.workloads.map((workload) => (
@@ -117,7 +125,7 @@ export function AdminOperationsScreen() {
   );
 }
 
-function Metric({ label, value, tone }: { label: string; value: number; tone: "neutral" | "warning" | "good" }) {
+function Metric({ label, value, tone }: { label: string; value: number | string; tone: "neutral" | "warning" | "good" }) {
   const theme = useTheme();
   const backgroundColor = tone === "warning" ? theme.colors.lavender : tone === "good" ? theme.colors.sage : theme.colors.surface;
   return <View style={[styles.metric, { backgroundColor, borderColor: theme.colors.border }]}><Text style={[styles.metricValue, { color: theme.colors.text }]}>{value}</Text><Text style={[styles.muted, { color: theme.colors.mutedText }]}>{label}</Text></View>;

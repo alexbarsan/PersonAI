@@ -44,6 +44,24 @@ variable "desired_count" {
   description = "Desired ECS service task count."
 }
 
+variable "worker_desired_count" {
+  type        = number
+  description = "Minimum number of independently scalable asynchronous worker tasks."
+  default     = 0
+}
+
+variable "worker_max_count" {
+  type        = number
+  description = "Maximum number of asynchronous worker tasks."
+  default     = 4
+}
+
+variable "async_queue_name" {
+  type        = string
+  description = "SQS queue name used for worker autoscaling metrics."
+  default     = null
+}
+
 variable "environment_variables" {
   type        = map(string)
   description = "Non-secret API environment variables."

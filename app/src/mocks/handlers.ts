@@ -12,6 +12,7 @@ export const handlers = [
   rest.get("http://localhost/v1/dreams", (_, response, context) => response(context.json(mockJournal))),
   rest.post("http://localhost/v1/dreams/:id/image", (_, response, context) => response(context.status(202), context.json(mockDreamImage))),
   rest.get("http://localhost/v1/dreams/:id/image", (_, response, context) => response(context.json(mockDreamImage))),
+  rest.get("http://localhost/v1/dreams/:id/image/wait", (_, response, context) => response(context.json(mockDreamImage))),
   rest.get("http://localhost/v1/dreams/:id", (_, response, context) => response(context.json(mockDream))),
   rest.get("http://localhost/v1/dreams/:id/feedback", (_, response, context) => response(context.json(mockDreamFeedback))),
   rest.get("http://localhost/v1/dreams/:id/deep-interpretation", (_, response, context) => response(context.json(mockDeepInterpretation))),

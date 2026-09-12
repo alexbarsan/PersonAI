@@ -1,6 +1,21 @@
 locals {
-  container_environment = [
-    for name, value in var.environment_variables : {
+  api_environment = [
+    for name, value in merge(var.environment_variables, var.worker_desired_count > 0 ? {
+      "Jobs__Worker__Enabled" = "false"
+      } : {}) : {
+      name  = name
+      value = value
+    }
+  ]
+
+  worker_environment = [
+    for name, value in merge(var.environment_variables, {
+      "Database__ApplyMigrations"           = "false"
+      "Jobs__EmbeddingBackfill__Enabled"    = "false"
+      "Jobs__Worker__Enabled"               = "true"
+      "Jobs__Worker__MaxConcurrentMessages" = "2"
+      "Runtime__Mode"                       = "worker"
+      }) : {
       name  = name
       value = value
     }
@@ -322,7 +337,7 @@ resource "aws_ecs_task_definition" "api" {
           protocol      = "tcp"
         }
       ]
-      environment = local.container_environment
+      environment = local.api_environment
       secrets     = local.container_secrets
       logConfiguration = {
         logDriver = "awslogs"
@@ -336,6 +351,123 @@ resource "aws_ecs_task_definition" "api" {
   ])
 
   tags = var.tags
+}
+
+resource "aws_ecs_task_definition" "worker" {
+  count = var.worker_desired_count > 0 ? 1 : 0
+
+  family                   = "${var.name_prefix}-worker"
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  cpu                      = var.task_cpu
+  memory                   = var.task_memory
+  execution_role_arn       = aws_iam_role.task_execution.arn
+  task_role_arn            = aws_iam_role.task.arn
+
+  container_definitions = jsonencode([{
+    name        = "worker"
+    image       = var.container_image
+    essential   = true
+    stopTimeout = 60
+    environment = local.worker_environment
+    secrets     = local.container_secrets
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        awslogs-group         = aws_cloudwatch_log_group.api.name
+        awslogs-region        = data.aws_region.current.name
+        awslogs-stream-prefix = "worker"
+      }
+    }
+  }])
+
+  tags = var.tags
+}
+
+resource "aws_ecs_service" "worker" {
+  count = var.worker_desired_count > 0 ? 1 : 0
+
+  name            = "${var.name_prefix}-worker"
+  cluster         = aws_ecs_cluster.this.id
+  task_definition = aws_ecs_task_definition.worker[0].arn
+  desired_count   = var.worker_desired_count
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    assign_public_ip = false
+    security_groups  = [aws_security_group.task.id]
+    subnets          = var.private_subnet_ids
+  }
+
+  lifecycle {
+    ignore_changes = [task_definition]
+  }
+
+  tags = var.tags
+}
+
+resource "aws_appautoscaling_target" "worker" {
+  count = var.worker_desired_count > 0 ? 1 : 0
+
+  max_capacity       = max(var.worker_max_count, var.worker_desired_count)
+  min_capacity       = var.worker_desired_count
+  resource_id        = "service/${aws_ecs_cluster.this.name}/${aws_ecs_service.worker[0].name}"
+  scalable_dimension = "ecs:service:DesiredCount"
+  service_namespace  = "ecs"
+}
+
+resource "aws_appautoscaling_policy" "worker_queue_depth" {
+  count = var.worker_desired_count > 0 && var.async_queue_name != null ? 1 : 0
+
+  name               = "${var.name_prefix}-worker-queue-depth"
+  policy_type        = "TargetTrackingScaling"
+  resource_id        = aws_appautoscaling_target.worker[0].resource_id
+  scalable_dimension = aws_appautoscaling_target.worker[0].scalable_dimension
+  service_namespace  = aws_appautoscaling_target.worker[0].service_namespace
+
+  target_tracking_scaling_policy_configuration {
+    target_value       = 2
+    scale_in_cooldown  = 180
+    scale_out_cooldown = 30
+
+    customized_metric_specification {
+      metric_name = "ApproximateNumberOfMessagesVisible"
+      namespace   = "AWS/SQS"
+      statistic   = "Average"
+
+      dimensions {
+        name  = "QueueName"
+        value = var.async_queue_name
+      }
+    }
+  }
+}
+
+resource "aws_appautoscaling_policy" "worker_oldest_message" {
+  count = var.worker_desired_count > 0 && var.async_queue_name != null ? 1 : 0
+
+  name               = "${var.name_prefix}-worker-oldest-message"
+  policy_type        = "TargetTrackingScaling"
+  resource_id        = aws_appautoscaling_target.worker[0].resource_id
+  scalable_dimension = aws_appautoscaling_target.worker[0].scalable_dimension
+  service_namespace  = aws_appautoscaling_target.worker[0].service_namespace
+
+  target_tracking_scaling_policy_configuration {
+    target_value       = 30
+    scale_in_cooldown  = 180
+    scale_out_cooldown = 30
+
+    customized_metric_specification {
+      metric_name = "ApproximateAgeOfOldestMessage"
+      namespace   = "AWS/SQS"
+      statistic   = "Average"
+
+      dimensions {
+        name  = "QueueName"
+        value = var.async_queue_name
+      }
+    }
+  }
 }
 
 resource "aws_ecs_service" "api" {

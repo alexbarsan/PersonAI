@@ -38,6 +38,7 @@ public sealed class DreamImageJobHandler(
         image.Status = DreamImageStatuses.Generating;
         image.UpdatedAt = DateTimeOffset.UtcNow;
         await dbContext.SaveChangesAsync(cancellationToken);
+        var providerStarted = started;
 
         try
         {
@@ -50,9 +51,11 @@ public sealed class DreamImageJobHandler(
                 image.Height,
                 image.EstimatedCostUsd,
                 image.Quality);
+            providerStarted = Stopwatch.GetTimestamp();
             var result = await imageGenerators.GetRequired(image.Provider).GenerateAsync(
                 new ImageGenerationRequest(encryptor.Decrypt(image.EncryptedPrompt), image.Style, route),
                 cancellationToken);
+            image.ProviderLatencyMilliseconds = Math.Max(0, (long)Stopwatch.GetElapsedTime(providerStarted).TotalMilliseconds);
             var key = $"dream-images/{image.Id:N}.png";
             await using var content = new MemoryStream(result.Content, writable: false);
             await assetStore.PutAsync(key, content, result.ContentType, cancellationToken);
@@ -60,11 +63,12 @@ public sealed class DreamImageJobHandler(
             image.AssetKey = key;
             image.ErrorMessage = null;
             image.UpdatedAt = DateTimeOffset.UtcNow;
-            dbContext.AiCostLedger.Add(CreateLedger(message, image, result.Provider, result.Model, "completed", null, Stopwatch.GetElapsedTime(started)));
+            dbContext.AiCostLedger.Add(CreateLedger(message, image, result.Provider, result.Model, "completed", null, Stopwatch.GetElapsedTime(providerStarted)));
             await dbContext.SaveChangesAsync(cancellationToken);
         }
         catch (Exception exception)
         {
+            image.ProviderLatencyMilliseconds ??= Math.Max(0, (long)Stopwatch.GetElapsedTime(providerStarted).TotalMilliseconds);
             image.Status = DreamImageStatuses.Failed;
             image.ErrorMessage = exception.Message[..Math.Min(exception.Message.Length, 2000)];
             image.UpdatedAt = DateTimeOffset.UtcNow;
@@ -75,7 +79,7 @@ public sealed class DreamImageJobHandler(
                 image.Model,
                 "failed",
                 exception is ImageGenerationException imageFailure ? imageFailure.FailureKind : exception.GetType().Name,
-                Stopwatch.GetElapsedTime(started)));
+                Stopwatch.GetElapsedTime(providerStarted)));
             await dbContext.SaveChangesAsync(cancellationToken);
             throw;
         }

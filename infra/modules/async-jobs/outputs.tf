@@ -8,6 +8,11 @@ output "queue_url" {
   description = "Main asynchronous jobs queue URL."
 }
 
+output "queue_name" {
+  value       = aws_sqs_queue.jobs.name
+  description = "Main asynchronous jobs queue name."
+}
+
 output "dead_letter_queue_arn" {
   value       = aws_sqs_queue.dead_letter.arn
   description = "Asynchronous jobs dead-letter queue ARN."

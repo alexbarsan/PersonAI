@@ -7,7 +7,7 @@ import { ApiClient } from "@/api/client";
 import { DreamResponse } from "@/api/dto";
 import { DreamResultScreen } from "@/features/dreams/DreamResultScreen";
 import { mockApiClient } from "@/mocks/mockApi";
-import { mockDream } from "@/mocks/mockData";
+import { mockDream, mockDreamImage } from "@/mocks/mockData";
 import { useDreamResultStore } from "@/state/dreamResultStore";
 import { ThemeProvider } from "@/theme/ThemeProvider";
 
@@ -83,7 +83,10 @@ describe("DreamResultScreen", () => {
         jobId: "job_free_1",
         downloadUrl: null,
         errorMessage: null,
-        createdAt: "2026-09-11T00:00:00Z"
+        queueWaitMilliseconds: null,
+        providerLatencyMilliseconds: null,
+        createdAt: "2026-09-11T00:00:00Z",
+        updatedAt: "2026-09-11T00:00:00Z"
       })
     };
 
@@ -105,7 +108,10 @@ describe("DreamResultScreen", () => {
         jobId: "job_1",
         downloadUrl: null,
         errorMessage: "OpenAI image generation failed with 400: moderation_blocked",
-        createdAt: "2026-09-11T00:00:00Z"
+        queueWaitMilliseconds: 200,
+        providerLatencyMilliseconds: 900,
+        createdAt: "2026-09-11T00:00:00Z",
+        updatedAt: "2026-09-11T00:00:01Z"
       })
     };
 
@@ -113,6 +119,25 @@ describe("DreamResultScreen", () => {
 
     expect(await screen.findByText("This dream cannot be visualized by the selected image provider.")).toBeTruthy();
     expect(screen.queryByText(/moderation_blocked/)).toBeNull();
+  });
+
+  it("shows queued and generating image phases", async () => {
+    useDreamResultStore.getState().rememberDream(mockDream);
+    const pending = {
+      ...mockDreamImage,
+      status: "pending" as const,
+      downloadUrl: null,
+      providerLatencyMilliseconds: null
+    };
+    const phaseApi: ApiClient = {
+      ...mockApiClient,
+      getDreamImage: async () => pending,
+      waitForDreamImage: async () => pending
+    };
+
+    renderWithProviders(<DreamResultScreen />, phaseApi);
+
+    expect(await screen.findByText("Visual queued")).toBeTruthy();
   });
 
 });

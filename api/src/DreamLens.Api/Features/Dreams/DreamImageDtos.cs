@@ -10,4 +10,7 @@ public sealed record DreamImageResponse(
     Guid? JobId,
     string? DownloadUrl,
     string? ErrorMessage,
-    DateTimeOffset CreatedAt);
+    long? QueueWaitMilliseconds,
+    long? ProviderLatencyMilliseconds,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset UpdatedAt);

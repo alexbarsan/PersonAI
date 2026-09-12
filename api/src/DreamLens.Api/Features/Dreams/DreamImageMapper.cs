@@ -4,7 +4,7 @@ namespace DreamLens.Api.Features.Dreams;
 
 internal static class DreamImageMapper
 {
-    public static DreamImageResponse Map(DreamImageRecord image, Guid? jobId, string? downloadUrl)
+    public static DreamImageResponse Map(DreamImageRecord image, Guid? jobId, string? downloadUrl, long? queueWaitMilliseconds = null)
     {
         return new DreamImageResponse(
             image.Id,
@@ -14,6 +14,9 @@ internal static class DreamImageMapper
             jobId,
             downloadUrl,
             image.ErrorMessage,
-            image.CreatedAt);
+            queueWaitMilliseconds,
+            image.ProviderLatencyMilliseconds,
+            image.CreatedAt,
+            image.UpdatedAt);
     }
 }

@@ -18,6 +18,16 @@ output "service_arn" {
   description = "ECS service ARN."
 }
 
+output "worker_service_name" {
+  value       = try(aws_ecs_service.worker[0].name, null)
+  description = "Independent asynchronous worker ECS service name."
+}
+
+output "worker_service_arn" {
+  value       = try(aws_ecs_service.worker[0].id, null)
+  description = "Independent asynchronous worker ECS service ARN."
+}
+
 output "load_balancer_dns_name" {
   value       = aws_lb.api.dns_name
   description = "API ALB DNS name."

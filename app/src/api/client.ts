@@ -53,6 +53,7 @@ export type ApiClient = {
   updateDreamJournal: (id: string, request: UpdateDreamJournalRequest) => Promise<DreamResponse>;
   requestDreamImage: (id: string, request?: RequestDreamImageRequest) => Promise<DreamImageResponse>;
   getDreamImage: (id: string) => Promise<DreamImageResponse>;
+  waitForDreamImage: (id: string, after: string) => Promise<DreamImageResponse>;
   deleteDream: (id: string) => Promise<void>;
   getInsights: () => Promise<InsightsResponse>;
   getEntitlements: () => Promise<EntitlementResponse>;
@@ -164,6 +165,7 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
         body: JSON.stringify(body)
       }),
     getDreamImage: (id) => request<DreamImageResponse>(`/v1/dreams/${id}/image`),
+    waitForDreamImage: (id, after) => request<DreamImageResponse>(`/v1/dreams/${id}/image/wait?after=${encodeURIComponent(after)}&timeoutSeconds=20`),
     deleteDream: (id) =>
       request<void>(`/v1/dreams/${id}`, {
         method: "DELETE"

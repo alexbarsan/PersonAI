@@ -33,6 +33,7 @@ env:
   ECR_REPOSITORY: ${{ vars.API_ECR_REPOSITORY }}
   ECS_CLUSTER: ${{ vars.API_ECS_CLUSTER }}
   ECS_SERVICE: ${{ vars.API_ECS_SERVICE }}
+  ECS_WORKER_SERVICE: ${{ vars.API_ECS_WORKER_SERVICE }}
 
 jobs:
   build-test-push-deploy:
@@ -106,3 +107,38 @@ jobs:
 
       - name: Wait for ECS service stability
         run: aws ecs wait services-stable --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE"
+
+      - name: Discover worker service
+        id: worker
+        shell: bash
+        run: |
+          SERVICE="${ECS_WORKER_SERVICE:-${ECS_SERVICE%-api}-worker}"
+          ACTIVE=$(aws ecs describe-services --cluster "$ECS_CLUSTER" --services "$SERVICE" --query 'length(services[?status==`ACTIVE`])' --output text)
+          echo "service=$SERVICE" >> "$GITHUB_OUTPUT"
+          echo "exists=$([ "$ACTIVE" = "1" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      - name: Download current worker task definition
+        if: steps.worker.outputs.exists == 'true'
+        run: aws ecs describe-task-definition --task-definition "${{ steps.worker.outputs.service }}" --query taskDefinition > worker-task-definition.json
+
+      - name: Render worker task definition
+        if: steps.worker.outputs.exists == 'true'
+        id: render-worker-task-definition
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: worker-task-definition.json
+          container-name: worker
+          image: ${{ steps.image.outputs.uri }}
+
+      - name: Deploy worker task definition
+        if: steps.worker.outputs.exists == 'true'
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.render-worker-task-definition.outputs.task-definition }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          service: ${{ steps.worker.outputs.service }}
+          wait-for-service-stability: false
+
+      - name: Wait for worker service stability
+        if: steps.worker.outputs.exists == 'true'
+        run: aws ecs wait services-stable --cluster "$ECS_CLUSTER" --services "${{ steps.worker.outputs.service }}"

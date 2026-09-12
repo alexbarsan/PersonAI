@@ -38,12 +38,17 @@ export function DreamResultScreen() {
   const canGenerateImage = entitlement.data !== undefined;
   const image = useQuery({
     queryKey: ["dream-image", id],
-    queryFn: () => api.getDreamImage(id!),
+    queryFn: ({ queryKey }) => {
+      const cached = queryClient.getQueryData<DreamImageResponse>(queryKey);
+      return cached && (cached.status === "pending" || cached.status === "generating")
+        ? api.waitForDreamImage(id!, cached.updatedAt).catch(() => api.getDreamImage(id!))
+        : api.getDreamImage(id!);
+    },
     enabled: Boolean(id) && canGenerateImage,
     retry: false,
     refetchInterval: (query) => {
       const status = query.state.data?.status;
-      return status === "pending" || status === "generating" ? 3000 : false;
+      return status === "pending" || status === "generating" ? 250 : false;
     }
   });
   const requestImage = useMutation({
@@ -185,7 +190,11 @@ function DreamImagePanel({
           {image?.status === "completed" && image.downloadUrl ? (
             <Image accessibilityLabel="Generated dream visual" source={{ uri: image.downloadUrl }} style={styles.image} />
           ) : null}
-          {isWorking ? <Text style={[styles.body, { color: theme.colors.mutedText }]}>Creating your visual</Text> : null}
+          {image?.status === "pending" ? <Text style={[styles.body, { color: theme.colors.mutedText }]}>Visual queued</Text> : null}
+          {image?.status === "generating" ? <Text style={[styles.body, { color: theme.colors.mutedText }]}>Generating your visual</Text> : null}
+          {image?.status === "completed" && image.providerLatencyMilliseconds !== null ? (
+            <Text style={[styles.imageTiming, { color: theme.colors.mutedText }]}>Created in {formatImageDuration(image.providerLatencyMilliseconds)}</Text>
+          ) : null}
           {error ? <Text style={[styles.error, { color: theme.colors.warning }]}>{mapImageError(error)}</Text> : null}
           {image?.status !== "completed" ? (
             <Pressable
@@ -223,6 +232,10 @@ function mapImageError(error: Error) {
   }
 
   return "Dream visual could not be created. Please try again.";
+}
+
+function formatImageDuration(milliseconds: number) {
+  return `${Math.max(0.1, milliseconds / 1000).toFixed(1)} seconds`;
 }
 
 const styles = StyleSheet.create({
@@ -321,6 +334,10 @@ const styles = StyleSheet.create({
   error: {
     fontSize: 13,
     lineHeight: 18
+  },
+  imageTiming: {
+    fontSize: 12,
+    lineHeight: 17
   },
   buttonText: {
     fontSize: 16,

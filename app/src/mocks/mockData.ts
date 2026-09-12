@@ -140,7 +140,10 @@ export const mockDreamImage: DreamImageResponse = {
   jobId: "job_image_mock_1",
   downloadUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL2ngAAAABJRU5ErkJggg==",
   errorMessage: null,
-  createdAt: mockDream.createdAt
+  queueWaitMilliseconds: 420,
+  providerLatencyMilliseconds: 8400,
+  createdAt: mockDream.createdAt,
+  updatedAt: mockDream.createdAt
 };
 
 export const mockJournal: DreamJournalResponse = {
@@ -220,7 +223,7 @@ export const mockSensitiveSafetyReviews: SensitiveSafetyReviewResponse[] = [{
 export const mockAdminOperations: AdminOperationsResponse = {
   generatedAt: "2026-09-12T12:00:00Z",
   queue: { status: "available", available: 2, inFlight: 1, delayed: 0, deadLetter: 1, error: null },
-  jobs: { pending: 2, processing: 1, failed: 1, oldestPendingSeconds: 420 },
+  jobs: { pending: 2, processing: 1, failed: 1, oldestPendingSeconds: 420, averageQueueWaitMilliseconds: 420, p95QueueWaitMilliseconds: 920, averageProcessingMilliseconds: 6200, p95ProcessingMilliseconds: 9100 },
   workloads: [
     { source: "image-safety", pending: 1, processing: 0, failed: 1, oldestActiveSeconds: 420 },
     { source: "dream-image", pending: 1, processing: 1, failed: 0, oldestActiveSeconds: 95 },

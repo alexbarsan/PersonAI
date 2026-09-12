@@ -395,6 +395,13 @@ public sealed class DreamEndpointTests
         Assert.Equal("standard", snapshot.PromptMode);
         Assert.Equal("[]", snapshot.ModerationCategoriesJson);
         Assert.DoesNotContain("soft digital painting", snapshot.EncryptedPrompt, StringComparison.OrdinalIgnoreCase);
+
+        var waitResponse = await client.GetAsync($"/v1/dreams/{dream.Id}/image/wait?after=2020-01-01T00:00:00Z&timeoutSeconds=1");
+        var waitedImage = await waitResponse.Content.ReadFromJsonAsync<DreamImageResponse>();
+        Assert.Equal(HttpStatusCode.OK, waitResponse.StatusCode);
+        Assert.NotNull(waitedImage);
+        Assert.Equal(image.Id, waitedImage.Id);
+        Assert.Equal(snapshot.UpdatedAt, waitedImage.UpdatedAt);
     }
 
     [Fact]

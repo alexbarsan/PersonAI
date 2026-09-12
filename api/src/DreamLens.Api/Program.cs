@@ -30,6 +30,7 @@ using PersonaKit.Pipeline;
 using PersonaKit.Providers;
 
 var builder = WebApplication.CreateBuilder(args);
+var workerOnly = string.Equals(builder.Configuration["Runtime:Mode"], "worker", StringComparison.OrdinalIgnoreCase);
 
 builder.Services.AddOpenApi();
 builder.Services.AddDreamLensObservability();
@@ -77,7 +78,10 @@ if (dreamEndpointsEnabled)
     builder.Services.Configure<DeepInterpretationOptions>(builder.Configuration.GetSection("DeepInterpretation"));
     builder.Services.Configure<SensitiveSafetyOptions>(builder.Configuration.GetSection("SensitiveSafety"));
     builder.Services.AddSingleton<SensitiveSafetyEventFactory>();
-    builder.Services.AddHostedService<SensitiveSafetyRetentionService>();
+    if (!workerOnly)
+    {
+        builder.Services.AddHostedService<SensitiveSafetyRetentionService>();
+    }
     builder.Services.AddScoped<IDreamQuotaService, EfDreamQuotaService>();
     builder.Services.AddScoped<SubmitDreamHandler>();
     builder.Services.AddScoped<GetDreamHandler>();

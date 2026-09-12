@@ -8,6 +8,8 @@ public sealed class AsyncJobWorkerOptions
 
     public int PollWaitSeconds { get; set; } = 20;
 
+    public int MaxConcurrentMessages { get; set; } = 2;
+
     public int RetryBaseDelaySeconds { get; set; } = 60;
 
     public int RetryMaxDelaySeconds { get; set; } = 3600;

@@ -57,10 +57,13 @@ module "api" {
   task_cpu             = 512
   task_memory          = 1024
   desired_count        = 1
+  worker_desired_count = 1
+  worker_max_count     = 4
   secret_kms_key_arn   = module.security.kms_key_arn
   regional_waf_acl_arn = module.security.regional_waf_acl_arn
   certificate_arn      = var.api_acm_certificate_arn
-  async_queue_arns     = [module.async_jobs.queue_arn]
+  async_queue_arns     = [module.async_jobs.queue_arn, module.async_jobs.dead_letter_queue_arn]
+  async_queue_name     = module.async_jobs.queue_name
   asset_bucket_arn     = module.private_assets.bucket_arn
 
   environment_variables = merge({
@@ -263,7 +266,7 @@ resource "aws_iam_role_policy" "github_deploy" {
           "ecs:DescribeServices",
           "ecs:UpdateService"
         ]
-        Resource = module.api.service_arn
+        Resource = compact([module.api.service_arn, module.api.worker_service_arn])
       },
       {
         Sid    = "EcsTaskDefinitionDeploy"

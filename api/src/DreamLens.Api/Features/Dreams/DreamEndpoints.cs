@@ -177,6 +177,19 @@ public static class DreamEndpoints
             .WithName("GetDreamImage")
             .WithSummary("Returns the latest generated image for a dream owned by the current user.");
 
+        group.MapGet("{id:guid}/image/wait", async (
+            Guid id,
+            DateTimeOffset? after,
+            int? timeoutSeconds,
+            [FromServices] GetDreamImageHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var image = await handler.WaitForChangeAsync(id, after, timeoutSeconds ?? 20, cancellationToken);
+            return image is null ? Results.NotFound() : Results.Ok(image);
+        })
+            .WithName("WaitForDreamImage")
+            .WithSummary("Waits for the latest owned dream image status to change, with a bounded timeout.");
+
         group.MapDelete("{id:guid}", async (
             Guid id,
             [FromServices] DeleteDreamHandler handler,

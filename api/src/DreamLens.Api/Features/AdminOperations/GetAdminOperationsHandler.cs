@@ -13,6 +13,9 @@ public sealed class GetAdminOperationsHandler(
         var now = DateTimeOffset.UtcNow;
         var queue = await queueMonitor.GetSnapshotAsync(cancellationToken);
         var jobs = await dbContext.AsyncJobs.AsNoTracking().ToArrayAsync(cancellationToken);
+        var recentJobs = jobs.Where(job => job.UpdatedAt >= now.AddHours(-24)).ToArray();
+        var queueWaits = recentJobs.Where(job => job.QueueWaitMilliseconds.HasValue).Select(job => job.QueueWaitMilliseconds!.Value).OrderBy(value => value).ToArray();
+        var processingTimes = recentJobs.Where(job => job.ProcessingDurationMilliseconds > 0).Select(job => job.ProcessingDurationMilliseconds).OrderBy(value => value).ToArray();
         var classifications = await dbContext.DreamImageSafety.AsNoTracking().ToArrayAsync(cancellationToken);
         var images = await dbContext.DreamImages.AsNoTracking().ToArrayAsync(cancellationToken);
         var voices = await dbContext.VoiceCaptures.AsNoTracking().ToArrayAsync(cancellationToken);
@@ -68,7 +71,11 @@ public sealed class GetAdminOperationsHandler(
                 jobs.Count(job => job.Status == AsyncJobStatuses.Pending),
                 jobs.Count(job => job.Status == AsyncJobStatuses.Processing),
                 jobs.Count(job => job.Status == AsyncJobStatuses.Failed),
-                OldestAge(jobs.Where(job => job.Status == AsyncJobStatuses.Pending).Select(job => job.CreatedAt), now)),
+                OldestAge(jobs.Where(job => job.Status == AsyncJobStatuses.Pending).Select(job => job.CreatedAt), now),
+                Average(queueWaits),
+                Percentile95(queueWaits),
+                Average(processingTimes),
+                Percentile95(processingTimes)),
             [
                 Workload("image-safety", classifications.Select(item => new WorkState(item.Status, item.UpdatedAt)), now),
                 Workload("dream-image", images.Select(item => new WorkState(item.Status, item.UpdatedAt)), now),
@@ -153,6 +160,9 @@ public sealed class GetAdminOperationsHandler(
 
     private static long Percentile95(long[] values) =>
         values.Length == 0 ? 0 : values[(int)Math.Ceiling(values.Length * 0.95) - 1];
+
+    private static long Average(long[] values) =>
+        values.Length == 0 ? 0 : (long)Math.Round(values.Average());
 
     private static string? SanitizeFailure(string? value)
     {

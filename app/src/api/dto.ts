@@ -118,7 +118,10 @@ export type DreamImageResponse = {
   jobId: string | null;
   downloadUrl: string | null;
   errorMessage: string | null;
+  queueWaitMilliseconds: number | null;
+  providerLatencyMilliseconds: number | null;
   createdAt: string;
+  updatedAt: string;
 };
 
 export type VoiceCaptureResponse = {
@@ -302,6 +305,10 @@ export type AdminOperationsResponse = {
     processing: number;
     failed: number;
     oldestPendingSeconds: number | null;
+    averageQueueWaitMilliseconds: number;
+    p95QueueWaitMilliseconds: number;
+    averageProcessingMilliseconds: number;
+    p95ProcessingMilliseconds: number;
   };
   workloads: AdminOperationsWorkloadResponse[];
   issues: AdminOperationsIssueResponse[];
