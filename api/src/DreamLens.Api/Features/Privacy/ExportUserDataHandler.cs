@@ -36,6 +36,9 @@ public sealed class ExportUserDataHandler(
         var images = await dbContext.DreamImages.AsNoTracking()
             .Where(image => image.UserSubject == subject && dreamIds.Contains(image.DreamId))
             .ToArrayAsync(cancellationToken);
+        var imageSafety = await dbContext.DreamImageSafety.AsNoTracking()
+            .Where(classification => classification.UserSubject == subject && dreamIds.Contains(classification.DreamId))
+            .ToArrayAsync(cancellationToken);
         var voiceCaptures = await dbContext.VoiceCaptures.AsNoTracking()
             .Where(capture => capture.UserSubject == subject)
             .OrderBy(capture => capture.CreatedAt)
@@ -77,6 +80,17 @@ public sealed class ExportUserDataHandler(
                             : null,
                         image.CreatedAt))
                     .ToArray(),
+                imageSafety.Where(classification => classification.DreamId == dream.Id)
+                    .Select(classification => new UserDataExportImageSafety(
+                        classification.Status,
+                        classification.Provider,
+                        classification.Model,
+                        classification.PromptMode,
+                        JsonSerializer.Deserialize<string[]>(classification.CategoriesJson) ?? [],
+                        classification.FailureKind,
+                        classification.LatencyMilliseconds,
+                        classification.UpdatedAt))
+                    .SingleOrDefault(),
                 interpretationFeedback.Where(feedback => feedback.DreamId == dream.Id)
                     .Select(feedback => new UserDataExportInterpretationFeedback(
                         feedback.Rating,

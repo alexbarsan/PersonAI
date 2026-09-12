@@ -37,6 +37,7 @@ public sealed record UserDataExportDream(
     string? ErrorMessage,
     UserDataExportFact[] Facts,
     UserDataExportImage[] Images,
+    UserDataExportImageSafety? ImageSafety,
     UserDataExportInterpretationFeedback? Feedback,
     UserDataExportDeepInterpretation? DeepInterpretation);
 
@@ -57,6 +58,16 @@ public sealed record UserDataExportInterpretationFeedback(
 public sealed record UserDataExportFact(string Type, string Value, decimal? Score, decimal? ExtractionConfidence);
 
 public sealed record UserDataExportImage(Guid Id, string Status, string Style, string? DownloadUrl, DateTimeOffset CreatedAt);
+
+public sealed record UserDataExportImageSafety(
+    string Status,
+    string Provider,
+    string Model,
+    string PromptMode,
+    string[] Categories,
+    string? FailureKind,
+    long? LatencyMilliseconds,
+    DateTimeOffset UpdatedAt);
 
 public sealed record UserDataExportVoiceCapture(
     Guid Id,

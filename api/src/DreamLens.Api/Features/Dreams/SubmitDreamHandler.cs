@@ -4,6 +4,7 @@ using DreamLens.Api.Features.Profile;
 using DreamLens.Api.Features.Safety;
 using DreamLens.Api.Infrastructure.Identity;
 using DreamLens.Api.Infrastructure.Embeddings;
+using DreamLens.Api.Infrastructure.Images;
 using DreamLens.Api.Infrastructure.Observability;
 using DreamLens.Api.Infrastructure.Jobs;
 using DreamLens.Api.Infrastructure.Persistence;
@@ -25,6 +26,8 @@ public sealed class SubmitDreamHandler(
     IInterpretationPipeline interpretationPipeline,
     IDreamQuotaService quotaService,
     IOptions<EmbeddingOptions> embeddingOptions,
+    IOptions<ImageGenerationOptions> imageGenerationOptions,
+    IOptions<ImagePromptSafetyOptions> imagePromptSafetyOptions,
     IOptions<DeepSeekOptions> deepSeekOptions,
     IOptions<UsageCostOptions> usageCostOptions,
     IOptions<SensitiveSafetyOptions> sensitiveSafetyOptions,
@@ -148,6 +151,21 @@ public sealed class SubmitDreamHandler(
             dbContext.SensitiveReviewNotifications.AddRange(notifications);
             DreamLensMeters.SensitiveSafetyReviewsPending.Add(notifications.Length);
         }
+        DreamImageSafetyRecord? imageSafety = null;
+        if (record.Status == "completed"
+            && imagePromptSafetyOptions.Value.Enabled
+            && (imageGenerationOptions.Value.Free.Enabled || imageGenerationOptions.Value.Premium.Enabled))
+        {
+            imageSafety = new DreamImageSafetyRecord
+            {
+                DreamId = record.Id,
+                UserSubject = record.UserSubject,
+                Provider = imagePromptSafetyOptions.Value.Provider,
+                Model = imagePromptSafetyOptions.Value.Model
+            };
+            dbContext.DreamImageSafety.Add(imageSafety);
+        }
+
         dbContext.AiCostLedger.Add(CreateLedgerRecord(record, interpretation, latency));
         if (record.Status == "failed")
         {
@@ -164,6 +182,17 @@ public sealed class SubmitDreamHandler(
                 record.UserSubject,
                 record.Id,
                 new DreamEmbeddingJobHandler.DreamEmbeddingJobPayload(record.Id),
+                cancellationToken);
+        }
+
+        if (imageSafety is not null && asyncJobService is not null)
+        {
+            await asyncJobService.EnqueueAsync(
+                $"{AsyncJobTypes.DreamImageSafety}:{record.Id}:{imagePromptSafetyOptions.Value.Model}",
+                AsyncJobTypes.DreamImageSafety,
+                record.UserSubject,
+                imageSafety.Id,
+                new DreamImageSafetyJobHandler.DreamImageSafetyJobPayload(imageSafety.Id),
                 cancellationToken);
         }
 

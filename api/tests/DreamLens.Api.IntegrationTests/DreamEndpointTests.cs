@@ -317,6 +317,57 @@ public sealed class DreamEndpointTests
     }
 
     [Fact]
+    public async Task CompletedDreamPrecomputesAndReusesImageSafetyClassification()
+    {
+        using var app = CreateDreamApp(
+            new StaticDreamChatClient(CanonicalAiOutput),
+            premiumSubjects: ["subject-a"],
+            imageGenerationEnabled: true,
+            imagePromptSafetyEnabled: true);
+        using var client = app.CreateAuthenticatedClient("subject-a");
+        await PutProfileAsync(client);
+
+        var dream = await (await client.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest()))
+            .Content.ReadFromJsonAsync<DreamResponse>();
+        Assert.Equal(1, app.PublishedAsyncJobCount);
+
+        await app.ProcessImageSafetyAsync();
+        var classification = await app.GetOnlyImageSafetyAsync();
+        Assert.Equal(DreamImageSafetyStatuses.Completed, classification.Status);
+        Assert.Equal("standard", classification.PromptMode);
+
+        var response = await client.PostAsJsonAsync($"/v1/dreams/{dream!.Id}/image", new { style = "SOFT_DIGITAL_PAINTING" });
+
+        Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
+        Assert.Equal(2, app.PublishedAsyncJobCount);
+        Assert.Single(await app.GetCostLedgerRowsAsync(), row => row.OperationType == "dream.image.moderation");
+        Assert.Equal("standard", (await app.GetOnlyDreamImageAsync()).PromptMode);
+    }
+
+    [Fact]
+    public async Task PendingImageSafetyDoesNotBlockImageRequest()
+    {
+        using var app = CreateDreamApp(
+            new StaticDreamChatClient(CanonicalAiOutput),
+            premiumSubjects: ["subject-a"],
+            imageGenerationEnabled: true,
+            imagePromptSafetyEnabled: true);
+        using var client = app.CreateAuthenticatedClient("subject-a");
+        await PutProfileAsync(client);
+        var dream = await (await client.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest()))
+            .Content.ReadFromJsonAsync<DreamResponse>();
+
+        var response = await client.PostAsJsonAsync($"/v1/dreams/{dream!.Id}/image", new { style = "SOFT_DIGITAL_PAINTING" });
+
+        Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
+        Assert.Equal(2, app.PublishedAsyncJobCount);
+        var image = await app.GetOnlyDreamImageAsync();
+        Assert.Equal("symbolic", image.PromptMode);
+        Assert.Contains("classification-pending", image.ModerationCategoriesJson, StringComparison.Ordinal);
+        Assert.DoesNotContain((await app.GetCostLedgerRowsAsync()), row => row.OperationType == "dream.image.moderation");
+    }
+
+    [Fact]
     public async Task PremiumUserCanQueueDreamImageWhenImageGenerationIsEnabled()
     {
         using var app = CreateDreamApp(
@@ -958,6 +1009,7 @@ public sealed class DreamEndpointTests
         bool imageGenerationEnabled = false,
         bool freeImageGenerationEnabled = false,
         int freeImageDailyLimit = 1,
+        bool imagePromptSafetyEnabled = false,
         int deepDailyLimit = 3,
         string[]? quotaExemptSubjects = null)
     {
@@ -998,6 +1050,7 @@ public sealed class DreamEndpointTests
                         ["ImageGeneration:Free:Quality"] = "low",
                         ["ImageGeneration:FreeDailyLimit"] = freeImageDailyLimit.ToString(System.Globalization.CultureInfo.InvariantCulture),
                         ["ImageGeneration:PremiumDailyLimit"] = "5",
+                        ["ImageGeneration:PromptSafety:Enabled"] = imagePromptSafetyEnabled.ToString(),
                         ["DeepInterpretation:Enabled"] = "true",
                         ["DeepInterpretation:Model"] = "deepseek-v4-pro",
                         ["DeepInterpretation:DailyLimit"] = deepDailyLimit.ToString(System.Globalization.CultureInfo.InvariantCulture),
@@ -1050,6 +1103,7 @@ public sealed class DreamEndpointTests
                     services.AddSingleton<IPrivateAssetStore, InMemoryPrivateAssetStore>();
                     services.AddScoped<AsyncJobService>();
                     services.AddScoped<IAsyncJobHandler, VoiceTranscriptionJobHandler>();
+                    services.AddScoped<IAsyncJobHandler, DreamImageSafetyJobHandler>();
                     services.AddScoped<IAnonymizedUserAccessService, AnonymizedUserAccessService>();
                     services.AddScoped<IDreamQuotaService, EfDreamQuotaService>();
                     services.AddScoped<GetProfileHandler>();
@@ -1160,6 +1214,7 @@ public sealed class DreamEndpointTests
             Assert.Empty(await dbContext.DreamEmbeddings.ToArrayAsync());
             Assert.Empty(await dbContext.AsyncJobs.ToArrayAsync());
             Assert.Empty(await dbContext.DreamImages.ToArrayAsync());
+            Assert.Empty(await dbContext.DreamImageSafety.ToArrayAsync());
             Assert.Single(await dbContext.AnonymizedUserTombstones.ToArrayAsync());
             var ledger = Assert.Single(await dbContext.AiCostLedger.ToArrayAsync());
             Assert.StartsWith("anon_", ledger.UserSubject, StringComparison.Ordinal);
@@ -1193,6 +1248,23 @@ public sealed class DreamEndpointTests
             using var scope = factory.Services.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<DreamLensDbContext>();
             return Assert.Single(await dbContext.DreamImages.ToArrayAsync());
+        }
+
+        public async Task<DreamImageSafetyRecord> GetOnlyImageSafetyAsync()
+        {
+            using var scope = factory.Services.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<DreamLensDbContext>();
+            return Assert.Single(await dbContext.DreamImageSafety.ToArrayAsync());
+        }
+
+        public async Task ProcessImageSafetyAsync()
+        {
+            var message = factory.Services.GetRequiredService<RecordingAsyncJobQueue>().Messages
+                .Single(job => job.JobType == AsyncJobTypes.DreamImageSafety);
+            await using var scope = factory.Services.CreateAsyncScope();
+            var handler = scope.ServiceProvider.GetServices<IAsyncJobHandler>()
+                .Single(candidate => candidate.JobType == AsyncJobTypes.DreamImageSafety);
+            await handler.HandleAsync(message, CancellationToken.None);
         }
 
         public async Task<int> CountInterpretationFeedbackAsync()

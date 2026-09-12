@@ -1,6 +1,6 @@
 # Remaining Work
 
-Last updated during S44 moderation-aware dream image prompting on 2026-09-12.
+Last updated during S46 precomputed image-safety classification on 2026-09-12.
 
 ## Planned Slices
 
@@ -12,7 +12,7 @@ The imported Catch Dreamer feature notes add several capabilities that are not f
 
 - Historical fact backfill: completed dreams created before S22 do not yet have the normalized `DreamFacts` projection.
 - Native mobile export sharing, Cognito disable/delete procedure after approved anonymization, and a documented support path for statutory erasure requests.
-- Dream-image generation uses the OpenAI Images API in dev: Free uses `gpt-image-1-mini` Low at an estimated `$0.005` per 1024x1024 image and Premium uses Medium at `$0.011`. At request time, `omni-moderation-latest` classifies the raw dream; the generator receives only an encrypted, bounded fact-based prompt. Sensitive categories and moderation outages select a metaphor-only prompt that excludes names, exact locations, explicit wording, bodies, injuries, and weapons. Immutable prompt mode/category/provider/model/quality/cost snapshots support audits and retries. S45 adds a daily request limit of Free `1` and Premium `5`, enforced after idempotency and before moderation. Create separate OpenAI secrets before enabling QA or production.
+- Dream-image generation uses the OpenAI Images API in dev: Free uses `gpt-image-1-mini` Low at an estimated `$0.005` per 1024x1024 image and Premium uses Medium at `$0.011`. S46 queues `omni-moderation-latest` immediately after a completed dream is persisted and stores pending/processing/completed/failed state, provider/model, categories, prompt mode, latency, and failure kind. Image requests reuse completed classifications without another moderation call; pending, failed, and legacy unclassified dreams use a conservative symbolic prompt without blocking. The generator receives only an encrypted, bounded fact-based prompt. S45 adds daily limits of Free `1` and Premium `5`. Create separate OpenAI secrets before enabling QA or production.
 - OpenAI may still decline a particular dream visual under its image safety policy. Treat this as a non-retryable, user-visible provider-policy result with no raw provider response shown; it does not block dream capture or interpretation. Never represent moderation as a policy bypass.
 - Embeddings use PostgreSQL `pgvector` and 1,024-dimensional Amazon Titan Text Embeddings V2, not full-history prompts. S36 is deployed in dev, the retained `codex` corpus is embedded, and authenticated Similar Dreams and Ask Dream DNA smoke tests pass. Nova remains available for a future separate multimodal index.
 - Historical fact backfill and semantic clustering: the Dream DNA overview and semantic similarity foundation are implemented, while clustering remains future work.
@@ -22,6 +22,7 @@ The imported Catch Dreamer feature notes add several capabilities that are not f
 - Cognito social sign-in provider setup for Google and Apple first; Facebook remains optional after product/privacy review.
 - Cognito password policy: dev now permits six-character passwords while retaining lowercase, uppercase, number, and symbol requirements. Apply and verify the same policy in QA and production before public launch.
 - S31 provides an aggregate-only admin metrics API for active users, conversion, dream completion, AI cost, cost per active user, and operation latency. RevenueCat revenue and AWS Cost Explorer ingestion remain before gross margin can be calculated; an internal dashboard remains optional.
+- S47 must add an in-app admin operations console. It should unify durable job and domain statuses, oldest-pending age, retries, provider failures, DLQ depth, costs, latency percentiles, and audited recovery actions so routine operations do not require AWS or log access. List views must not expose raw dream text; any content access remains purpose-gated and audited.
 - S37 sensitive-dream safety workflow: allow private adult sexual, violent, and trauma dream content while using contextual safety categories rather than keyword alerts. Notify reviewers with category, confidence, anonymized subject, dream ID, and timestamp only; raw-text access must be explicit, audited, and privacy-governed.
 - Local-first voice capture: durable native recording backup, retryable upload outbox, Free device transcription when supported, Premium server transcription, and explicit local/AWS retention windows.
 

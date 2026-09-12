@@ -51,6 +51,7 @@ public sealed class ApproveAnonymizationHandler(
         var facts = await dbContext.DreamFacts.Where(fact => fact.UserSubject == subject).ToArrayAsync(cancellationToken);
         var embeddings = await dbContext.DreamEmbeddings.Where(embedding => embedding.UserSubject == subject).ToArrayAsync(cancellationToken);
         var images = await dbContext.DreamImages.Where(image => image.UserSubject == subject).ToArrayAsync(cancellationToken);
+        var imageSafety = await dbContext.DreamImageSafety.Where(classification => classification.UserSubject == subject).ToArrayAsync(cancellationToken);
         var voiceCaptures = await dbContext.VoiceCaptures.Where(capture => capture.UserSubject == subject).ToArrayAsync(cancellationToken);
         var jobs = await dbContext.AsyncJobs.Where(job => job.UserSubject == subject).ToArrayAsync(cancellationToken);
         var safetyEvents = await dbContext.SensitiveDreamSafetyEvents.Where(review => review.UserSubject == subject).ToArrayAsync(cancellationToken);
@@ -66,6 +67,7 @@ public sealed class ApproveAnonymizationHandler(
         dbContext.DreamFacts.RemoveRange(facts);
         dbContext.DreamEmbeddings.RemoveRange(embeddings);
         dbContext.DreamImages.RemoveRange(images);
+        dbContext.DreamImageSafety.RemoveRange(imageSafety);
         dbContext.VoiceCaptures.RemoveRange(voiceCaptures);
         dbContext.AsyncJobs.RemoveRange(jobs);
         dbContext.SensitiveReviewNotifications.RemoveRange(safetyNotifications);

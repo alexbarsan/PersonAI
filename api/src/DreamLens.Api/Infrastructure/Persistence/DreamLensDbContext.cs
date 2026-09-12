@@ -21,6 +21,8 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
 
     public DbSet<DreamImageRecord> DreamImages => Set<DreamImageRecord>();
 
+    public DbSet<DreamImageSafetyRecord> DreamImageSafety => Set<DreamImageSafetyRecord>();
+
     public DbSet<VoiceCaptureRecord> VoiceCaptures => Set<VoiceCaptureRecord>();
 
     public DbSet<AiCostLedgerRecord> AiCostLedger => Set<AiCostLedgerRecord>();
@@ -186,6 +188,28 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
             entity.Property(image => image.ErrorMessage).HasMaxLength(2000);
             entity.Property(image => image.CreatedAt).IsRequired();
             entity.Property(image => image.UpdatedAt).IsRequired();
+        });
+
+        modelBuilder.Entity<DreamImageSafetyRecord>(entity =>
+        {
+            entity.ToTable("DreamImageSafety");
+            entity.HasKey(classification => classification.Id);
+            entity.HasIndex(classification => classification.DreamId).IsUnique();
+            entity.HasIndex(classification => new { classification.Status, classification.UpdatedAt });
+            entity.HasIndex(classification => new { classification.UserSubject, classification.CreatedAt });
+            entity.Property(classification => classification.UserSubject).HasMaxLength(256).IsRequired();
+            entity.Property(classification => classification.Status).HasMaxLength(32).IsRequired();
+            entity.Property(classification => classification.Provider).HasMaxLength(64).IsRequired();
+            entity.Property(classification => classification.Model).HasMaxLength(128).IsRequired();
+            entity.Property(classification => classification.PromptMode).HasMaxLength(32).IsRequired();
+            entity.Property(classification => classification.CategoriesJson).HasMaxLength(1000).IsRequired();
+            entity.Property(classification => classification.FailureKind).HasMaxLength(64);
+            entity.Property(classification => classification.CreatedAt).IsRequired();
+            entity.Property(classification => classification.UpdatedAt).IsRequired();
+            entity.HasOne<DreamRecord>()
+                .WithOne()
+                .HasForeignKey<DreamImageSafetyRecord>(classification => classification.DreamId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<VoiceCaptureRecord>(entity =>

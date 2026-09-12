@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Text.Json;
 using DreamLens.Api.Features.Profile;
 using DreamLens.Api.Infrastructure.Images;
@@ -17,8 +16,8 @@ public sealed class RequestDreamImageHandler(
     ICurrentUser currentUser,
     IEntitlementService entitlementService,
     IOptions<ImageGenerationOptions> imageOptions,
+    IOptions<ImagePromptSafetyOptions> promptSafetyOptions,
     IImageGenerationRouteResolver routeResolver,
-    IImagePromptSafetyClassifier promptSafetyClassifier,
     IDreamImagePromptComposer promptComposer,
     IStringEncryptor encryptor,
     AsyncJobService? asyncJobService = null)
@@ -83,23 +82,7 @@ public sealed class RequestDreamImageHandler(
             ? ProfileTraitsDto.Empty
             : JsonSerializer.Deserialize<ProfileTraitsDto>(encryptor.Decrypt(profile.EncryptedTraitsJson)) ?? ProfileTraitsDto.Empty;
 
-        var moderationStopwatch = Stopwatch.StartNew();
-        var safety = await promptSafetyClassifier.ClassifyAsync(dream.Text, cancellationToken);
-        moderationStopwatch.Stop();
-        dbContext.AiCostLedger.Add(new AiCostLedgerRecord
-        {
-            UserSubject = currentUser.Subject,
-            DreamId = dreamId,
-            Provider = safety.Provider,
-            Model = safety.Model,
-            PersonaId = "dream-image-safety",
-            OperationType = "dream.image.moderation",
-            Status = safety.UsedFallback ? "failed" : "completed",
-            FailureKind = safety.UsedFallback ? "SafetyFallback" : null,
-            AttemptCount = 1,
-            LatencyMilliseconds = Math.Max(0, (long)moderationStopwatch.Elapsed.TotalMilliseconds),
-            EstimatedCostUsd = 0
-        });
+        var safety = await ResolveSafetyAsync(dream, asyncJobService, cancellationToken);
         var prompt = promptComposer.Compose(
             dream,
             facts,
@@ -138,6 +121,65 @@ public sealed class RequestDreamImageHandler(
             cancellationToken);
 
         return RequestDreamImageResult.Accepted(DreamImageMapper.Map(image, job.Id, null));
+    }
+
+    private async Task<ImagePromptSafetyResult> ResolveSafetyAsync(
+        DreamRecord dream,
+        AsyncJobService asyncJobService,
+        CancellationToken cancellationToken)
+    {
+        if (!promptSafetyOptions.Value.Enabled)
+        {
+            return new ImagePromptSafetyResult(
+                DreamImagePromptMode.Standard,
+                "Disabled",
+                promptSafetyOptions.Value.Model,
+                []);
+        }
+
+        var classification = await dbContext.DreamImageSafety
+            .AsNoTracking()
+            .SingleOrDefaultAsync(
+                candidate => candidate.DreamId == dream.Id && candidate.UserSubject == currentUser.Subject,
+                cancellationToken);
+        if (classification?.Status == DreamImageSafetyStatuses.Completed)
+        {
+            var categories = JsonSerializer.Deserialize<string[]>(classification.CategoriesJson) ?? [];
+            var mode = Enum.TryParse<DreamImagePromptMode>(classification.PromptMode, true, out var storedMode)
+                ? storedMode
+                : DreamImagePromptMode.Symbolic;
+            return new ImagePromptSafetyResult(mode, classification.Provider, classification.Model, categories);
+        }
+
+        if (classification is null)
+        {
+            classification = new DreamImageSafetyRecord
+            {
+                DreamId = dream.Id,
+                UserSubject = currentUser.Subject,
+                Provider = promptSafetyOptions.Value.Provider,
+                Model = promptSafetyOptions.Value.Model
+            };
+            dbContext.DreamImageSafety.Add(classification);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await asyncJobService.EnqueueAsync(
+                $"{AsyncJobTypes.DreamImageSafety}:{dream.Id}:{promptSafetyOptions.Value.Model}",
+                AsyncJobTypes.DreamImageSafety,
+                currentUser.Subject,
+                classification.Id,
+                new DreamImageSafetyJobHandler.DreamImageSafetyJobPayload(classification.Id),
+                cancellationToken);
+        }
+
+        var category = classification.Status == DreamImageSafetyStatuses.Failed
+            ? "safety-unavailable"
+            : "classification-pending";
+        return new ImagePromptSafetyResult(
+            DreamImagePromptMode.Symbolic,
+            classification.Provider,
+            classification.Model,
+            [category],
+            UsedFallback: true);
     }
 
     private async Task<bool> CanQueueImageAsync(EntitlementTier tier, CancellationToken cancellationToken)
