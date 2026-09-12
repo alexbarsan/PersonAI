@@ -53,6 +53,25 @@ public sealed class RequestDreamImageHandler(
             return RequestDreamImageResult.InvalidStyle();
         }
 
+        var idempotencyKey = $"{AsyncJobTypes.DreamImage}:{dreamId}:{style}:{route.Tier}:{route.Provider}:{route.Model}:{route.Quality}:{imageOptions.Value.PromptVersion}";
+        var existingJob = await dbContext.AsyncJobs
+            .AsNoTracking()
+            .SingleOrDefaultAsync(job => job.IdempotencyKey == idempotencyKey, cancellationToken);
+        if (existingJob is not null)
+        {
+            var existingImage = existingJob.TargetId is null
+                ? null
+                : await dbContext.DreamImages.AsNoTracking().SingleOrDefaultAsync(image => image.Id == existingJob.TargetId, cancellationToken);
+            return existingImage is null
+                ? RequestDreamImageResult.Unavailable()
+                : RequestDreamImageResult.Accepted(DreamImageMapper.Map(existingImage, existingJob.Id, null));
+        }
+
+        if (!entitlement.QuotaExempt && !await CanQueueImageAsync(route.Tier, cancellationToken))
+        {
+            return RequestDreamImageResult.QuotaExceeded(route.Tier);
+        }
+
         var facts = await dbContext.DreamFacts
             .AsNoTracking()
             .Where(fact => fact.DreamId == dreamId && fact.UserSubject == currentUser.Subject)
@@ -90,20 +109,6 @@ public sealed class RequestDreamImageHandler(
             safety,
             style,
             imageOptions.Value.PromptVersion);
-        var idempotencyKey = $"{AsyncJobTypes.DreamImage}:{dreamId}:{style}:{route.Tier}:{route.Provider}:{route.Model}:{route.Quality}:{prompt.Version}";
-        var existingJob = await dbContext.AsyncJobs
-            .AsNoTracking()
-            .SingleOrDefaultAsync(job => job.IdempotencyKey == idempotencyKey, cancellationToken);
-        if (existingJob is not null)
-        {
-            var existingImage = existingJob.TargetId is null
-                ? null
-                : await dbContext.DreamImages.AsNoTracking().SingleOrDefaultAsync(image => image.Id == existingJob.TargetId, cancellationToken);
-            return existingImage is null
-                ? RequestDreamImageResult.Unavailable()
-                : RequestDreamImageResult.Accepted(DreamImageMapper.Map(existingImage, existingJob.Id, null));
-        }
-
         var image = new DreamImageRecord
         {
             DreamId = dreamId,
@@ -134,6 +139,26 @@ public sealed class RequestDreamImageHandler(
 
         return RequestDreamImageResult.Accepted(DreamImageMapper.Map(image, job.Id, null));
     }
+
+    private async Task<bool> CanQueueImageAsync(EntitlementTier tier, CancellationToken cancellationToken)
+    {
+        var limit = tier == EntitlementTier.Premium
+            ? imageOptions.Value.PremiumDailyLimit
+            : imageOptions.Value.FreeDailyLimit;
+        if (limit <= 0)
+        {
+            return false;
+        }
+
+        var todayStart = new DateTimeOffset(DateTimeOffset.UtcNow.Date, TimeSpan.Zero);
+        var tomorrowStart = todayStart.AddDays(1);
+        var requestsToday = await dbContext.DreamImages.AsNoTracking().CountAsync(
+            image => image.UserSubject == currentUser.Subject
+                && image.CreatedAt >= todayStart
+                && image.CreatedAt < tomorrowStart,
+            cancellationToken);
+        return requestsToday < limit;
+    }
 }
 
 public sealed record RequestDreamImageResult(int StatusCode, DreamImageResponse? Image, Dictionary<string, string[]>? Errors)
@@ -141,6 +166,7 @@ public sealed record RequestDreamImageResult(int StatusCode, DreamImageResponse?
     public static RequestDreamImageResult Accepted(DreamImageResponse image) => new(StatusCodes.Status202Accepted, image, null);
     public static RequestDreamImageResult NotFound() => new(StatusCodes.Status404NotFound, null, null);
     public static RequestDreamImageResult NotEntitled() => new(StatusCodes.Status403Forbidden, null, new Dictionary<string, string[]> { ["entitlement"] = ["Dream images require premium access."] });
+    public static RequestDreamImageResult QuotaExceeded(EntitlementTier tier) => new(StatusCodes.Status429TooManyRequests, null, new Dictionary<string, string[]> { ["quota"] = [$"You have reached today's {tier.ToString().ToLowerInvariant()} dream image limit."] });
     public static RequestDreamImageResult Unavailable() => new(StatusCodes.Status503ServiceUnavailable, null, new Dictionary<string, string[]> { ["imageGeneration"] = ["Dream image generation is not available yet."] });
     public static RequestDreamImageResult InvalidStyle() => new(StatusCodes.Status400BadRequest, null, new Dictionary<string, string[]> { ["style"] = ["The requested image style is not supported."] });
 }

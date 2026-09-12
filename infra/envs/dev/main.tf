@@ -91,6 +91,8 @@ module "api" {
     Assets__BucketName                                            = module.private_assets.bucket_name
     ImageGeneration__PromptVersion                                = "dream-image-v2"
     ImageGeneration__DefaultStyle                                 = "SOFT_DIGITAL_PAINTING"
+    ImageGeneration__FreeDailyLimit                               = "1"
+    ImageGeneration__PremiumDailyLimit                            = "5"
     ImageGeneration__PromptSafety__Enabled                        = "true"
     ImageGeneration__PromptSafety__Provider                       = "openai-moderation"
     ImageGeneration__PromptSafety__Model                          = "omni-moderation-latest"

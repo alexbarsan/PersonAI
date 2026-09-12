@@ -9,6 +9,10 @@ public sealed class ImageGenerationOptions
 
     public string DefaultStyle { get; set; } = "SOFT_DIGITAL_PAINTING";
 
+    public int FreeDailyLimit { get; set; } = 1;
+
+    public int PremiumDailyLimit { get; set; } = 5;
+
     public ImageGenerationTierOptions Free { get; set; } = new();
 
     public ImageGenerationTierOptions Premium { get; set; } = new();

@@ -94,6 +94,8 @@ module "api" {
     Assets__BucketName                                = module.private_assets.bucket_name
     ImageGeneration__Free__Enabled                    = "false"
     ImageGeneration__Premium__Enabled                 = "false"
+    ImageGeneration__FreeDailyLimit                   = "1"
+    ImageGeneration__PremiumDailyLimit                = "5"
     VoiceTranscription__Enabled                       = "false"
     VoiceTranscription__Provider                      = "amazon-transcribe"
     VoiceTranscription__Model                         = "amazon-transcribe-standard"

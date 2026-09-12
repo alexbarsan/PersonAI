@@ -364,6 +364,28 @@ public sealed class DreamEndpointTests
     }
 
     [Fact]
+    public async Task FreeUserCannotQueueMoreDreamImagesThanDailyLimit()
+    {
+        using var app = CreateDreamApp(
+            new StaticDreamChatClient(CanonicalAiOutput),
+            freeImageGenerationEnabled: true,
+            freeImageDailyLimit: 1);
+        using var client = app.CreateAuthenticatedClient("subject-a");
+        await PutProfileAsync(client);
+        var firstDream = await (await client.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest()))
+            .Content.ReadFromJsonAsync<DreamResponse>();
+        var secondDream = await (await client.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest()))
+            .Content.ReadFromJsonAsync<DreamResponse>();
+
+        var first = await client.PostAsJsonAsync($"/v1/dreams/{firstDream!.Id}/image", new { style = "SOFT_DIGITAL_PAINTING" });
+        var second = await client.PostAsJsonAsync($"/v1/dreams/{secondDream!.Id}/image", new { style = "SOFT_DIGITAL_PAINTING" });
+
+        Assert.Equal(HttpStatusCode.Accepted, first.StatusCode);
+        Assert.Equal(HttpStatusCode.TooManyRequests, second.StatusCode);
+        Assert.Equal(1, app.PublishedAsyncJobCount);
+    }
+
+    [Fact]
     public async Task VoiceUploadIsUnavailableUntilVoiceTranscriptionIsEnabled()
     {
         using var app = CreateDreamApp(new StaticDreamChatClient(CanonicalAiOutput), premiumSubjects: ["subject-a"]);
@@ -935,6 +957,7 @@ public sealed class DreamEndpointTests
         bool embeddingsEnabled = false,
         bool imageGenerationEnabled = false,
         bool freeImageGenerationEnabled = false,
+        int freeImageDailyLimit = 1,
         int deepDailyLimit = 3,
         string[]? quotaExemptSubjects = null)
     {
@@ -973,6 +996,8 @@ public sealed class DreamEndpointTests
                         ["ImageGeneration:Free:Model"] = "fake-free-image-v1",
                         ["ImageGeneration:Free:EstimatedCostUsd"] = "0.004",
                         ["ImageGeneration:Free:Quality"] = "low",
+                        ["ImageGeneration:FreeDailyLimit"] = freeImageDailyLimit.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                        ["ImageGeneration:PremiumDailyLimit"] = "5",
                         ["DeepInterpretation:Enabled"] = "true",
                         ["DeepInterpretation:Model"] = "deepseek-v4-pro",
                         ["DeepInterpretation:DailyLimit"] = deepDailyLimit.ToString(System.Globalization.CultureInfo.InvariantCulture),
