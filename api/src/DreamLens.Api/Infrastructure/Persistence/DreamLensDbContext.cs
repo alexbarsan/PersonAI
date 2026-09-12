@@ -175,6 +175,8 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
             entity.Property(image => image.Status).HasMaxLength(32).IsRequired();
             entity.Property(image => image.Style).HasMaxLength(64).IsRequired();
             entity.Property(image => image.PromptVersion).HasMaxLength(64).IsRequired();
+            entity.Property(image => image.PromptMode).HasMaxLength(32).IsRequired();
+            entity.Property(image => image.ModerationCategoriesJson).HasMaxLength(1000).IsRequired();
             entity.Property(image => image.Provider).HasMaxLength(128).IsRequired();
             entity.Property(image => image.Model).HasMaxLength(256).IsRequired();
             entity.Property(image => image.Tier).HasMaxLength(32).IsRequired();

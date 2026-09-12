@@ -5,13 +5,24 @@ namespace DreamLens.Api.Infrastructure.Images;
 
 public sealed class ImageGenerationOptions
 {
-    public string PromptVersion { get; set; } = "dream-image-v1";
+    public string PromptVersion { get; set; } = "dream-image-v2";
 
     public string DefaultStyle { get; set; } = "SOFT_DIGITAL_PAINTING";
 
     public ImageGenerationTierOptions Free { get; set; } = new();
 
     public ImageGenerationTierOptions Premium { get; set; } = new();
+}
+
+public sealed class ImagePromptSafetyOptions
+{
+    public bool Enabled { get; set; } = true;
+
+    public string Provider { get; set; } = "fake";
+
+    public string Model { get; set; } = "omni-moderation-latest";
+
+    public decimal SymbolicCategoryScoreThreshold { get; set; } = 0.10m;
 }
 
 public sealed class ImageGenerationTierOptions

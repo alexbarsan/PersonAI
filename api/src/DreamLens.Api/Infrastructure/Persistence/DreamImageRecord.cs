@@ -16,6 +16,10 @@ public sealed class DreamImageRecord
 
     public string PromptVersion { get; set; } = string.Empty;
 
+    public string PromptMode { get; set; } = string.Empty;
+
+    public string ModerationCategoriesJson { get; set; } = "[]";
+
     public string Provider { get; set; } = string.Empty;
 
     public string Model { get; set; } = string.Empty;

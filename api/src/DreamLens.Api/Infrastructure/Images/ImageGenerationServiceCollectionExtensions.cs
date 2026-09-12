@@ -9,7 +9,9 @@ public static class ImageGenerationServiceCollectionExtensions
     public static IServiceCollection AddDreamLensImageGeneration(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<ImageGenerationOptions>(configuration.GetSection("ImageGeneration"));
+        services.Configure<ImagePromptSafetyOptions>(configuration.GetSection("ImageGeneration:PromptSafety"));
         var settings = configuration.GetSection("ImageGeneration").Get<ImageGenerationOptions>() ?? new ImageGenerationOptions();
+        var promptSafety = configuration.GetSection("ImageGeneration:PromptSafety").Get<ImagePromptSafetyOptions>() ?? new ImagePromptSafetyOptions();
         var needsBedrock = new[] { settings.Free.Provider, settings.Premium.Provider }
             .Any(provider => string.Equals(provider, "bedrock-nova-canvas", StringComparison.OrdinalIgnoreCase));
         if (needsBedrock)
@@ -28,6 +30,16 @@ public static class ImageGenerationServiceCollectionExtensions
             services.Configure<OpenAiImageOptions>(configuration.GetSection("OpenAI"));
             services.AddHttpClient<OpenAiImageGenerator>(client => client.Timeout = TimeSpan.FromMinutes(2));
             services.AddScoped<IImageGenerator>(serviceProvider => serviceProvider.GetRequiredService<OpenAiImageGenerator>());
+        }
+        if (string.Equals(promptSafety.Provider, OpenAiImagePromptSafetyClassifier.ProviderName, StringComparison.OrdinalIgnoreCase))
+        {
+            services.Configure<OpenAiImageOptions>(configuration.GetSection("OpenAI"));
+            services.AddHttpClient<OpenAiImagePromptSafetyClassifier>(client => client.Timeout = TimeSpan.FromSeconds(15));
+            services.AddScoped<IImagePromptSafetyClassifier>(serviceProvider => serviceProvider.GetRequiredService<OpenAiImagePromptSafetyClassifier>());
+        }
+        else
+        {
+            services.AddScoped<IImagePromptSafetyClassifier, FakeImagePromptSafetyClassifier>();
         }
         services.AddScoped<IImageGenerator, FakeImageGenerator>();
         services.AddScoped<IImageGeneratorRegistry, ImageGeneratorRegistry>();

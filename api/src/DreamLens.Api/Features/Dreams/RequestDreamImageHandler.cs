@@ -1,3 +1,6 @@
+using System.Diagnostics;
+using System.Text.Json;
+using DreamLens.Api.Features.Profile;
 using DreamLens.Api.Infrastructure.Images;
 using DreamLens.Api.Infrastructure.Identity;
 using DreamLens.Api.Infrastructure.Jobs;
@@ -15,6 +18,7 @@ public sealed class RequestDreamImageHandler(
     IEntitlementService entitlementService,
     IOptions<ImageGenerationOptions> imageOptions,
     IImageGenerationRouteResolver routeResolver,
+    IImagePromptSafetyClassifier promptSafetyClassifier,
     IDreamImagePromptComposer promptComposer,
     IStringEncryptor encryptor,
     AsyncJobService? asyncJobService = null)
@@ -49,7 +53,43 @@ public sealed class RequestDreamImageHandler(
             return RequestDreamImageResult.InvalidStyle();
         }
 
-        var prompt = promptComposer.Compose(dream, style, imageOptions.Value.PromptVersion);
+        var facts = await dbContext.DreamFacts
+            .AsNoTracking()
+            .Where(fact => fact.DreamId == dreamId && fact.UserSubject == currentUser.Subject)
+            .ToArrayAsync(cancellationToken);
+        var profile = await dbContext.UserProfiles
+            .AsNoTracking()
+            .SingleOrDefaultAsync(candidate => candidate.UserSubject == currentUser.Subject, cancellationToken);
+        var traits = profile is null
+            ? ProfileTraitsDto.Empty
+            : JsonSerializer.Deserialize<ProfileTraitsDto>(encryptor.Decrypt(profile.EncryptedTraitsJson)) ?? ProfileTraitsDto.Empty;
+
+        var moderationStopwatch = Stopwatch.StartNew();
+        var safety = await promptSafetyClassifier.ClassifyAsync(dream.Text, cancellationToken);
+        moderationStopwatch.Stop();
+        dbContext.AiCostLedger.Add(new AiCostLedgerRecord
+        {
+            UserSubject = currentUser.Subject,
+            DreamId = dreamId,
+            Provider = safety.Provider,
+            Model = safety.Model,
+            PersonaId = "dream-image-safety",
+            OperationType = "dream.image.moderation",
+            Status = safety.UsedFallback ? "failed" : "completed",
+            FailureKind = safety.UsedFallback ? "SafetyFallback" : null,
+            AttemptCount = 1,
+            LatencyMilliseconds = Math.Max(0, (long)moderationStopwatch.Elapsed.TotalMilliseconds),
+            EstimatedCostUsd = 0
+        });
+        var prompt = promptComposer.Compose(
+            dream,
+            facts,
+            traits,
+            profile?.ConsentAiProcessing == true,
+            profile?.ConsentAiProcessing == true && profile.ConsentSensitiveTraits,
+            safety,
+            style,
+            imageOptions.Value.PromptVersion);
         var idempotencyKey = $"{AsyncJobTypes.DreamImage}:{dreamId}:{style}:{route.Tier}:{route.Provider}:{route.Model}:{route.Quality}:{prompt.Version}";
         var existingJob = await dbContext.AsyncJobs
             .AsNoTracking()
@@ -72,6 +112,8 @@ public sealed class RequestDreamImageHandler(
             Style = style,
             EncryptedPrompt = encryptor.Encrypt(prompt.Text),
             PromptVersion = prompt.Version,
+            PromptMode = prompt.Mode.ToString().ToLowerInvariant(),
+            ModerationCategoriesJson = JsonSerializer.Serialize(prompt.ModerationCategories),
             Provider = route.Provider,
             Model = route.Model,
             Tier = route.Tier.ToString().ToLowerInvariant(),

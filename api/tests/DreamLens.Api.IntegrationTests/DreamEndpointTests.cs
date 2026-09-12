@@ -340,6 +340,8 @@ public sealed class DreamEndpointTests
         Assert.Equal("fake-premium-image-v1", snapshot.Model);
         Assert.Equal("premium", snapshot.Tier);
         Assert.NotEmpty(snapshot.EncryptedPrompt);
+        Assert.Equal("standard", snapshot.PromptMode);
+        Assert.Equal("[]", snapshot.ModerationCategoriesJson);
         Assert.DoesNotContain("soft digital painting", snapshot.EncryptedPrompt, StringComparison.OrdinalIgnoreCase);
     }
 
