@@ -231,6 +231,11 @@ resource "aws_route53_record" "api_ipv4" {
   }
 }
 
+resource "aws_iam_role_policy_attachment" "github_terraform_view" {
+  role       = module.security.github_deploy_role_name
+  policy_arn = "arn:aws:iam::aws:policy/job-function/ViewOnlyAccess"
+}
+
 resource "aws_iam_role_policy" "github_deploy" {
   name = "${local.name_prefix}-app-deploy"
   role = module.security.github_deploy_role_name
@@ -345,6 +350,15 @@ resource "aws_iam_role_policy" "github_deploy" {
           "dynamodb:DeleteItem"
         ]
         Resource = "arn:aws:dynamodb:us-east-1:379959319368:table/dreamlens-dev-tflock"
+      },
+      {
+        Sid    = "ManageOwnTerraformPolicy"
+        Effect = "Allow"
+        Action = [
+          "iam:GetRolePolicy",
+          "iam:PutRolePolicy"
+        ]
+        Resource = "arn:aws:iam::379959319368:role/${module.security.github_deploy_role_name}"
       }
     ]
   })
