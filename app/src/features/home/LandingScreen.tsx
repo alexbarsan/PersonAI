@@ -93,10 +93,10 @@ export function LandingScreen({ onStart, pending, error, mock }: Props) {
           Dream DNA
         </Text>
         <Text style={s.nativeBody}>
-          A few seconds is enough to keep a dream from disappearing.
+          Your inner world deserves a place to stay.
         </Text>
         <Text style={s.body}>
-          A personal map of your subconscious, over time.
+          A personal map of your subconscious over time.
         </Text>
         {start(mock ? "mock-sign-in" : "cognito-sign-in")}
         <Text testID="auth-state" style={s.small}>
@@ -120,7 +120,7 @@ export function LandingScreen({ onStart, pending, error, mock }: Props) {
           disabled={pending}
           style={s.headerAction}
         >
-          <Text style={s.headerActionText}>Open web app</Text>
+          <Text style={s.headerActionText}>Sign In</Text>
           <ArrowRight size={17} color="#245c49" />
         </Pressable>
       </View>
@@ -144,7 +144,9 @@ export function LandingScreen({ onStart, pending, error, mock }: Props) {
         >
           <View style={s.eyebrow}>
             <View style={s.smallDot} />
-            <Text style={s.eyebrowText}>For the part of you that dreams</Text>
+            <Text style={s.eyebrowText}>
+              Your inner world deserves a place to stay.
+            </Text>
           </View>
           <Text
             accessibilityRole="header"
@@ -153,7 +155,7 @@ export function LandingScreen({ onStart, pending, error, mock }: Props) {
             Dream DNA
           </Text>
           <Text style={[s.heroStatement, mobile && s.heroStatementMobile]}>
-            Your inner world deserves a place to stay.
+            A personal map of your subconscious over time.
           </Text>
           <Text style={s.heroBody}>
             A few seconds is enough to keep a dream from disappearing. Remember
@@ -351,7 +353,7 @@ export function LandingScreen({ onStart, pending, error, mock }: Props) {
             <Monitor size={24} color="white" />
             <View>
               <Text style={s.downloadSmall}>Available now</Text>
-              <Text style={s.downloadTitle}>Open web app</Text>
+              <Text style={s.downloadTitle}>Sign In</Text>
             </View>
             <ArrowRight size={18} color="white" />
           </Pressable>

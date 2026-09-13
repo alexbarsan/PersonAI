@@ -6,8 +6,15 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
+    "icon": "./assets/brand/dream-dna-owl.png",
     "web": {
       "favicon": "./assets/brand/dream-dna-owl.png"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/brand/dream-dna-owl.png",
+        "backgroundColor": "#E7F4ED"
+      }
     },
     "platforms": [
       "ios",

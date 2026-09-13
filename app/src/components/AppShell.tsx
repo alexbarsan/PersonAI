@@ -1,5 +1,5 @@
 import { PropsWithChildren } from "react";
-import { router, usePathname } from "expo-router";
+import { Link, router, usePathname } from "expo-router";
 import {
   Platform,
   Pressable,
@@ -106,7 +106,14 @@ export function AppShell({
             })}
           </View>
           <View style={styles.sidebarFoot}>
-            <OwlMark size={76} />
+            <Link href="/" asChild>
+              <Pressable
+                accessibilityRole="link"
+                accessibilityLabel="Dream DNA home"
+              >
+                <OwlMark size={76} />
+              </Pressable>
+            </Link>
             <Text
               style={[styles.sidebarCaption, { color: theme.colors.mutedText }]}
             >
@@ -179,19 +186,27 @@ export function AppShell({
 export function BrandMark({ detail }: { detail?: string }) {
   const theme = useTheme();
   return (
-    <View style={styles.brandMark}>
-      <OwlMark />
-      <View style={styles.brandWords}>
-        <Text style={[styles.brand, { color: theme.colors.text }]}>
-          {theme.appName}
-        </Text>
-        {detail ? (
-          <Text style={[styles.brandDetail, { color: theme.colors.mutedText }]}>
-            {detail}
+    <Link href="/" asChild>
+      <Pressable
+        accessibilityRole="link"
+        accessibilityLabel="Dream DNA home"
+        style={styles.brandMark}
+      >
+        <OwlMark />
+        <View style={styles.brandWords}>
+          <Text style={[styles.brand, { color: theme.colors.text }]}>
+            {theme.appName}
           </Text>
-        ) : null}
-      </View>
-    </View>
+          {detail ? (
+            <Text
+              style={[styles.brandDetail, { color: theme.colors.mutedText }]}
+            >
+              {detail}
+            </Text>
+          ) : null}
+        </View>
+      </Pressable>
+    </Link>
   );
 }
 

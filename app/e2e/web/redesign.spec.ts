@@ -53,7 +53,7 @@ test("landing offers a working web entry, honest store placeholders and interact
   ).toBeVisible();
   await noHorizontalOverflow(page);
   await page
-    .getByRole("button", { name: "Open web app", exact: true })
+    .getByRole("button", { name: "Sign In", exact: true })
     .first()
     .click();
   await expect(page.getByText("Today's dream", { exact: true })).toBeVisible();
@@ -87,6 +87,23 @@ test("landing offers a working web entry, honest store placeholders and interact
   await page.getByRole("tab", { name: "Everything", exact: true }).click();
   await expect(page.getByText("water", { exact: true })).toBeVisible();
   await noHorizontalOverflow(page);
+});
+
+test("the Dream DNA brand returns a signed-in visitor home", async ({ page }) => {
+  await page.goto("/");
+  await page.getByTestId("mock-sign-in").click();
+  await expect(page.getByText("Today's dream", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Journal", exact: true }).click();
+  await expect(page.getByText("Your dreams", { exact: true })).toBeVisible();
+
+  await page.getByRole("link", { name: "Dream DNA home", exact: true }).first().click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(
+    page.getByRole("heading", {
+      name: "What followed you into today?",
+      exact: true,
+    }),
+  ).toBeVisible();
 });
 
 for (const width of [375, 390, 768]) {
