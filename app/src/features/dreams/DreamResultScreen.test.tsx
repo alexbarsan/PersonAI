@@ -9,6 +9,7 @@ import { DreamResultScreen } from "@/features/dreams/DreamResultScreen";
 import { mockApiClient } from "@/mocks/mockApi";
 import { mockDream, mockDreamImage } from "@/mocks/mockData";
 import { useDreamResultStore } from "@/state/dreamResultStore";
+import { useAuthStore } from "@/auth/authStore";
 import { ThemeProvider } from "@/theme/ThemeProvider";
 
 const mockPush = jest.fn();
@@ -25,6 +26,7 @@ jest.mock("@/features/dreams/InterpretationFeedbackPanel", () => ({
 describe("DreamResultScreen", () => {
   beforeEach(() => {
     useDreamResultStore.setState({ dreamsById: {} });
+    useAuthStore.setState({ accessToken: null, user: null });
     mockPush.mockClear();
   });
 
@@ -72,6 +74,19 @@ describe("DreamResultScreen", () => {
     expect(await screen.findByLabelText("Generated dream visual")).toBeTruthy();
     expect(screen.getByText("Guidance")).toBeTruthy();
     expect(screen.getByText("Cognitive Analysis")).toBeTruthy();
+    expect(screen.queryByText(/Created in/)).toBeNull();
+  });
+
+  it("shows image generation timing to administrators only", async () => {
+    useAuthStore.setState({
+      accessToken: "admin-token",
+      user: { subject: "admin", groups: ["dreamlens-metrics-admin"] }
+    });
+    useDreamResultStore.getState().rememberDream(mockDream);
+
+    renderWithProviders(<DreamResultScreen />);
+
+    expect(await screen.findByText(/Created in/)).toBeTruthy();
   });
 
   it("lets free users request a dream visual", async () => {

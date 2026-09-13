@@ -13,6 +13,7 @@ import { InterpretationFeedbackPanel } from "@/features/dreams/InterpretationFee
 import { DeepInterpretationPanel } from "@/features/dreams/DeepInterpretationPanel";
 import { SafetyCard } from "@/features/dreams/SafetyCard";
 import { useDreamResultStore } from "@/state/dreamResultStore";
+import { useAuthStore } from "@/auth/authStore";
 import { useTheme } from "@/theme/ThemeProvider";
 
 export function DreamResultScreen() {
@@ -22,6 +23,7 @@ export function DreamResultScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
   const cachedDream = useDreamResultStore((state) => (id ? state.getDream(id) : null));
+  const isAdmin = useAuthStore((state) => state.user?.groups?.some((group) => group === "dreamlens-admin" || group === "dreamlens-metrics-admin") === true);
   const dream = useQuery({
     queryKey: ["dream", id],
     queryFn: () => api.getDream(id!),
@@ -107,6 +109,7 @@ export function DreamResultScreen() {
               canGenerateImage={canGenerateImage}
               image={image.data}
               isRequesting={requestImage.isPending}
+              showOperationalTiming={isAdmin}
               onRequest={() => requestImage.mutate()}
               requestError={requestImage.error}
             />
@@ -170,12 +173,14 @@ function DreamImagePanel({
   canGenerateImage,
   image,
   isRequesting,
+  showOperationalTiming,
   onRequest,
   requestError
 }: {
   canGenerateImage: boolean;
   image: DreamImageResponse | undefined;
   isRequesting: boolean;
+  showOperationalTiming: boolean;
   onRequest: () => void;
   requestError: Error | null;
 }) {
@@ -193,7 +198,7 @@ function DreamImagePanel({
           ) : null}
           {image?.status === "pending" ? <Text style={[styles.body, { color: theme.colors.mutedText }]}>Visual queued</Text> : null}
           {image?.status === "generating" ? <Text style={[styles.body, { color: theme.colors.mutedText }]}>Generating your visual</Text> : null}
-          {image?.status === "completed" && image.providerLatencyMilliseconds !== null ? (
+          {showOperationalTiming && image?.status === "completed" && image.providerLatencyMilliseconds !== null ? (
             <Text style={[styles.imageTiming, { color: theme.colors.mutedText }]}>Created in {formatImageDuration(image.providerLatencyMilliseconds)}</Text>
           ) : null}
           {error ? <Text style={[styles.error, { color: theme.colors.warning }]}>{mapImageError(error)}</Text> : null}
