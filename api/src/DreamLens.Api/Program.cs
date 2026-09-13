@@ -10,6 +10,7 @@ using DreamLens.Api.Features.Voice;
 using DreamLens.Api.Features.AdminMetrics;
 using DreamLens.Api.Features.AdminOperations;
 using DreamLens.Api.Features.Safety;
+using DreamLens.Api.Features.Content;
 using DreamLens.Api.Infrastructure.Identity;
 using DreamLens.Api.Infrastructure.Embeddings;
 using DreamLens.Api.Infrastructure.Images;
@@ -74,6 +75,9 @@ if (profileEndpointsEnabled)
 var dreamEndpointsEnabled = DreamEndpointsEnabled(builder.Configuration);
 if (dreamEndpointsEnabled)
 {
+    builder.Services.AddScoped<DailyDreamContentSeeder>();
+    builder.Services.AddScoped<GetDailyDreamContentHandler>();
+    builder.Services.AddHostedService<DailyDreamContentSeedService>();
     builder.Services.Configure<AskDreamsOptions>(builder.Configuration.GetSection("AskDreams"));
     builder.Services.Configure<DeepInterpretationOptions>(builder.Configuration.GetSection("DeepInterpretation"));
     builder.Services.Configure<SensitiveSafetyOptions>(builder.Configuration.GetSection("SensitiveSafety"));
@@ -143,6 +147,7 @@ app.MapJobEndpoints();
 app.MapPrivacyEndpoints();
 app.MapVoiceEndpoints();
 app.MapSensitiveSafetyEndpoints();
+app.MapDailyDreamContentEndpoints();
 
 app.Run();
 

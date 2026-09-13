@@ -40,6 +40,8 @@ Free users receive an interpretation generated with the standard model. Premium 
 
 On a completed dream, **Cognitive Analysis** offers an optional second reading focused on possible thought patterns, attention, agency, uncertainty, and emotional responses. It uses relevant journal context only when dream-history consent is enabled, is saved after the first request, and has a daily Premium limit. Free users see **Cognitive Analysis** as a link to the Premium screen.
 
+The landing page includes a daily dream thought. While an interpretation or Cognitive Analysis is being prepared, Dream DNA shows a few short facts about dreaming.
+
 ## Privacy Notes
 
 Dream DNA sends a pseudonymized context snapshot to the AI provider. It does not send your name, email, device id, IP address, or Cognito subject. Sensitive traits are included only when consent allows it.

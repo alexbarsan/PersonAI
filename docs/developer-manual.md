@@ -65,6 +65,10 @@ Dream submission selects the model from the user's entitlement. Free submissions
 
 Each attempted Cognitive Analysis writes a `dream.cognitive-analysis` AI cost ledger row with model, provider, status, attempts, tokens, latency, failure category, and estimated cost. The saved result and source list are included in data export and removed when its dream is deleted or the account is anonymized.
 
+## Daily Dream Content
+
+`GET /v1/dream-content?date=YYYY-MM-DD` is an anonymous, date-aware endpoint for the landing-page quote and interpretation waiting facts. `DailyDreamContent` stores one unique row per date with an editorial quote and three facts. On startup, the seed service fills a rolling range from 30 days ago through 13 months ahead; the read handler repeats that coverage check as a resilience guard. It uses no AI provider or scheduled nightly job.
+
 ## Interpretation Feedback
 
 `GET /v1/dreams/{id}/feedback` returns the current user's saved rating or an empty feedback response. `PUT /v1/dreams/{id}/feedback` creates or replaces one owner-scoped record. Ratings are `like` or `dislike`; dislikes require at least one controlled reason and may include up to 1,000 characters of detail. Feedback does not invoke AI. It is included in Premium data exports and removed with the dream or during approved anonymization.

@@ -14,6 +14,17 @@ import {
   AdminOperationsResponse
 } from "@/api/dto";
 
+export const mockDailyDreamContent = {
+  date: "2026-09-13",
+  quote: "Dreams do not have to be solved to be worth keeping.",
+  attribution: "Dream DNA editorial",
+  facts: [
+    "Most people dream several times a night, even when they remember none of them in the morning.",
+    "Dreams often combine familiar people, places, and concerns in new arrangements.",
+    "A dream journal can reveal patterns that are difficult to notice from one dream alone."
+  ]
+};
+
 export const mockDreamFeedback: DreamFeedbackResponse = {
   rating: null,
   reasons: [],

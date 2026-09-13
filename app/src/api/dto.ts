@@ -5,6 +5,13 @@ export type MeResponse = {
   authenticationScheme: string;
 };
 
+export type DailyDreamContentResponse = {
+  date: string;
+  quote: string;
+  attribution: string | null;
+  facts: string[];
+};
+
 export type ProfileResponse = {
   age: number | null;
   sex: string | null;

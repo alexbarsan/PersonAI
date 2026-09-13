@@ -21,6 +21,7 @@ import Waypoints from "lucide-react-native/icons/waypoints";
 import { BrandMark } from "@/components/AppShell";
 import { gardenSource, OwlMark } from "@/components/OwlMark";
 import { Text } from "@/components/Text";
+import { DailyDreamQuote } from "@/features/content/DailyDreamContent";
 
 type Props = {
   onStart: () => void;
@@ -161,6 +162,7 @@ export function LandingScreen({ onStart, pending, error, mock }: Props) {
             A few seconds is enough to keep a dream from disappearing. Remember
             it. Explore its meaning. Discover what connects your nights.
           </Text>
+          <DailyDreamQuote />
           <View style={s.heroActions}>
             {start(mock ? "mock-sign-in" : "cognito-sign-in")}
             <Text style={s.heroFootnote}>

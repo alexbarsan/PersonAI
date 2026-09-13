@@ -7,6 +7,7 @@ import { useApiClient } from "@/api/apiContext";
 import { ApiError } from "@/api/client";
 import { DeepInterpretationResponse } from "@/api/dto";
 import { ResultSectionRenderer } from "@/features/dreams/ResultSectionRenderer";
+import { DreamingFacts } from "@/features/content/DailyDreamContent";
 import { useTheme } from "@/theme/ThemeProvider";
 
 export function DeepInterpretationPanel({ dreamId, enabled }: { dreamId: string; enabled: boolean }) {
@@ -46,8 +47,9 @@ export function DeepInterpretationPanel({ dreamId, enabled }: { dreamId: string;
       {!result ? <Text style={[styles.body, { color: theme.colors.mutedText }]}>Explore possible thought patterns, attention, agency, and emotional responses using this dream and relevant journal context.</Text> : null}
       {deep.isLoading ? <Text style={[styles.body, { color: theme.colors.mutedText }]}>Checking for saved analysis</Text> : null}
       {deep.isError && !expectedMissing ? <Text style={[styles.error, { color: theme.colors.warning }]}>Saved Cognitive Analysis could not be loaded.</Text> : null}
-      {create.isError ? <Text style={[styles.error, { color: theme.colors.warning }]}>{mapCreateError(create.error)}</Text> : null}
-      {!result && (!deep.isLoading || expectedMissing) ? (
+       {create.isError ? <Text style={[styles.error, { color: theme.colors.warning }]}>{mapCreateError(create.error)}</Text> : null}
+       {create.isPending ? <DreamingFacts label="While your Cognitive Analysis takes shape" /> : null}
+       {!result && (!deep.isLoading || expectedMissing) ? (
         <Pressable
           accessibilityRole="button"
           disabled={create.isPending}

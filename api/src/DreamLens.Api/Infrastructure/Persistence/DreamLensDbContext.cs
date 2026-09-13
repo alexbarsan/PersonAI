@@ -9,6 +9,8 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
 {
     public DbSet<SchemaMarker> SchemaMarkers => Set<SchemaMarker>();
 
+    public DbSet<DailyDreamContent> DailyDreamContent => Set<DailyDreamContent>();
+
     public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
 
     public DbSet<DreamRecord> Dreams => Set<DreamRecord>();
@@ -56,6 +58,18 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
                 .IsRequired();
             entity.Property(marker => marker.CreatedAt)
                 .IsRequired();
+        });
+
+        modelBuilder.Entity<DailyDreamContent>(entity =>
+        {
+            entity.ToTable("DailyDreamContent");
+            entity.HasKey(content => content.Id);
+            entity.HasIndex(content => content.ContentDate).IsUnique();
+            entity.Property(content => content.ContentDate).HasColumnType("date").IsRequired();
+            entity.Property(content => content.Quote).HasMaxLength(500).IsRequired();
+            entity.Property(content => content.Attribution).HasMaxLength(128);
+            entity.Property(content => content.FactsJson).IsRequired();
+            entity.Property(content => content.CreatedAt).IsRequired();
         });
 
         modelBuilder.Entity<UserProfile>(entity =>

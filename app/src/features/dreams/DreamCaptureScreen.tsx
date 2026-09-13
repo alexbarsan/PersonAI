@@ -11,6 +11,7 @@ import { AppShell, BrandMark } from "@/components/AppShell";
 import { ChoiceOption, ChoiceSet, FivePointScale, TagEditor } from "@/components/FieldControls";
 import { toSubmitDreamRequest } from "@/features/dreams/dreamCaptureMapping";
 import { VoiceCapturePanel } from "@/features/dreams/VoiceCapturePanel";
+import { DreamingFacts } from "@/features/content/DailyDreamContent";
 import { defaultDreamCaptureValues, DreamCaptureValues, dreamCaptureSchema } from "@/features/dreams/dreamCaptureSchema";
 import { useDreamDraftStore } from "@/state/dreamDraftStore";
 import { useDreamResultStore } from "@/state/dreamResultStore";
@@ -63,8 +64,9 @@ export function DreamCaptureScreen({ onSubmitted }: DreamCaptureScreenProps) {
           <DreamScaleField control={form.control} label="Sleep quality" name="sleepQuality" />
           <DreamTagField control={form.control} label="Tags" name="tags" placeholder="Add a tag" />
           <Field control={form.control} label="Occurred at" name="occurredAt" placeholder="2026-07-01" />
-          {submitDream.isError ? <ErrorMessage error={submitDream.error} /> : null}
-          <Pressable accessibilityRole="button" disabled={submitDream.isPending} onPress={onSubmit} testID="submit-dream" style={[styles.button, { backgroundColor: theme.colors.primary }]}>
+           {submitDream.isError ? <ErrorMessage error={submitDream.error} /> : null}
+           {submitDream.isPending ? <DreamingFacts label="While your interpretation takes shape" /> : null}
+           <Pressable accessibilityRole="button" disabled={submitDream.isPending} onPress={onSubmit} testID="submit-dream" style={[styles.button, { backgroundColor: theme.colors.primary }]}>
             <Text style={[styles.buttonText, { color: theme.colors.primaryText }]}>{submitDream.isPending ? "Interpreting" : "Interpret dream"}</Text>
           </Pressable>
         </View>

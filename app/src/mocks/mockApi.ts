@@ -1,8 +1,9 @@
 import type { ApiClient } from "@/api/client";
 import { ApiError } from "@/api/errors";
-import { mockAdminOperations, mockAnonymizationRequest, mockAskDreams, mockDeepInterpretation, mockDream, mockDreamFeedback, mockDreamImage, mockEntitlement, mockInsights, mockJournal, mockMe, mockProfile, mockSensitiveSafetyReviews, mockUserDataExport } from "@/mocks/mockData";
+import { mockAdminOperations, mockAnonymizationRequest, mockAskDreams, mockDailyDreamContent, mockDeepInterpretation, mockDream, mockDreamFeedback, mockDreamImage, mockEntitlement, mockInsights, mockJournal, mockMe, mockProfile, mockSensitiveSafetyReviews, mockUserDataExport } from "@/mocks/mockData";
 
 export const mockApiClient: ApiClient = {
+  getDailyDreamContent: async () => mockDailyDreamContent,
   getMe: async () => mockMe,
   getProfile: async () => mockProfile,
   updateProfile: async (request) => request,

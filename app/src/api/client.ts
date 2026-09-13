@@ -24,6 +24,7 @@ import {
   AdminOperationsResponse,
   AdminDreamDetailResponse,
   AdminDreamSearchResponse,
+  DailyDreamContentResponse,
   VoiceCaptureResponse,
   VoiceCaptureUpload
 } from "@/api/dto";
@@ -38,6 +39,7 @@ export type ApiClientOptions = {
 };
 
 export type ApiClient = {
+  getDailyDreamContent: (date: string) => Promise<DailyDreamContentResponse>;
   getMe: () => Promise<MeResponse>;
   getProfile: () => Promise<ProfileResponse>;
   updateProfile: (request: ProfileUpdateRequest) => Promise<ProfileResponse>;
@@ -126,6 +128,7 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
   }
 
   return {
+    getDailyDreamContent: (date) => request<DailyDreamContentResponse>(`/v1/dream-content?date=${encodeURIComponent(date)}`),
     getMe: () => request<MeResponse>("/v1/me"),
     getProfile: () => request<ProfileResponse>("/v1/profile"),
     updateProfile: (body) =>

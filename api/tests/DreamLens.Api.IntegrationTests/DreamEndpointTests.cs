@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using DreamLens.Api.Features.Dreams;
 using DreamLens.Api.Features.AdminMetrics;
 using DreamLens.Api.Features.AdminOperations;
+using DreamLens.Api.Features.Content;
 using DreamLens.Api.Features.Insights;
 using DreamLens.Api.Features.Jobs;
 using DreamLens.Api.Features.Profile;
@@ -32,6 +33,30 @@ namespace DreamLens.Api.IntegrationTests;
 public sealed class DreamEndpointTests
 {
     private static readonly Guid AskSourceDreamId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+
+    [Fact]
+    public async Task DailyDreamContentIsPublicDateAwareAndReturnsThreeStoredFacts()
+    {
+        using var app = CreateDreamApp(new StaticDreamChatClient(CanonicalAiOutput));
+        using var client = app.CreateClient();
+
+        var response = await client.GetAsync("/v1/dream-content?date=2026-09-13");
+        var repeated = await client.GetAsync("/v1/dream-content?date=2026-09-13");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var content = await response.Content.ReadFromJsonAsync<DailyDreamContentResponse>();
+        var repeatedContent = await repeated.Content.ReadFromJsonAsync<DailyDreamContentResponse>();
+        Assert.NotNull(content);
+        Assert.NotNull(repeatedContent);
+        Assert.Equal(new DateOnly(2026, 9, 13), content.Date);
+        Assert.False(string.IsNullOrWhiteSpace(content.Quote));
+        Assert.Equal("Dream DNA editorial", content.Attribution);
+        Assert.Equal(3, content.Facts.Length);
+        Assert.Equal(content.Date, repeatedContent.Date);
+        Assert.Equal(content.Quote, repeatedContent.Quote);
+        Assert.Equal(content.Attribution, repeatedContent.Attribution);
+        Assert.Equal(content.Facts, repeatedContent.Facts);
+    }
 
     [Fact]
     public async Task PremiumUserCanCreateAndReuseDeepInterpretationWithRelatedDreamContext()
@@ -1213,6 +1238,8 @@ public sealed class DreamEndpointTests
                     services.AddScoped<IDreamQuotaService, EfDreamQuotaService>();
                     services.AddScoped<GetProfileHandler>();
                     services.AddScoped<UpdateProfileHandler>();
+                    services.AddScoped<DailyDreamContentSeeder>();
+                    services.AddScoped<GetDailyDreamContentHandler>();
                     services.AddScoped<SubmitDreamHandler>();
                     services.AddScoped<GetDreamHandler>();
                     services.AddScoped<GetDreamFactsHandler>();

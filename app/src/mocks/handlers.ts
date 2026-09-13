@@ -1,8 +1,9 @@
 import { rest } from "msw";
 
-import { mockAnonymizationRequest, mockAskDreams, mockDeepInterpretation, mockDream, mockDreamFeedback, mockDreamImage, mockEntitlement, mockInsights, mockJournal, mockMe, mockProfile, mockUserDataExport } from "@/mocks/mockData";
+import { mockAnonymizationRequest, mockAskDreams, mockDailyDreamContent, mockDeepInterpretation, mockDream, mockDreamFeedback, mockDreamImage, mockEntitlement, mockInsights, mockJournal, mockMe, mockProfile, mockUserDataExport } from "@/mocks/mockData";
 
 export const handlers = [
+  rest.get("http://localhost/v1/dream-content", (_, response, context) => response(context.json(mockDailyDreamContent))),
   rest.get("http://localhost/v1/me", (_, response, context) => response(context.json(mockMe))),
   rest.get("http://localhost/v1/profile", (_, response, context) => response(context.json(mockProfile))),
   rest.put("http://localhost/v1/profile", async (request, response, context) =>
