@@ -318,6 +318,33 @@ resource "aws_iam_role_policy" "github_deploy" {
           "cloudfront:GetDistribution"
         ]
         Resource = module.web.cloudfront_distribution_arn
+      },
+      {
+        Sid      = "TerraformStateBucket"
+        Effect   = "Allow"
+        Action   = ["s3:ListBucket"]
+        Resource = "arn:aws:s3:::dreamlens-dev-tfstate-379959319368-us-east-1"
+      },
+      {
+        Sid    = "TerraformStateObjects"
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject"
+        ]
+        Resource = "arn:aws:s3:::dreamlens-dev-tfstate-379959319368-us-east-1/dreamlens/dev/*"
+      },
+      {
+        Sid    = "TerraformStateLock"
+        Effect = "Allow"
+        Action = [
+          "dynamodb:DescribeTable",
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:DeleteItem"
+        ]
+        Resource = "arn:aws:dynamodb:us-east-1:379959319368:table/dreamlens-dev-tflock"
       }
     ]
   })

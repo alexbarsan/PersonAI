@@ -251,8 +251,6 @@ resource "aws_iam_role" "task" {
 }
 
 resource "aws_iam_role_policy" "task_async_jobs" {
-  count = length(var.async_queue_arns) > 0 || var.asset_bucket_arn != null ? 1 : 0
-
   name = "${var.name_prefix}-async-jobs-assets"
   role = aws_iam_role.task.id
 
