@@ -248,17 +248,24 @@ resource "aws_iam_role_policy" "github_terraform_refresh" {
       Action = [
         "cloudfront:GetOriginAccessControl",
         "cognito-idp:DescribeUserPool",
+        "cognito-idp:GetUserPoolMfaConfig",
+        "cloudwatch:DescribeAlarms",
         "ec2:DescribeAddressesAttribute",
         "ecr:ListTagsForResource",
+        "elasticloadbalancing:DescribeListenerAttributes",
         "elasticloadbalancing:DescribeTags",
         "elasticloadbalancing:DescribeTargetGroupAttributes",
         "iam:GetOpenIDConnectProvider",
         "iam:GetRole",
+        "iam:GetRolePolicy",
         "kms:DescribeKey",
+        "kms:GetKeyPolicy",
         "rds:ListTagsForResource",
+        "s3:GetBucketAcl",
         "s3:GetBucketPolicy",
         "sns:GetTopicAttributes",
-        "wafv2:GetWebACL"
+        "wafv2:GetWebACL",
+        "wafv2:GetWebACLForResource"
       ]
       Resource = "*"
     }]
