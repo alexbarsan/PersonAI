@@ -592,7 +592,7 @@ public sealed class DreamEndpointTests
         Assert.Equal("dislike", exportedFeedback.Rating);
         Assert.Equal("The emotion did not fit.", exportedFeedback.Details);
         Assert.Single(export.AiOperations);
-        Assert.Equal("dream.interpretation", export.AiOperations[0].OperationType);
+        Assert.Equal("dream.premium-interpretation", export.AiOperations[0].OperationType);
     }
 
     [Fact]
