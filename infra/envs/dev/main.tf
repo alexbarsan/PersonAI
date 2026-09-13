@@ -236,6 +236,35 @@ resource "aws_iam_role_policy_attachment" "github_terraform_view" {
   policy_arn = "arn:aws:iam::aws:policy/job-function/ViewOnlyAccess"
 }
 
+resource "aws_iam_role_policy" "github_terraform_refresh" {
+  name = "${local.name_prefix}-terraform-refresh"
+  role = module.security.github_deploy_role_name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid    = "RefreshManagedInfrastructure"
+      Effect = "Allow"
+      Action = [
+        "cloudfront:GetOriginAccessControl",
+        "cognito-idp:DescribeUserPool",
+        "ec2:DescribeAddressesAttribute",
+        "ecr:ListTagsForResource",
+        "elasticloadbalancing:DescribeTags",
+        "elasticloadbalancing:DescribeTargetGroupAttributes",
+        "iam:GetOpenIDConnectProvider",
+        "iam:GetRole",
+        "kms:DescribeKey",
+        "rds:ListTagsForResource",
+        "s3:GetBucketPolicy",
+        "sns:GetTopicAttributes",
+        "wafv2:GetWebACL"
+      ]
+      Resource = "*"
+    }]
+  })
+}
+
 resource "aws_iam_role_policy" "github_deploy" {
   name = "${local.name_prefix}-app-deploy"
   role = module.security.github_deploy_role_name
