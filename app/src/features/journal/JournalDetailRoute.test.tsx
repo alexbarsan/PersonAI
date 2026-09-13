@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react-native";
-import { PropsWithChildren } from "react";
+import { PropsWithChildren, ReactNode } from "react";
 
 import { ApiClientProvider } from "@/api/apiContext";
 import JournalDetailRoute from "../../../app/journal/[id]";
@@ -9,6 +9,7 @@ import { mockDream } from "@/mocks/mockData";
 import { ThemeProvider } from "@/theme/ThemeProvider";
 
 jest.mock("expo-router", () => ({
+  Link: ({ children }: { children: ReactNode }) => children,
   useLocalSearchParams: () => ({ id: "dream_mock_1" })
 }));
 
