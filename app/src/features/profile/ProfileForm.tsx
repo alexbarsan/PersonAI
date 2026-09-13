@@ -2,7 +2,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { Controller, useForm } from "react-hook-form";
-import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from "react-native";
+import { Text } from "@/components/Text";
 
 import { useApiClient } from "@/api/apiContext";
 import { ProfileResponse } from "@/api/dto";
@@ -367,9 +368,9 @@ const styles = StyleSheet.create({
     paddingBottom: 48
   },
   header: {
-    borderRadius: 8,
+    marginHorizontal: -20,
     gap: 10,
-    padding: 18
+    padding: 24
   },
   title: {
     fontSize: 30,
@@ -380,10 +381,9 @@ const styles = StyleSheet.create({
     lineHeight: 20
   },
   panel: {
-    borderRadius: 8,
-    borderWidth: 1,
-    gap: 16,
-    padding: 16
+    borderTopWidth: 1,
+    gap: 20,
+    paddingVertical: 24
   },
   sectionTitle: {
     fontSize: 18,
@@ -397,6 +397,7 @@ const styles = StyleSheet.create({
     fontWeight: "700"
   },
   input: {
+    fontFamily: "Nunito_400Regular",
     borderRadius: 8,
     borderWidth: 1,
     fontSize: 16,

@@ -23,7 +23,7 @@ test("happy path: onboarding, submit dream, view result", async ({ page }) => {
   await page.getByTestId("submit-dream").click();
 
   await expect(page.getByText("Dream result")).toBeVisible();
-  await expect(page.getByText("The dream points to uncertainty and a wish for steadier ground.")).toBeVisible();
+  await expect(page.getByTestId("dream-summary")).toHaveText("The dream points to uncertainty and a wish for steadier ground.");
   await expect(page.getByText("Guidance")).toBeVisible();
   await expect(page.getByText("Deep Interpretation", { exact: true })).toBeVisible();
   await expect(page.getByText("View Premium", { exact: true })).toBeVisible();

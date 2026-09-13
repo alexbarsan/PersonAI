@@ -16,3 +16,14 @@ Deployed builds override `app.json` through direct `process.env.EXPO_PUBLIC_*` r
 - `EXPO_PUBLIC_MOCK_API`
 - `EXPO_PUBLIC_COGNITO_DOMAIN`
 - `EXPO_PUBLIC_COGNITO_CLIENT_ID`
+
+## Dream DNA Design
+
+The signed-out web route is the landing page; signing in opens the journal workspace. Native builds use a compact welcome screen. The desktop sidebar and mobile bottom tabs share the existing routes.
+
+- `EXPO_PUBLIC_IOS_STORE_URL`: final HTTPS App Store listing, empty until ready.
+- `EXPO_PUBLIC_ANDROID_STORE_URL`: final HTTPS Google Play listing, empty until ready.
+
+Store buttons remain disabled and marked coming soon until configured. The web app remains available independently. Design decisions and original asset briefs: [Dream DNA UX](../docs/design/dream-dna-ux.md).
+
+Run `npm run e2e:web` for workflow and responsive UI checks. Screenshots are written to `test-results/`.

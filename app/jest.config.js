@@ -6,7 +6,8 @@ module.exports = {
     "^msw/node$": "<rootDir>/node_modules/msw/lib/node/index.js"
   },
   testMatch: ["**/*.test.ts", "**/*.test.tsx"],
+  transform: { "^.+\\.mjs$": "babel-jest" },
   transformIgnorePatterns: [
-    "node_modules/(?!((jest-)?react-native|@react-native|expo(nent)?|@expo(nent)?/.*|expo-.*|@expo/.*|@react-navigation/.*|@testing-library/react-native|react-native-safe-area-context)/)"
+    "node_modules/(?!((jest-)?react-native|react-native-svg|lucide-react-native|@react-native|expo(nent)?|@expo(nent)?/.*|expo-.*|@expo/.*|@react-navigation/.*|@testing-library/react-native|react-native-safe-area-context)/)"
   ]
 };

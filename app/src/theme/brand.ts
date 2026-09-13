@@ -31,17 +31,17 @@ export const dreamLensBrand = {
   appName: "Dream DNA",
   personaId: "dream-interpreter",
   colors: {
-    background: "#f1f1ee",
-    surface: "#fffdf9",
-    text: "#17213d",
-    mutedText: "#657083",
-    primary: "#17213d",
+    background: "#f7faf9",
+    surface: "#ffffff",
+    text: "#203e36",
+    mutedText: "#596e67",
+    primary: "#245c49",
     primaryText: "#ffffff",
-    border: "#d9dce3",
-    warning: "#a6493d",
-    lavender: "#eeeaf7",
-    sage: "#dce9d8",
-    softInk: "#e7edf6"
+    border: "#d9e5df",
+    warning: "#a33e32",
+    lavender: "#eeebf8",
+    sage: "#e0f0e7",
+    softInk: "#fae8df"
   },
   spacing: {
     xs: 4,

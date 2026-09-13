@@ -1,7 +1,8 @@
 import { useMutation } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
+import { Text } from "@/components/Text";
 
 import { useApiClient } from "@/api/apiContext";
 import { ApiError } from "@/api/errors";
@@ -25,6 +26,7 @@ export function AskDreamsScreen() {
         </View>
 
         <View style={styles.form}>
+          <View style={styles.suggestions}>{["When do water dreams appear?", "Which places keep returning?", "How have my dreams been feeling?"].map(suggestion => <Pressable key={suggestion} accessibilityRole="button" onPress={() => setQuestion(suggestion)} style={[styles.suggestion, { borderColor: theme.colors.border }]}><Text style={[styles.suggestionText, { color: theme.colors.primary }]}>{suggestion}</Text></Pressable>)}</View>
           <Text style={[styles.label, { color: theme.colors.text }]}>What pattern are you curious about?</Text>
           <TextInput
             accessibilityLabel="Dream history question"
@@ -80,7 +82,10 @@ function formatDate(value: string) {
 
 const styles = StyleSheet.create({
   screen: { gap: 18, padding: 20, paddingBottom: 28 },
-  intro: { borderRadius: 8, gap: 7, padding: 18 },
+  intro: { gap: 10, padding: 24, marginHorizontal: -20 },
+  suggestions: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 10 },
+  suggestion: { borderWidth: 1, borderRadius: 8, padding: 12, minHeight: 44 },
+  suggestionText: { fontSize: 13, lineHeight: 20 },
   title: { fontSize: 28, fontWeight: "700", lineHeight: 34 },
   body: { fontSize: 14, lineHeight: 21 },
   form: { gap: 10 },

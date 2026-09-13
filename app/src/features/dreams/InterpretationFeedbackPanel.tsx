@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import { Text } from "@/components/Text";
 
 import { useApiClient } from "@/api/apiContext";
 import { DreamFeedbackRating, DreamFeedbackResponse, UpdateDreamFeedbackRequest } from "@/api/dto";

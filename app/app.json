@@ -6,6 +6,9 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
+    "web": {
+      "favicon": "./assets/brand/dream-dna-owl.png"
+    },
     "platforms": [
       "ios",
       "android",
@@ -20,7 +23,8 @@
           "microphonePermission": "Allow Dream DNA to record a dream for transcription.",
           "enableBackgroundPlayback": false
         }
-      ]
+      ],
+      "expo-font"
     ],
     "extra": {
       "apiBaseUrl": "http://localhost:5000",

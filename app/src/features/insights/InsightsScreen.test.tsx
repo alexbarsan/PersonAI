@@ -13,8 +13,8 @@ describe("InsightsScreen", () => {
   it("renders themes and streaks", async () => {
     renderWithProviders(<InsightsScreen />);
 
-    expect(await screen.findByText("1 days")).toBeTruthy();
-    expect(screen.getByText("Recurring symbols")).toBeTruthy();
+    expect(await screen.findByText("1 day")).toBeTruthy();
+    expect(screen.getAllByText("Recurring symbols").length).toBeGreaterThan(0);
     expect(screen.getByText(mockInsights.factGroups[0].facts[0].value)).toBeTruthy();
   });
 

@@ -2,7 +2,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { Controller, useForm } from "react-hook-form";
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
+import { Text } from "@/components/Text";
 
 import { useApiClient } from "@/api/apiContext";
 import { ApiError } from "@/api/client";
@@ -63,11 +64,11 @@ export function DreamCaptureScreen({ onSubmitted }: DreamCaptureScreenProps) {
           <DreamTagField control={form.control} label="Tags" name="tags" placeholder="Add a tag" />
           <Field control={form.control} label="Occurred at" name="occurredAt" placeholder="2026-07-01" />
           {submitDream.isError ? <ErrorMessage error={submitDream.error} /> : null}
-          <Pressable accessibilityRole="button" onPress={onSubmit} testID="submit-dream" style={[styles.button, { backgroundColor: theme.colors.primary }]}>
+          <Pressable accessibilityRole="button" disabled={submitDream.isPending} onPress={onSubmit} testID="submit-dream" style={[styles.button, { backgroundColor: theme.colors.primary }]}>
             <Text style={[styles.buttonText, { color: theme.colors.primaryText }]}>{submitDream.isPending ? "Interpreting" : "Interpret dream"}</Text>
           </Pressable>
         </View>
-        <Text style={[styles.disclaimer, { color: theme.colors.mutedText }]}>Dream DNA is for reflection and entertainment. It is not medical, mental health, or safety advice. Dreams stay private; high-risk context may create a text-free safety review event.</Text>
+        <Text style={[styles.disclaimer, { color: theme.colors.mutedText }]}>Dream DNA is for reflection and entertainment, not medical or mental health advice. AI providers process relevant content; authorized administrators may review original dreams.</Text>
       </ScrollView>
     </AppShell>
   );
@@ -189,10 +190,10 @@ function readValidationMessage(body: unknown) {
 
 const styles = StyleSheet.create({
   screen: { gap: 16, padding: 20, paddingBottom: 28 },
-  hero: { borderRadius: 8, gap: 8, padding: 18 },
+  hero: { gap: 8, padding: 24, marginHorizontal: -20 },
   title: { fontSize: 29, fontWeight: "700", lineHeight: 35 },
   subtitle: { fontSize: 15, lineHeight: 22 },
-  form: { borderRadius: 8, borderWidth: 1, gap: 16, padding: 16 },
+  form: { gap: 22, paddingVertical: 18 },
   field: { flex: 1, gap: 6 },
   wideField: { flexBasis: "100%" },
   label: { fontSize: 13, fontWeight: "800" },

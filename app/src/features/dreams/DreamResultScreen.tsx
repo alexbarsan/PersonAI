@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Image, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
+import { Text } from "@/components/Text";
 
 import { useApiClient } from "@/api/apiContext";
 import { ApiError } from "@/api/client";
@@ -81,7 +82,7 @@ export function DreamResultScreen() {
           <View style={styles.content}>
           <View style={[styles.summaryCard, { backgroundColor: theme.colors.primary }]}>
             <Text style={[styles.summaryLabel, { color: theme.colors.primaryText }]}>What this dream may be holding</Text>
-            <Text style={[styles.summary, { color: theme.colors.primaryText }]}>{result.summary}</Text>
+            <Text testID="dream-summary" style={[styles.summary, { color: theme.colors.primaryText }]}>{result.summary}</Text>
           </View>
           <SafetyCard safety={result.safety} />
           {elevatedSafety
@@ -245,7 +246,7 @@ const styles = StyleSheet.create({
     paddingBottom: 28
   },
   hero: {
-    borderRadius: 8,
+    marginHorizontal: -20,
     gap: 8,
     padding: 18
   },
