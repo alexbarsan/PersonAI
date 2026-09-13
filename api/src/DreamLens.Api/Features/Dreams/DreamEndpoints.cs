@@ -112,7 +112,7 @@ public static class DreamEndpoints
             return interpretation is null ? Results.NotFound() : Results.Ok(interpretation);
         })
             .WithName("GetDeepInterpretation")
-            .WithSummary("Returns the persisted Premium Deep Interpretation for an owned dream.");
+            .WithSummary("Returns the persisted Premium Cognitive Analysis for an owned dream.");
 
         group.MapPost("{id:guid}/deep-interpretation", async (
             Guid id,
@@ -125,7 +125,7 @@ public static class DreamEndpoints
                 : Results.Json(result.Errors, statusCode: result.StatusCode);
         })
             .WithName("CreateDeepInterpretation")
-            .WithSummary("Creates one persisted, Premium-only deep interpretation using related dream context.");
+            .WithSummary("Creates one persisted, Premium-only Cognitive Analysis using related dream context.");
 
         group.MapGet("{id:guid}/feedback", async (
             Guid id,

@@ -70,8 +70,8 @@ describe("DreamResultScreen", () => {
     renderWithProviders(<DreamResultScreen />, premiumApi);
 
     expect(await screen.findByLabelText("Generated dream visual")).toBeTruthy();
-    expect(screen.queryByText("Guidance")).toBeNull();
-    expect(screen.getByText("Deep Interpretation")).toBeTruthy();
+    expect(screen.getByText("Guidance")).toBeTruthy();
+    expect(screen.getByText("Cognitive Analysis")).toBeTruthy();
   });
 
   it("lets free users request a dream visual", async () => {

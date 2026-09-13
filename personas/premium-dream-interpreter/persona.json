@@ -1,7 +1,7 @@
 {
-  "id": "deep-dream-interpreter",
-  "version": "1.1.0",
-  "displayName": "Dream DNA Cognitive Analysis",
+  "id": "premium-dream-interpreter",
+  "version": "1.0.0",
+  "displayName": "Dream DNA Premium Interpretation",
   "promptTemplate": "prompt.scriban",
   "outputSchema": "../dream-interpreter/output.schema.json",
   "sectionMap": "../dream-interpreter/section-map.json"

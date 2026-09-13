@@ -36,7 +36,6 @@ export function DreamResultScreen() {
     enabled: Boolean(result) && !elevatedSafety
   });
   const hasPremiumDreamFeatures = entitlement.data?.deepAnalysisEnabled === true;
-  const isPremium = entitlement.data?.tier === "premium";
   const canGenerateImage = entitlement.data !== undefined;
   const image = useQuery({
     queryKey: ["dream-image", id],
@@ -79,7 +78,7 @@ export function DreamResultScreen() {
         </Text>
         ) : null}
 
-        {result && !isPremium ? (
+        {result ? (
           <View style={styles.content}>
           <View style={[styles.summaryCard, { backgroundColor: theme.colors.primary }]}>
             <Text style={[styles.summaryLabel, { color: theme.colors.primaryText }]}>What this dream may be holding</Text>
@@ -113,21 +112,6 @@ export function DreamResultScreen() {
             />
           )}
           <JournalDetailsEditor dream={dream.data} />
-          </View>
-        ) : null}
-        {result && isPremium ? (
-          <View style={styles.content}>
-            <DeepInterpretationPanel dreamId={dream.data!.id} enabled={hasPremiumDreamFeatures} />
-            {elevatedSafety ? null : (
-              <DreamImagePanel
-                canGenerateImage={canGenerateImage}
-                image={image.data}
-                isRequesting={requestImage.isPending}
-                onRequest={() => requestImage.mutate()}
-                requestError={requestImage.error}
-              />
-            )}
-            <JournalDetailsEditor dream={dream.data} />
           </View>
         ) : null}
       </ScrollView>

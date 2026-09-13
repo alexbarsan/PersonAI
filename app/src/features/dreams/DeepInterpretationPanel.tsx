@@ -30,10 +30,10 @@ export function DeepInterpretationPanel({ dreamId, enabled }: { dreamId: string;
     return (
       <View style={[styles.panel, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
         <Text style={[styles.eyebrow, { color: theme.colors.mutedText }]}>Premium</Text>
-        <Text style={[styles.title, { color: theme.colors.text }]}>Deep Interpretation</Text>
+        <Text style={[styles.title, { color: theme.colors.text }]}>Cognitive Analysis</Text>
         <Text style={[styles.body, { color: theme.colors.mutedText }]}>Explore this dream alongside related patterns from your journal.</Text>
         <Pressable accessibilityRole="button" onPress={() => router.push("/paywall")} style={[styles.secondaryButton, { borderColor: theme.colors.primary }]}>
-          <Text style={[styles.buttonText, { color: theme.colors.primary }]}>Deep Interpretation</Text>
+          <Text style={[styles.buttonText, { color: theme.colors.primary }]}>Cognitive Analysis</Text>
         </Pressable>
       </View>
     );
@@ -42,10 +42,10 @@ export function DeepInterpretationPanel({ dreamId, enabled }: { dreamId: string;
   return (
     <View style={[styles.panel, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
       <Text style={[styles.eyebrow, { color: theme.colors.mutedText }]}>Premium</Text>
-      <Text style={[styles.title, { color: theme.colors.text }]}>Deep Interpretation</Text>
-      {!result ? <Text style={[styles.body, { color: theme.colors.mutedText }]}>Look more closely at this dream using your profile and the most relevant patterns in your journal.</Text> : null}
+      <Text style={[styles.title, { color: theme.colors.text }]}>Cognitive Analysis</Text>
+      {!result ? <Text style={[styles.body, { color: theme.colors.mutedText }]}>Explore possible thought patterns, attention, agency, and emotional responses using this dream and relevant journal context.</Text> : null}
       {deep.isLoading ? <Text style={[styles.body, { color: theme.colors.mutedText }]}>Checking for saved analysis</Text> : null}
-      {deep.isError && !expectedMissing ? <Text style={[styles.error, { color: theme.colors.warning }]}>Saved Deep Interpretation could not be loaded.</Text> : null}
+      {deep.isError && !expectedMissing ? <Text style={[styles.error, { color: theme.colors.warning }]}>Saved Cognitive Analysis could not be loaded.</Text> : null}
       {create.isError ? <Text style={[styles.error, { color: theme.colors.warning }]}>{mapCreateError(create.error)}</Text> : null}
       {!result && (!deep.isLoading || expectedMissing) ? (
         <Pressable
@@ -55,7 +55,7 @@ export function DeepInterpretationPanel({ dreamId, enabled }: { dreamId: string;
           style={[styles.primaryButton, { backgroundColor: theme.colors.primary }, create.isPending && styles.disabled]}
           testID="create-deep-interpretation"
         >
-          <Text style={[styles.buttonText, { color: theme.colors.primaryText }]}>{create.isPending ? "Creating Deep Interpretation" : "Deep Interpretation"}</Text>
+          <Text style={[styles.buttonText, { color: theme.colors.primaryText }]}>{create.isPending ? "Creating Cognitive Analysis" : "Cognitive Analysis"}</Text>
         </Pressable>
       ) : null}
       {result ? (
@@ -83,12 +83,12 @@ export function DeepInterpretationPanel({ dreamId, enabled }: { dreamId: string;
 
 function mapCreateError(error: Error) {
   if (error instanceof ApiError) {
-    if (error.status === 403) return "Deep Interpretation requires Premium.";
-    if (error.status === 409) return "Your profile, consent, and first interpretation must be ready before going deeper.";
-    if (error.status === 429) return "You have reached today's Deep Interpretation limit.";
-    if (error.status === 503) return "Deep Interpretation is temporarily unavailable. Please try again.";
+    if (error.status === 403) return "Cognitive Analysis requires Premium.";
+    if (error.status === 409) return "Your profile, consent, and interpretation must be ready before Cognitive Analysis.";
+    if (error.status === 429) return "You have reached today's Cognitive Analysis limit.";
+    if (error.status === 503) return "Cognitive Analysis is temporarily unavailable. Please try again.";
   }
-  return "Deep Interpretation could not be created. Please try again.";
+  return "Cognitive Analysis could not be created. Please try again.";
 }
 
 const styles = StyleSheet.create({

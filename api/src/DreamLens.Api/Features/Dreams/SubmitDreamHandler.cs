@@ -7,6 +7,7 @@ using DreamLens.Api.Infrastructure.Embeddings;
 using DreamLens.Api.Infrastructure.Images;
 using DreamLens.Api.Infrastructure.Observability;
 using DreamLens.Api.Infrastructure.Jobs;
+using DreamLens.Api.Infrastructure.Monetization;
 using DreamLens.Api.Infrastructure.Persistence;
 using DreamLens.Api.Infrastructure.Quotas;
 using DreamLens.Api.Infrastructure.Security;
@@ -24,11 +25,13 @@ public sealed class SubmitDreamHandler(
     ICurrentUser currentUser,
     IStringEncryptor encryptor,
     IInterpretationPipeline interpretationPipeline,
+    IEntitlementService entitlementService,
     IDreamQuotaService quotaService,
     IOptions<EmbeddingOptions> embeddingOptions,
     IOptions<ImageGenerationOptions> imageGenerationOptions,
     IOptions<ImagePromptSafetyOptions> imagePromptSafetyOptions,
     IOptions<DeepSeekOptions> deepSeekOptions,
+    IOptions<DeepInterpretationOptions> deepInterpretationOptions,
     IOptions<UsageCostOptions> usageCostOptions,
     IOptions<SensitiveSafetyOptions> sensitiveSafetyOptions,
     SensitiveSafetyEventFactory sensitiveSafetyEventFactory,
@@ -75,14 +78,19 @@ public sealed class SubmitDreamHandler(
         var traits = JsonSerializer.Deserialize<ProfileTraitsDto>(encryptor.Decrypt(profile.EncryptedTraitsJson), JsonOptions)
             ?? ProfileTraitsDto.Empty;
         var dreamText = request.Text!.Trim();
+        var entitlement = entitlementService.GetEntitlement(currentUser.Subject);
+        var isPremium = entitlement.Tier == EntitlementTier.Premium;
+        var personaId = isPremium ? "premium-dream-interpreter" : "dream-interpreter";
+        var personaVersion = isPremium ? "1.0.0" : "1.1.0";
+        var model = isPremium ? deepInterpretationOptions.Value.Model : deepSeekOptions.Value.Model;
         var started = Stopwatch.GetTimestamp();
         var interpretation = await interpretationPipeline.InterpretAsync(
             new InterpretationRequest(
-                "dream-interpreter",
+                personaId,
                 new ContextBuildRequest(
                     Guid.NewGuid().ToString(),
                     NormalizeLocale(profile.Language),
-                    new ContextPersona("dream-interpreter", "1.1.0"),
+                    new ContextPersona(personaId, personaVersion),
                     new ContextUserSource(
                         profile.UserSubject,
                         null,
@@ -112,7 +120,13 @@ public sealed class SubmitDreamHandler(
                         Normalize(request.Mood),
                         request.SleepQuality,
                         NormalizeArray(request.Tags),
-                        Normalize(request.OccurredAt)))),
+                        Normalize(request.OccurredAt))),
+                isPremium
+                    ? new InterpretationExecutionOptions(
+                        model,
+                        Math.Clamp(deepInterpretationOptions.Value.MaxOutputTokens, 512, 16_384),
+                        0.8f)
+                    : null),
             cancellationToken);
         var latency = Stopwatch.GetElapsedTime(started);
 
@@ -167,7 +181,7 @@ public sealed class SubmitDreamHandler(
             dbContext.DreamImageSafety.Add(imageSafety);
         }
 
-        dbContext.AiCostLedger.Add(CreateLedgerRecord(record, interpretation, latency));
+        dbContext.AiCostLedger.Add(CreateLedgerRecord(record, interpretation, latency, isPremium, model));
         if (record.Status == "failed")
         {
             DreamLensMeters.ProviderFailures.Add(1, new KeyValuePair<string, object?>("provider", "DeepSeek"));
@@ -237,7 +251,9 @@ public sealed class SubmitDreamHandler(
     private AiCostLedgerRecord CreateLedgerRecord(
         DreamRecord dream,
         InterpretationResponse interpretation,
-        TimeSpan latency)
+        TimeSpan latency,
+        bool isPremium,
+        string model)
     {
         var run = interpretation.Run;
         var inputTokens = run?.InputTokens;
@@ -248,9 +264,9 @@ public sealed class SubmitDreamHandler(
             UserSubject = currentUser.Subject,
             DreamId = dream.Id,
             Provider = "DeepSeek",
-            Model = deepSeekOptions.Value.Model,
-            PersonaId = run?.PersonaId ?? "dream-interpreter",
-            OperationType = "dream.interpretation",
+            Model = model,
+            PersonaId = run?.PersonaId ?? (isPremium ? "premium-dream-interpreter" : "dream-interpreter"),
+            OperationType = isPremium ? "dream.premium-interpretation" : "dream.interpretation",
             Status = interpretation.Status == InterpretationStatus.Completed ? "completed" : "failed",
             FailureKind = run?.FailureKind?.ToString(),
             AttemptCount = run?.AttemptCount ?? 0,
@@ -258,15 +274,20 @@ public sealed class SubmitDreamHandler(
             OutputTokens = outputTokens,
             TotalTokens = inputTokens + outputTokens,
             LatencyMilliseconds = Math.Max(0, (long)latency.TotalMilliseconds),
-            EstimatedCostUsd = EstimateCost(inputTokens, outputTokens)
+            EstimatedCostUsd = EstimateCost(inputTokens, outputTokens, isPremium)
         };
     }
 
-    private decimal EstimateCost(int? inputTokens, int? outputTokens)
+    private decimal EstimateCost(int? inputTokens, int? outputTokens, bool isPremium)
     {
-        var options = usageCostOptions.Value;
-        var input = (inputTokens ?? 0) * options.InputCostPerMillionTokens / 1_000_000m;
-        var output = (outputTokens ?? 0) * options.OutputCostPerMillionTokens / 1_000_000m;
+        var inputCost = isPremium
+            ? deepInterpretationOptions.Value.InputCostPerMillionTokensUsd
+            : usageCostOptions.Value.InputCostPerMillionTokens;
+        var outputCost = isPremium
+            ? deepInterpretationOptions.Value.OutputCostPerMillionTokensUsd
+            : usageCostOptions.Value.OutputCostPerMillionTokens;
+        var input = (inputTokens ?? 0) * inputCost / 1_000_000m;
+        var output = (outputTokens ?? 0) * outputCost / 1_000_000m;
         return input + output;
     }
 

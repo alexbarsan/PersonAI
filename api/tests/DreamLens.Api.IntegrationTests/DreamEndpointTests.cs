@@ -65,7 +65,7 @@ public sealed class DreamEndpointTests
         Assert.Contains("A familiar river returned beside an open door.", chatClient.Calls[0].Messages.Single().Text);
         Assert.DoesNotContain("Another user's private dream.", chatClient.Calls[0].Messages.Single().Text);
         var ledger = Assert.Single(await app.GetCostLedgerRowsAsync());
-        Assert.Equal("dream.deep-interpretation", ledger.OperationType);
+        Assert.Equal("dream.cognitive-analysis", ledger.OperationType);
         Assert.Equal("deepseek-v4-pro", ledger.Model);
         Assert.Equal("completed", ledger.Status);
         Assert.Equal(0.00033m, ledger.EstimatedCostUsd);
@@ -133,6 +133,25 @@ public sealed class DreamEndpointTests
         Assert.Equal(HttpStatusCode.OK, firstResponse.StatusCode);
         Assert.Equal(HttpStatusCode.TooManyRequests, response.StatusCode);
         Assert.Single(chatClient.Calls);
+    }
+
+    [Fact]
+    public async Task PremiumDreamSubmissionUsesProForItsPrimaryInterpretation()
+    {
+        var chatClient = new StaticDreamChatClient(CanonicalAiOutput);
+        using var app = CreateDreamApp(chatClient, premiumSubjects: ["subject-a"]);
+        using var client = app.CreateAuthenticatedClient("subject-a");
+        await PutProfileAsync(client);
+
+        var response = await client.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest());
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var call = Assert.Single(chatClient.Calls);
+        Assert.Equal("deepseek-v4-pro", call.Options?.ModelId);
+        var ledger = Assert.Single(await app.GetCostLedgerRowsAsync());
+        Assert.Equal("dream.premium-interpretation", ledger.OperationType);
+        Assert.Equal("deepseek-v4-pro", ledger.Model);
+        Assert.Equal("premium-dream-interpreter", ledger.PersonaId);
     }
 
     [Fact]

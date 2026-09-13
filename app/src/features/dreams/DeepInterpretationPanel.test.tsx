@@ -15,10 +15,10 @@ jest.mock("expo-router", () => ({ router: { push: (...args: unknown[]) => mockPu
 describe("DeepInterpretationPanel", () => {
   beforeEach(() => mockPush.mockClear());
 
-  it("redirects free users to Premium from the Deep Interpretation action", () => {
+  it("redirects free users to Premium from the Cognitive Analysis action", () => {
     renderWithProviders(<DeepInterpretationPanel dreamId="dream_mock_1" enabled={false} />);
 
-    fireEvent.press(screen.getByRole("button", { name: "Deep Interpretation" }));
+    fireEvent.press(screen.getByRole("button", { name: "Cognitive Analysis" }));
     expect(mockPush).toHaveBeenCalledWith("/paywall");
   });
 
@@ -33,7 +33,7 @@ describe("DeepInterpretationPanel", () => {
     };
     renderWithProviders(<DeepInterpretationPanel dreamId="dream_mock_1" enabled />, api);
 
-    fireEvent.press(await screen.findByRole("button", { name: "Deep Interpretation" }));
+    fireEvent.press(await screen.findByRole("button", { name: "Cognitive Analysis" }));
 
     await waitFor(() => expect(createDeepInterpretation).toHaveBeenCalledWith("dream_mock_1"));
     expect(await screen.findByTestId("deep-interpretation-result")).toBeTruthy();

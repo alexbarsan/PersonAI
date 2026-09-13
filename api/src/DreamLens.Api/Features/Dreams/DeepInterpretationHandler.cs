@@ -26,7 +26,7 @@ public sealed class DeepInterpretationHandler(
     ILogger<DeepInterpretationHandler> logger)
 {
     private const string PersonaId = "deep-dream-interpreter";
-    private const string PersonaVersion = "1.0.0";
+    private const string PersonaVersion = "1.1.0";
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     public async Task<DeepInterpretationResponse?> GetAsync(Guid dreamId, CancellationToken cancellationToken)
@@ -42,12 +42,12 @@ public sealed class DeepInterpretationHandler(
     {
         if (!options.Value.Enabled)
         {
-            return DeepInterpretationResult.Failure(StatusCodes.Status503ServiceUnavailable, "service", "Deep Interpretation is temporarily unavailable.");
+            return DeepInterpretationResult.Failure(StatusCodes.Status503ServiceUnavailable, "service", "Cognitive Analysis is temporarily unavailable.");
         }
 
         if (entitlementService.GetEntitlement(currentUser.Subject).Tier != EntitlementTier.Premium)
         {
-            return DeepInterpretationResult.Failure(StatusCodes.Status403Forbidden, "entitlement", "Deep Interpretation requires Premium.");
+            return DeepInterpretationResult.Failure(StatusCodes.Status403Forbidden, "entitlement", "Cognitive Analysis requires Premium.");
         }
 
         var stage = "load saved result";
@@ -86,7 +86,7 @@ public sealed class DeepInterpretationHandler(
                 return DeepInterpretationResult.Failure(
                     StatusCodes.Status409Conflict,
                     "safety",
-                    "Deep Interpretation is unavailable for this dream. Your original reflection is still available.");
+                    "Cognitive Analysis is unavailable for this dream. Your interpretation is still available.");
             }
 
             stage = "load profile";
@@ -94,7 +94,7 @@ public sealed class DeepInterpretationHandler(
             .SingleOrDefaultAsync(candidate => candidate.UserSubject == currentUser.Subject, cancellationToken);
             if (profile is null)
             {
-                return DeepInterpretationResult.Failure(StatusCodes.Status409Conflict, "profile", "Complete your profile before requesting Deep Interpretation.");
+                return DeepInterpretationResult.Failure(StatusCodes.Status409Conflict, "profile", "Complete your profile before requesting Cognitive Analysis.");
             }
 
             if (!profile.ConsentAiProcessing || !profile.ConsentHistoryUse)
@@ -109,13 +109,13 @@ public sealed class DeepInterpretationHandler(
                 var today = DateTimeOffset.UtcNow.Date;
                 var completedToday = await dbContext.AiCostLedger.AsNoTracking().CountAsync(
                     row => row.UserSubject == currentUser.Subject
-                        && row.OperationType == "dream.deep-interpretation"
+                        && row.OperationType == "dream.cognitive-analysis"
                         && row.Status == "completed"
                         && row.CreatedAt >= today,
                     cancellationToken);
                 if (completedToday >= Math.Max(0, options.Value.DailyLimit))
                 {
-                    return DeepInterpretationResult.Failure(StatusCodes.Status429TooManyRequests, "quota", "You have reached today's Deep Interpretation limit.");
+                    return DeepInterpretationResult.Failure(StatusCodes.Status429TooManyRequests, "quota", "You have reached today's Cognitive Analysis limit.");
                 }
             }
 
@@ -197,7 +197,7 @@ public sealed class DeepInterpretationHandler(
                 return DeepInterpretationResult.Failure(
                     StatusCodes.Status503ServiceUnavailable,
                     "interpretation",
-                    interpretation.ErrorMessage ?? "Deep Interpretation could not be completed.");
+                    interpretation.ErrorMessage ?? "Cognitive Analysis could not be completed.");
             }
 
             stage = "persist interpretation";
@@ -222,11 +222,11 @@ public sealed class DeepInterpretationHandler(
         }
         catch (Exception exception)
         {
-            logger.LogError(exception, "Deep Interpretation failed during {Stage}.", stage);
+            logger.LogError(exception, "Cognitive Analysis failed during {Stage}.", stage);
             return DeepInterpretationResult.Failure(
                 StatusCodes.Status503ServiceUnavailable,
                 "interpretation",
-                "Deep Interpretation is temporarily unavailable. Please try again.");
+                "Cognitive Analysis is temporarily unavailable. Please try again.");
         }
     }
 
@@ -250,7 +250,7 @@ public sealed class DeepInterpretationHandler(
             Provider = "DeepSeek",
             Model = options.Value.Model,
             PersonaId = PersonaId,
-            OperationType = "dream.deep-interpretation",
+            OperationType = "dream.cognitive-analysis",
             Status = interpretation.Status == InterpretationStatus.Completed ? "completed" : "failed",
             FailureKind = interpretation.Run?.FailureKind?.ToString(),
             AttemptCount = interpretation.Run?.AttemptCount ?? 0,

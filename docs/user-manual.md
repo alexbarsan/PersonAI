@@ -36,7 +36,9 @@ The Premium screen shows planned paid-tier benefits. In the current local build,
 
 Voice transcription is a Premium feature. A recording can be up to three minutes and is subject to a daily cap. The transcript is retained as journal data. The audio recording is deleted after transcription unless you explicitly turn on Keep recording after transcription; retained audio remains private and is available only through a short-lived link.
 
-Premium users can select **Go deeper** on a completed dream. Deep Interpretation uses a stronger model plus a small set of semantically related entries from that user's journal, then saves the result so reopening it does not create another AI charge. The screen identifies related journal entries used as context. AI-processing and dream-history consent are required, and a daily limit applies. Free users see a link to the Premium screen instead.
+Free users receive an interpretation generated with the standard model. Premium users receive their main interpretation directly from the stronger Premium model, without first generating the Free interpretation.
+
+On a completed dream, **Cognitive Analysis** offers an optional second reading focused on possible thought patterns, attention, agency, uncertainty, and emotional responses. It uses relevant journal context only when dream-history consent is enabled, is saved after the first request, and has a daily Premium limit. Free users see **Cognitive Analysis** as a link to the Premium screen.
 
 ## Privacy Notes
 

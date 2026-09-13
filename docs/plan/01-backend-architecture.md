@@ -111,7 +111,7 @@ PersonaKit should expose narrow abstractions:
 - `IResultSectionMapper`
 - `IInterpretationPipeline`
 
-AI providers are accessed through Microsoft.Extensions.AI `IChatClient`. DeepSeek is accessed through its OpenAI-compatible endpoint. Base interpretation uses the explicit `deepseek-v4-flash` model; Premium Deep Interpretation routes the dedicated persona and richer retrieved context to `deepseek-v4-pro`. Model IDs remain typed environment configuration so a provider change does not alter the pipeline.
+AI providers are accessed through Microsoft.Extensions.AI `IChatClient`. DeepSeek is accessed through its OpenAI-compatible endpoint. Free dream submission uses the explicit `deepseek-v4-flash` model, while Premium dream submission routes directly to `deepseek-v4-pro`; Premium never pays for a preceding Free interpretation. The dedicated persona is reserved for optional Cognitive Analysis with richer retrieved context. Model IDs remain typed environment configuration so a provider change does not alter the pipeline.
 
 Embeddings use a separate abstraction, not `IChatClient`. The default dream-text provider is Amazon Titan Text Embeddings V2 through Bedrock with normalized 1,024-dimensional vectors. Amazon Nova Multimodal Embeddings remains available for a future separate multimodal index. Keep provider/model/dimension/version on every embedding record, filter retrieval to the active model/version, and replace stale vectors during a bounded backfill. Embedding operations write AI operation ledger rows with token count, response time, status, failure kind, and estimated cost.
 
