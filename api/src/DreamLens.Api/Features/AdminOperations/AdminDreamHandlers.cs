@@ -95,12 +95,8 @@ public sealed class AccessAdminDreamHandler(
 
     public async Task<AdminDreamAccessResult> HandleAsync(
         Guid dreamId,
-        AdminDreamAccessRequest request,
         CancellationToken cancellationToken)
     {
-        var reason = RequeueAdminJobHandler.ValidateReason(request.Reason);
-        if (reason is null) return AdminDreamAccessResult.InvalidReason();
-
         var dream = await dbContext.Dreams.AsNoTracking().SingleOrDefaultAsync(item => item.Id == dreamId, cancellationToken);
         if (dream is null) return AdminDreamAccessResult.NotFound();
         var images = await dbContext.DreamImages.AsNoTracking()
@@ -115,7 +111,7 @@ public sealed class AccessAdminDreamHandler(
             "dream",
             "dream.content-access",
             "access",
-            reason,
+            "administrator-content-access",
             currentUser.Subject);
         dbContext.OperationsActionAudits.Add(audit);
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -157,6 +153,5 @@ public sealed record AdminDreamAccessResult(
     Dictionary<string, string[]>? Errors)
 {
     public static AdminDreamAccessResult Success(AdminDreamDetailResponse response) => new(200, response, null);
-    public static AdminDreamAccessResult InvalidReason() => new(400, null, new() { ["reason"] = ["Reason must be between 10 and 500 characters."] });
     public static AdminDreamAccessResult NotFound() => new(404, null, null);
 }

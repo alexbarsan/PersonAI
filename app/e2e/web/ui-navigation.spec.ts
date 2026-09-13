@@ -51,7 +51,7 @@ test("onboarding uses structured choices, scales, and tags", async ({ page }) =>
   await page.screenshot({ path: "test-results/profile-controls-desktop.png", fullPage: true });
 });
 
-test("admin can inspect operations and audit private dream access", async ({ page }) => {
+test("admin can inspect operations and open a private dream", async ({ page }) => {
   await page.goto("/");
   await page.getByTestId("mock-sign-in").click();
   await page.getByLabel("Profile").last().click();
@@ -63,8 +63,7 @@ test("admin can inspect operations and audit private dream access", async ({ pag
   await page.getByLabel("Search all dreams").fill("river");
   await page.getByText("Search", { exact: true }).click();
   await page.getByTestId("admin-dream-dream_mock_1").click();
-  await page.getByLabel("Dream access purpose").fill("Investigating a reported image failure.");
-  await page.getByText("Open and audit", { exact: true }).click();
+  await page.getByText("View original dream", { exact: true }).click();
 
   await expect(page.getByText("Original dream", { exact: true })).toBeVisible();
   await expect(page.getByText("I followed a river through a quiet city at dawn.", { exact: true })).toBeVisible();

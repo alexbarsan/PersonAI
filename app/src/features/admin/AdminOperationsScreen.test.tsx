@@ -24,17 +24,15 @@ describe("AdminOperationsScreen", () => {
     ));
   });
 
-  it("requires a purpose before opening a private dream", async () => {
+  it("opens the original private dream for an authorized administrator", async () => {
     const accessAdminDream = jest.fn(mockApiClient.accessAdminDream);
     renderWithProviders(<AdminOperationsScreen />, { accessAdminDream });
 
     fireEvent.press(screen.getByText("Dreams"));
     fireEvent.press(await screen.findByTestId("admin-dream-dream_mock_1"));
-    expect(screen.queryByText("Original dream")).toBeNull();
-    fireEvent.changeText(screen.getByLabelText("Dream access purpose"), "Investigating a reported image failure.");
-    fireEvent.press(screen.getByText("Open and audit"));
+    fireEvent.press(screen.getByText("View original dream"));
 
-    await waitFor(() => expect(accessAdminDream).toHaveBeenCalledWith("dream_mock_1", "Investigating a reported image failure."));
+    await waitFor(() => expect(accessAdminDream).toHaveBeenCalledWith("dream_mock_1"));
     expect(await screen.findByText("Original dream")).toBeTruthy();
     expect(screen.getByText("I followed a river through a quiet city at dawn.")).toBeTruthy();
     expect(screen.getByLabelText("Generated dream")).toBeTruthy();

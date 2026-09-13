@@ -14,7 +14,6 @@ import {
   ProfileResponse,
   AnonymizationRequestResponse,
   RequestDreamImageRequest,
-  SensitiveSafetyRawAccessRequest,
   SensitiveSafetyRawAccessResponse,
   SensitiveSafetyReviewResponse,
   SubmitDreamRequest,
@@ -63,12 +62,12 @@ export type ApiClient = {
   getVoiceCapture: (id: string) => Promise<VoiceCaptureResponse>;
   listSensitiveSafetyReviews: (status?: string) => Promise<SensitiveSafetyReviewResponse[]>;
   acknowledgeSensitiveSafetyReview: (id: string) => Promise<SensitiveSafetyReviewResponse>;
-  accessSensitiveSafetyReviewRawText: (id: string, request: SensitiveSafetyRawAccessRequest) => Promise<SensitiveSafetyRawAccessResponse>;
+  accessSensitiveSafetyReviewRawText: (id: string) => Promise<SensitiveSafetyRawAccessResponse>;
   getAdminOperations: () => Promise<AdminOperationsResponse>;
   requeueAdminJob: (id: string, reason: string) => Promise<AdminOperationsActionResponse>;
   acknowledgeAdminIssue: (source: string, id: string, reason: string) => Promise<AdminOperationsActionResponse>;
   searchAdminDreams: (query?: string) => Promise<AdminDreamSearchResponse>;
-  accessAdminDream: (id: string, reason: string) => Promise<AdminDreamDetailResponse>;
+  accessAdminDream: (id: string) => Promise<AdminDreamDetailResponse>;
 };
 
 export { ApiError };
@@ -193,10 +192,7 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
     getVoiceCapture: (id) => request<VoiceCaptureResponse>(`/v1/voice-captures/${id}`),
     listSensitiveSafetyReviews: (status = "open") => request<SensitiveSafetyReviewResponse[]>(`/v1/safety/admin/reviews?status=${encodeURIComponent(status)}`),
     acknowledgeSensitiveSafetyReview: (id) => request<SensitiveSafetyReviewResponse>(`/v1/safety/admin/reviews/${id}/acknowledge`, { method: "POST" }),
-    accessSensitiveSafetyReviewRawText: (id, body) => request<SensitiveSafetyRawAccessResponse>(`/v1/safety/admin/reviews/${id}/raw-access`, {
-      method: "POST",
-      body: JSON.stringify(body)
-    }),
+    accessSensitiveSafetyReviewRawText: (id) => request<SensitiveSafetyRawAccessResponse>(`/v1/safety/admin/reviews/${id}/raw-access`, { method: "POST" }),
     getAdminOperations: () => request<AdminOperationsResponse>("/v1/admin/operations"),
     requeueAdminJob: (id, reason) => request<AdminOperationsActionResponse>(`/v1/admin/operations/jobs/${id}/requeue`, {
       method: "POST",
@@ -207,10 +203,7 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
       body: JSON.stringify({ reason })
     }),
     searchAdminDreams: (query = "") => request<AdminDreamSearchResponse>(`/v1/admin/dreams?query=${encodeURIComponent(query)}&page=1&pageSize=50`),
-    accessAdminDream: (id, reason) => request<AdminDreamDetailResponse>(`/v1/admin/dreams/${id}/access`, {
-      method: "POST",
-      body: JSON.stringify({ reason })
-    })
+    accessAdminDream: (id) => request<AdminDreamDetailResponse>(`/v1/admin/dreams/${id}/access`, { method: "POST" })
   };
 }
 

@@ -51,22 +51,20 @@ public static class AdminOperationsEndpoints
 
         app.MapPost("/v1/admin/dreams/{id:guid}/access", async (
             Guid id,
-            [FromBody] AdminDreamAccessRequest request,
             [FromServices] AccessAdminDreamHandler handler,
             CancellationToken cancellationToken) =>
         {
-            var result = await handler.HandleAsync(id, request, cancellationToken);
+            var result = await handler.HandleAsync(id, cancellationToken);
             return result.StatusCode switch
             {
                 200 => Results.Ok(result.Response),
-                400 => Results.BadRequest(result.Errors),
                 _ => Results.NotFound()
             };
         })
             .RequireAuthorization(PrivacyAuthorizationExtensions.PrivacyAdminPolicy)
             .WithTags("Admin")
             .WithName("AccessAdminDream")
-            .WithSummary("Returns original dream content, interpretations, and generated images after auditing the administrator purpose.");
+            .WithSummary("Returns original dream content, interpretations, and generated images for a privacy administrator, with an automatic access audit.");
 
         return app;
     }

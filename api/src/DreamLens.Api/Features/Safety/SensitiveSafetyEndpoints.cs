@@ -26,22 +26,14 @@ public static class SensitiveSafetyEndpoints
 
         reviews.MapPost("{id:guid}/raw-access", async (
             Guid id,
-            SensitiveSafetyRawAccessRequest request,
             [FromServices] GetSensitiveSafetyReviewRawHandler handler,
             CancellationToken cancellationToken) =>
         {
-            try
-            {
-                var result = await handler.HandleAsync(id, request, cancellationToken);
-                return result is null ? Results.NotFound() : Results.Ok(result);
-            }
-            catch (ArgumentException exception)
-            {
-                return Results.BadRequest(new { purpose = new[] { exception.Message } });
-            }
+            var result = await handler.HandleAsync(id, cancellationToken);
+            return result is null ? Results.NotFound() : Results.Ok(result);
         })
             .WithName("AccessSensitiveSafetyReviewRawText")
-            .WithSummary("Explicitly accesses one encrypted dream snapshot and creates an audit record. Never use for routine review.");
+            .WithSummary("Accesses one encrypted dream snapshot for a privacy administrator and creates an automatic audit record.");
 
         return app;
     }

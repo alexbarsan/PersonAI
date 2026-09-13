@@ -58,15 +58,8 @@ public sealed class GetSensitiveSafetyReviewRawHandler(
 {
     public async Task<SensitiveSafetyRawAccessResponse?> HandleAsync(
         Guid eventId,
-        SensitiveSafetyRawAccessRequest request,
         CancellationToken cancellationToken)
     {
-        var purpose = request.Purpose?.Trim();
-        if (string.IsNullOrWhiteSpace(purpose) || purpose.Length is < 10 or > 200)
-        {
-            throw new ArgumentException("A review purpose between 10 and 200 characters is required.", nameof(request));
-        }
-
         var review = await dbContext.SensitiveDreamSafetyEvents.SingleOrDefaultAsync(review => review.Id == eventId, cancellationToken);
         if (review is null || review.ExpiresAt <= DateTimeOffset.UtcNow)
         {
@@ -77,7 +70,7 @@ public sealed class GetSensitiveSafetyReviewRawHandler(
         {
             SafetyEventId = review.Id,
             ReviewerSubject = currentUser.Subject,
-            Purpose = purpose
+            Purpose = "administrator-sensitive-content-access"
         });
         await dbContext.SaveChangesAsync(cancellationToken);
         return new SensitiveSafetyRawAccessResponse(review.Id, review.DreamId, encryptor.Decrypt(review.EncryptedDreamText), review.ExpiresAt);

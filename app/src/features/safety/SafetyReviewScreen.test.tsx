@@ -8,7 +8,7 @@ import { mockApiClient } from "@/mocks/mockApi";
 import { ThemeProvider } from "@/theme/ThemeProvider";
 
 describe("SafetyReviewScreen", () => {
-  it("only displays original text after a documented access request", async () => {
+  it("opens original text for an authorized safety administrator", async () => {
     const accessSensitiveSafetyReviewRawText = jest.fn(mockApiClient.accessSensitiveSafetyReviewRawText);
     renderWithProviders(<SafetyReviewScreen />, { accessSensitiveSafetyReviewRawText });
 
@@ -16,10 +16,8 @@ describe("SafetyReviewScreen", () => {
     expect(screen.queryByText("Original submitted text")).toBeNull();
 
     fireEvent.press(screen.getByText("View original"));
-    fireEvent.changeText(screen.getByLabelText("Review access purpose"), "Investigating a user-reported concern.");
-    fireEvent.press(screen.getByText("Access and audit"));
 
-    await waitFor(() => expect(accessSensitiveSafetyReviewRawText).toHaveBeenCalledWith("safety_mock_1", { purpose: "Investigating a user-reported concern." }));
+    await waitFor(() => expect(accessSensitiveSafetyReviewRawText).toHaveBeenCalledWith("safety_mock_1"));
     expect(await screen.findByText("Original submitted text")).toBeTruthy();
   });
 });

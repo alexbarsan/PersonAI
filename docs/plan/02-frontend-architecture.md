@@ -143,6 +143,6 @@ RNTL covers component behavior, form validation, and renderer variants. Maestro 
 
 ## Admin Console
 
-The web-first `/admin/operations` route has separate Health and Dreams views. Health presents queue state, workload age, queue-versus-processing latency, actionable incidents, and provider latency/cost without exposing dream content. Dreams requires privacy-admin authorization; opening original text, interpretations, and generated images requires an explicit purpose. React Native Testing Library covers recovery and access gating, while Playwright covers the complete mock administrator flow.
+The web-first `/admin/operations` route has separate Health and Dreams views. Health presents queue state, workload age, queue-versus-processing latency, actionable incidents, and provider latency/cost without exposing dream content. Dreams requires privacy-admin authorization; opening original text, interpretations, and generated images automatically records an audit. React Native Testing Library covers recovery and access gating, while Playwright covers the complete mock administrator flow.
 
 Dream image status uses an authenticated bounded-wait request after the initial response changes from `pending` or `generating`; ordinary status polling remains the fallback. The result screen makes the queue and generation phases explicit and never starts image generation speculatively.

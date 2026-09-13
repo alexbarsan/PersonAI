@@ -281,10 +281,6 @@ export type SensitiveSafetyReviewResponse = {
   expiresAt: string;
 };
 
-export type SensitiveSafetyRawAccessRequest = {
-  purpose: string;
-};
-
 export type SensitiveSafetyRawAccessResponse = {
   safetyEventId: string;
   dreamId: string;

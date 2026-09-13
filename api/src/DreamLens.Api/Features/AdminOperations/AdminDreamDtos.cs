@@ -20,8 +20,6 @@ public sealed record AdminDreamSearchItemResponse(
     int ImageCount,
     string? LatestImageStatus);
 
-public sealed record AdminDreamAccessRequest(string? Reason);
-
 public sealed record AdminDreamDetailResponse(
     Guid Id,
     string SubjectPseudonym,

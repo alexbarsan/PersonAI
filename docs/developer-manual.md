@@ -160,7 +160,7 @@ See `docs/deployment.md`. Deployment uses GitHub Actions OIDC, Terraform, ECS Fa
 - `GET /v1/dreams/{id}/image/wait?after=<ISO-8601>&timeoutSeconds=20` is an authenticated, bounded long-poll endpoint used after an image is queued or generating. It returns immediately when status changes, after the bounded timeout, or after terminal completion/failure; clients must retain ordinary `GET /image` polling as fallback.
 - S48 runs `dreamlens-<environment>-api` without the SQS worker and `dreamlens-<environment>-worker` with it. Terraform keeps one worker warm, allows scale-out to four on SQS visible-message depth and oldest-message age, and configures two concurrent receives per worker. Check the Admin Operations latency cards before changing either threshold.
 - `POST /v1/admin/operations/jobs/{id}/requeue` and `POST /v1/admin/operations/issues/{source}/{id}/acknowledge` require a 10-500 character reason and persist an operations audit row.
-- `GET /v1/admin/dreams` and `POST /v1/admin/dreams/{id}/access` require the stronger `dreamlens-admin` privacy role. Detail access requires a reason and audits original-text, interpretation, and signed-image access.
+- `GET /v1/admin/dreams` and `POST /v1/admin/dreams/{id}/access` require the stronger `dreamlens-admin` privacy role. Detail access returns original text, interpretations, and signed-image URLs and writes an automatic access audit.
 - The web route is `/admin/operations`; authenticated group claims determine whether the Profile administration entry is visible.
 
 ## Monetization / S21

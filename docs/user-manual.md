@@ -46,7 +46,7 @@ Dream DNA sends a pseudonymized context snapshot to the AI provider. It does not
 
 Authorized administrators can open **Profile**, then **Open operations**. The Health view shows queue state, delayed or failed work, provider latency, and estimated AI cost. Requeue and acknowledgement actions require a written reason and are audited.
 
-The Dreams view is available only to privacy administrators. Search results show bounded metadata. Opening original dream text, interpretations, or generated images requires a case-specific reason and creates an immutable access audit.
+The Dreams view is available only to privacy administrators. Search results show bounded metadata. Selecting a dream and choosing **View original dream** reveals the original text, interpretations, and generated images, and creates an immutable access audit automatically.
 
 ## Local Mock Mode
 

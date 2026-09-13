@@ -14,11 +14,9 @@ export function AdminDreamExplorer() {
   const [draft, setDraft] = useState("");
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<AdminDreamSearchItemResponse | null>(null);
-  const [reason, setReason] = useState("");
   const dreams = useQuery({ queryKey: ["admin-dreams", query], queryFn: () => api.searchAdminDreams(query) });
-  const access = useMutation({ mutationFn: ({ id, purpose }: { id: string; purpose: string }) => api.accessAdminDream(id, purpose) });
+  const access = useMutation({ mutationFn: (id: string) => api.accessAdminDream(id) });
   const unauthorized = dreams.error instanceof ApiError && dreams.error.status === 403;
-  const validReason = reason.trim().length >= 10 && reason.trim().length <= 500;
 
   return <View style={styles.container}>
     <View style={styles.searchRow}>
@@ -29,13 +27,12 @@ export function AdminDreamExplorer() {
     {dreams.isError && !unauthorized ? <Text style={[styles.error, { color: theme.colors.warning }]}>Dream search could not be loaded.</Text> : null}
     {dreams.data ? <Text style={[styles.meta, { color: theme.colors.mutedText }]}>{dreams.data.total} dream{dreams.data.total === 1 ? "" : "s"}</Text> : null}
     <View style={styles.results}>
-      {dreams.data?.items.map((dream) => <Pressable key={dream.id} accessibilityRole="button" onPress={() => { setSelected(dream); setReason(""); access.reset(); }} style={[styles.result, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]} testID={`admin-dream-${dream.id}`}><View style={styles.resultHeader}><View style={styles.resultText}><Text numberOfLines={2} style={[styles.summary, { color: theme.colors.text }]}>{dream.summary ?? "Interpretation unavailable"}</Text><Text style={[styles.meta, { color: theme.colors.mutedText }]}>{dream.subjectPseudonym} | {formatDate(dream.occurredAt ?? dream.createdAt)}</Text></View><View style={[styles.imageBadge, { backgroundColor: dream.imageCount > 0 ? theme.colors.sage : theme.colors.softInk }]}><Text style={[styles.badgeText, { color: theme.colors.text }]}>{dream.imageCount} image{dream.imageCount === 1 ? "" : "s"}</Text></View></View>{dream.tags.length > 0 ? <Text style={[styles.meta, { color: theme.colors.mutedText }]}>{dream.tags.join(" | ")}</Text> : null}</Pressable>)}
+      {dreams.data?.items.map((dream) => <Pressable key={dream.id} accessibilityRole="button" onPress={() => { setSelected(dream); access.reset(); }} style={[styles.result, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]} testID={`admin-dream-${dream.id}`}><View style={styles.resultHeader}><View style={styles.resultText}><Text numberOfLines={2} style={[styles.summary, { color: theme.colors.text }]}>{dream.summary ?? "Interpretation unavailable"}</Text><Text style={[styles.meta, { color: theme.colors.mutedText }]}>{dream.subjectPseudonym} | {formatDate(dream.occurredAt ?? dream.createdAt)}</Text></View><View style={[styles.imageBadge, { backgroundColor: dream.imageCount > 0 ? theme.colors.sage : theme.colors.softInk }]}><Text style={[styles.badgeText, { color: theme.colors.text }]}>{dream.imageCount} image{dream.imageCount === 1 ? "" : "s"}</Text></View></View>{dream.tags.length > 0 ? <Text style={[styles.meta, { color: theme.colors.mutedText }]}>{dream.tags.join(" | ")}</Text> : null}</Pressable>)}
     </View>
 
     {selected && !access.data ? <View style={[styles.accessPanel, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
       <View style={styles.resultHeader}><View style={styles.resultText}><Text style={[styles.summary, { color: theme.colors.text }]}>Open private dream</Text><Text style={[styles.meta, { color: theme.colors.mutedText }]}>{selected.subjectPseudonym} | {selected.id}</Text></View><Pressable accessibilityRole="button" onPress={() => setSelected(null)}><Text style={[styles.close, { color: theme.colors.mutedText }]}>Close</Text></Pressable></View>
-      <TextInput accessibilityLabel="Dream access purpose" multiline onChangeText={setReason} placeholder="Case-specific reason for access" placeholderTextColor={theme.colors.mutedText} style={[styles.reasonInput, { borderColor: theme.colors.border, color: theme.colors.text }]} value={reason} />
-      <Pressable accessibilityRole="button" disabled={!validReason || access.isPending} onPress={() => access.mutate({ id: selected.id, purpose: reason.trim() })} style={[styles.accessButton, { backgroundColor: theme.colors.primary, opacity: validReason ? 1 : 0.5 }]}><Text style={[styles.buttonText, { color: theme.colors.primaryText }]}>{access.isPending ? "Opening" : "Open and audit"}</Text></Pressable>
+      <Pressable accessibilityRole="button" disabled={access.isPending} onPress={() => access.mutate(selected.id)} style={[styles.accessButton, { backgroundColor: theme.colors.primary, opacity: access.isPending ? 0.5 : 1 }]}><Text style={[styles.buttonText, { color: theme.colors.primaryText }]}>{access.isPending ? "Opening" : "View original dream"}</Text></Pressable>
       {access.isError ? <Text style={[styles.error, { color: theme.colors.warning }]}>Dream details could not be opened.</Text> : null}
     </View> : null}
 
@@ -68,7 +65,6 @@ const styles = StyleSheet.create({
   imageBadge: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 5 },
   badgeText: { fontSize: 11, fontWeight: "700" },
   accessPanel: { borderRadius: 8, borderWidth: 1, gap: 11, padding: 14 },
-  reasonInput: { borderRadius: 6, borderWidth: 1, fontSize: 14, lineHeight: 20, minHeight: 78, padding: 10, textAlignVertical: "top" },
   accessButton: { alignItems: "center", borderRadius: 6, justifyContent: "center", minHeight: 42, paddingHorizontal: 14 },
   close: { fontSize: 13, fontWeight: "800", padding: 4 },
   detail: { gap: 18 },

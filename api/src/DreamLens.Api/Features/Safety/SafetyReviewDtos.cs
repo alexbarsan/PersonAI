@@ -12,8 +12,6 @@ public sealed record SensitiveSafetyReviewResponse(
     DateTimeOffset DetectedAt,
     DateTimeOffset ExpiresAt);
 
-public sealed record SensitiveSafetyRawAccessRequest(string? Purpose);
-
 public sealed record SensitiveSafetyRawAccessResponse(
     Guid SafetyEventId,
     Guid DreamId,

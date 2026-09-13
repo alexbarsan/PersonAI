@@ -178,7 +178,7 @@ Use structured logs and OpenTelemetry. Never log raw dream text, full context JS
 
 ## Application Operations Console
 
-Operational control is exposed through authenticated application APIs rather than requiring routine AWS console access. `dreamlens-metrics-admin` can inspect queue/DLQ state, durable job and workload aging, provider failures, latency, and cost, then acknowledge or requeue recoverable work with an immutable audit reason. Cross-user dream search and original-content access require the stronger `dreamlens-admin` privacy role. Search results remain bounded, detail access is purpose-gated and audited, and generated assets are returned only through signed S3 URLs.
+Operational control is exposed through authenticated application APIs rather than requiring routine AWS console access. `dreamlens-metrics-admin` can inspect queue/DLQ state, durable job and workload aging, provider failures, latency, and cost, then acknowledge or requeue recoverable work with an immutable audit reason. Cross-user dream search and original-content access require the stronger `dreamlens-admin` privacy role. Search results remain bounded, detail access is automatically audited, and generated assets are returned only through signed S3 URLs.
 
 ## Testing
 
