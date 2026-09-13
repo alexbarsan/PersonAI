@@ -79,6 +79,7 @@ module "api" {
     DeepSeek__Model                                   = "deepseek-v4-flash"
     ChatUsageCost__InputCostPerMillionTokens          = "0.44"
     ChatUsageCost__OutputCostPerMillionTokens         = "1.32"
+    ChatResilience__Timeout                           = "00:02:30"
     DeepInterpretation__Enabled                       = "true"
     DeepInterpretation__Model                         = "deepseek-v4-pro"
     DeepInterpretation__DailyLimit                    = "3"
