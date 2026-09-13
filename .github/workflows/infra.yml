@@ -96,6 +96,10 @@ jobs:
       - name: Terraform init
         run: terraform -chdir=infra/envs/${{ inputs.environment }} init
 
+      - name: Verify existing dev state
+        if: inputs.environment == 'dev'
+        run: terraform -chdir=infra/envs/dev state list | grep -qx 'module.network.aws_vpc.this'
+
       - name: Write Terraform input variables
         env:
           TERRAFORM_TFVARS_JSON: ${{ vars.TERRAFORM_TFVARS_JSON }}
