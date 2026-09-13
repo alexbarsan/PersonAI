@@ -193,7 +193,7 @@ export function JournalListScreen() {
                     <Text
                       style={[styles.cardTitle, { color: theme.colors.text }]}
                     >
-                      {item.summary ?? "Dream interpretation"}
+                      {item.title}
                     </Text>
                     <Text
                       style={[styles.body, { color: theme.colors.mutedText }]}

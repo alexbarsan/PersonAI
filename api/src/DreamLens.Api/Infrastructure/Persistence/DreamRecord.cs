@@ -8,6 +8,8 @@ public sealed class DreamRecord
 
     public required string Text { get; set; }
 
+    public string? Title { get; set; }
+
     public string? Mood { get; set; }
 
     public int? SleepQuality { get; set; }

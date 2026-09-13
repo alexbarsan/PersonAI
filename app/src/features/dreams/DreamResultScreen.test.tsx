@@ -33,6 +33,7 @@ describe("DreamResultScreen", () => {
     renderWithProviders(<DreamResultScreen />);
 
     expect(screen.getByTestId("result-disclaimer")).toBeTruthy();
+    expect(screen.getByText(mockDream.title)).toBeTruthy();
     expect(screen.getByText(mockDream.result!.summary)).toBeTruthy();
     expect(screen.getByText("Guidance")).toBeTruthy();
   });

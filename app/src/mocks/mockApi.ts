@@ -19,7 +19,7 @@ export const mockApiClient: ApiClient = {
   listDreams: async (filters = {}) => ({
     items: mockJournal.items.filter(item => {
       const date = (item.occurredAt ?? item.createdAt).slice(0, 10);
-      return (!filters.query || (item.summary ?? "").toLowerCase().includes(filters.query.toLowerCase()))
+      return (!filters.query || `${item.title} ${item.summary ?? ""}`.toLowerCase().includes(filters.query.toLowerCase()))
         && (!filters.mood || item.mood?.toLowerCase() === filters.mood.toLowerCase())
         && (!filters.tag || (item.id === mockDream.id && mockDream.tags?.some(tag => tag.toLowerCase() === filters.tag!.toLowerCase())))
         && (!filters.from || date >= filters.from)

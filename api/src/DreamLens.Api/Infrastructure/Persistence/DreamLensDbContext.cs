@@ -98,6 +98,8 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
             entity.Property(dream => dream.Text)
                 .HasMaxLength(4000)
                 .IsRequired();
+            entity.Property(dream => dream.Title)
+                .HasMaxLength(120);
             entity.Property(dream => dream.Mood)
                 .HasMaxLength(64);
             entity.Property(dream => dream.TagsJson)

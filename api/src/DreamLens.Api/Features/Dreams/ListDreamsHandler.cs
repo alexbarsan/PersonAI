@@ -15,6 +15,7 @@ public sealed class ListDreamsHandler(DreamLensDbContext dbContext, ICurrentUser
         {
             var term = query.Query.Trim().ToLowerInvariant();
             dreamsQuery = dreamsQuery.Where(dream => dream.Text.ToLower().Contains(term)
+                || (dream.Title != null && dream.Title.ToLower().Contains(term))
                 || (dream.ResultJson != null && dream.ResultJson.ToLower().Contains(term))
                 || (dream.JournalNote != null && dream.JournalNote.ToLower().Contains(term)));
         }
@@ -37,6 +38,7 @@ public sealed class ListDreamsHandler(DreamLensDbContext dbContext, ICurrentUser
                 dream.Id,
                 dream.CreatedAt,
                 dream.Status,
+                DreamTitleGenerator.Create(dream.Title, DreamMapper.ReadSummary(dream), dream.Text),
                 DreamMapper.ReadSummary(dream),
                 dream.Mood,
                 dream.OccurredAt))

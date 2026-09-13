@@ -68,6 +68,7 @@ export type DreamResponse = {
   status: "completed" | "failed";
   result: DreamResultResponse | null;
   errorMessage: string | null;
+  title: string;
   mood?: string | null;
   sleepQuality?: number | null;
   tags?: string[];
@@ -190,6 +191,7 @@ export type DreamJournalItemResponse = {
   id: string;
   createdAt: string;
   status: string;
+  title: string;
   summary: string | null;
   mood: string | null;
   occurredAt: string | null;

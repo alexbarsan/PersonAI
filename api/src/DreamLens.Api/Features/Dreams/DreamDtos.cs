@@ -15,6 +15,7 @@ public sealed record DreamResponse(
     string Status,
     DreamResultResponse? Result,
     string? ErrorMessage,
+    string Title,
     string? Mood = null,
     int? SleepQuality = null,
     string[]? Tags = null,
@@ -74,6 +75,7 @@ public sealed record DreamJournalItemResponse(
     Guid Id,
     DateTimeOffset CreatedAt,
     string Status,
+    string Title,
     string? Summary,
     string? Mood,
     string? OccurredAt);

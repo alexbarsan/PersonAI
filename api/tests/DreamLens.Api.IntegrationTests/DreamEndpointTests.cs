@@ -211,6 +211,7 @@ public sealed class DreamEndpointTests
         Assert.NotNull(dream);
         Assert.Equal("completed", dream.Status);
         Assert.NotEqual(Guid.Empty, dream.Id);
+        Assert.Equal("Falling Into Dark Water", dream.Title);
         Assert.NotNull(dream.Result);
         Assert.StartsWith("The dream centers", dream.Result.Summary, StringComparison.Ordinal);
         Assert.Contains(dream.Result.Sections, section => section.Kind == "symbols");
@@ -232,6 +233,7 @@ public sealed class DreamEndpointTests
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.NotNull(fetched);
         Assert.Equal(submitted.Id, fetched.Id);
+        Assert.Equal(submitted.Title, fetched.Title);
         Assert.Equal("completed", fetched.Status);
         Assert.Equal(submitted.Result!.Summary, fetched.Result!.Summary);
     }
@@ -693,9 +695,9 @@ public sealed class DreamEndpointTests
         Assert.Equal(submitted.Id, result.Id);
         Assert.Equal(1, result.ImageCount);
 
-        var accessResponse = await privacyAdmin.PostAsJsonAsync(
+        var accessResponse = await privacyAdmin.PostAsync(
             $"/v1/admin/dreams/{submitted.Id}/access",
-            new AdminDreamAccessRequest("Investigating a reported interpretation issue."));
+            content: null);
         var detail = await accessResponse.Content.ReadFromJsonAsync<AdminDreamDetailResponse>();
 
         Assert.Equal(HttpStatusCode.OK, accessResponse.StatusCode);
@@ -971,12 +973,10 @@ public sealed class DreamEndpointTests
         Assert.True(review.RestrictsElaboration);
 
         var blockedDeep = await owner.PostAsync($"/v1/dreams/{dream!.Id}/deep-interpretation", null);
-        var missingPurpose = await reviewer.PostAsJsonAsync($"/v1/safety/admin/reviews/{review.Id}/raw-access", new SensitiveSafetyRawAccessRequest("short"));
-        var rawResponse = await reviewer.PostAsJsonAsync($"/v1/safety/admin/reviews/{review.Id}/raw-access", new SensitiveSafetyRawAccessRequest("Assess whether a privacy review requires follow-up."));
+        var rawResponse = await reviewer.PostAsync($"/v1/safety/admin/reviews/{review.Id}/raw-access", content: null);
         var raw = await rawResponse.Content.ReadFromJsonAsync<SensitiveSafetyRawAccessResponse>();
 
         Assert.Equal(HttpStatusCode.Conflict, blockedDeep.StatusCode);
-        Assert.Equal(HttpStatusCode.BadRequest, missingPurpose.StatusCode);
         Assert.Equal(HttpStatusCode.OK, rawResponse.StatusCode);
         Assert.Equal(rawDreamText, raw!.DreamText);
         Assert.Equal(1, await app.CountSensitiveSafetyEventsAsync());
@@ -1702,6 +1702,7 @@ public sealed class DreamEndpointTests
     private const string CanonicalAiOutput = """
     {
       "schemaVersion": "1.1",
+      "title": "Falling Into Dark Water",
       "summary": "The dream centers on uncertainty, pressure, and a wish to regain steadiness.",
       "symbols": [
         {

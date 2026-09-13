@@ -13,7 +13,7 @@ describe("JournalListScreen", () => {
   it("renders mock dreams", async () => {
     renderWithProviders(<JournalListScreen />);
 
-    expect(await screen.findByText(mockJournal.items[0].summary!)).toBeTruthy();
+    expect(await screen.findByText(mockJournal.items[0].title)).toBeTruthy();
     expect(screen.getByText(/2026-07-01/)).toBeTruthy();
   });
 
@@ -30,7 +30,7 @@ describe("JournalListScreen", () => {
     const deleteDream = jest.fn(async () => undefined);
     renderWithProviders(<JournalListScreen />, { deleteDream });
 
-    expect(await screen.findByText(mockJournal.items[0].summary!)).toBeTruthy();
+    expect(await screen.findByText(mockJournal.items[0].title)).toBeTruthy();
     fireEvent.press(screen.getByText("Delete"));
 
     await waitFor(() => expect(deleteDream).toHaveBeenCalledWith(mockJournal.items[0].id));

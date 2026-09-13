@@ -121,6 +121,7 @@ public sealed class SubmitDreamHandler(
         {
             UserSubject = currentUser.Subject,
             Text = dreamText,
+            Title = DreamTitleGenerator.FromInterpretation(interpretation.Result?.RawJson, result?.Summary, dreamText),
             Mood = Normalize(request.Mood),
             SleepQuality = request.SleepQuality,
             TagsJson = JsonSerializer.Serialize(NormalizeArray(request.Tags), JsonOptions),

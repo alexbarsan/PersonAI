@@ -64,7 +64,7 @@ export function DreamResultScreen() {
       <ScrollView contentContainerStyle={styles.screen}>
         <BrandMark detail="A reflection, not a prediction." />
         <View style={[styles.hero, { backgroundColor: theme.colors.lavender }]}>
-          <Text style={[styles.title, { color: theme.colors.text }]}>Dream result</Text>
+          <Text style={[styles.title, { color: theme.colors.text }]}>{dream.data?.title ?? "Dream result"}</Text>
           <Text style={[styles.disclaimer, { color: theme.colors.mutedText }]} testID="result-disclaimer">
             Dream DNA is for reflection and entertainment. It is not medical, mental health, or safety advice.
           </Text>

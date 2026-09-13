@@ -69,6 +69,7 @@ export const mockDream: DreamResponse = {
   id: "dream_mock_1",
   createdAt: "2026-07-01T08:00:00Z",
   status: "completed",
+  title: "The Quiet Shoreline",
   result: {
     summary: "The dream points to uncertainty and a wish for steadier ground.",
     sections: [
@@ -152,6 +153,7 @@ export const mockJournal: DreamJournalResponse = {
       id: mockDream.id,
       createdAt: mockDream.createdAt,
       status: mockDream.status,
+      title: mockDream.title,
       summary: mockDream.result?.summary ?? null,
       mood: "curious",
       occurredAt: "2026-07-01"

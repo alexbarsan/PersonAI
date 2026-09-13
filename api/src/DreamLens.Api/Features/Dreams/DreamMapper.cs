@@ -17,6 +17,7 @@ public static class DreamMapper
             record.Status,
             result,
             record.ErrorMessage,
+            DreamTitleGenerator.Create(record.Title, result?.Summary, record.Text),
             record.Mood,
             record.SleepQuality,
             ReadTags(record),
