@@ -96,6 +96,13 @@ jobs:
       - name: Terraform init
         run: terraform -chdir=infra/envs/${{ inputs.environment }} init
 
+      - name: Write Terraform input variables
+        env:
+          TERRAFORM_TFVARS_JSON: ${{ vars.TERRAFORM_TFVARS_JSON }}
+        run: |
+          test -n "$TERRAFORM_TFVARS_JSON" || { echo "TERRAFORM_TFVARS_JSON is not configured for this environment."; exit 1; }
+          printf '%s' "$TERRAFORM_TFVARS_JSON" > infra/envs/${{ inputs.environment }}/terraform.auto.tfvars.json
+
       - name: Terraform plan
         run: terraform -chdir=infra/envs/${{ inputs.environment }} plan -input=false -out=tfplan
 
