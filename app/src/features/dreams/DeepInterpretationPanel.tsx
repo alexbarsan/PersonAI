@@ -33,7 +33,7 @@ export function DeepInterpretationPanel({ dreamId, enabled }: { dreamId: string;
         <Text style={[styles.title, { color: theme.colors.text }]}>Deep Interpretation</Text>
         <Text style={[styles.body, { color: theme.colors.mutedText }]}>Explore this dream alongside related patterns from your journal.</Text>
         <Pressable accessibilityRole="button" onPress={() => router.push("/paywall")} style={[styles.secondaryButton, { borderColor: theme.colors.primary }]}>
-          <Text style={[styles.buttonText, { color: theme.colors.primary }]}>View Premium</Text>
+          <Text style={[styles.buttonText, { color: theme.colors.primary }]}>Deep Interpretation</Text>
         </Pressable>
       </View>
     );
@@ -55,7 +55,7 @@ export function DeepInterpretationPanel({ dreamId, enabled }: { dreamId: string;
           style={[styles.primaryButton, { backgroundColor: theme.colors.primary }, create.isPending && styles.disabled]}
           testID="create-deep-interpretation"
         >
-          <Text style={[styles.buttonText, { color: theme.colors.primaryText }]}>{create.isPending ? "Looking for deeper patterns" : "Go deeper"}</Text>
+          <Text style={[styles.buttonText, { color: theme.colors.primaryText }]}>{create.isPending ? "Creating Deep Interpretation" : "Deep Interpretation"}</Text>
         </Pressable>
       ) : null}
       {result ? (
