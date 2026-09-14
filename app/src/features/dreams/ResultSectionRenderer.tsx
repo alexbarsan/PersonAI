@@ -1,4 +1,5 @@
-import { StyleSheet, View } from "react-native";
+import { useState } from "react";
+import { Pressable, StyleSheet, View } from "react-native";
 import { Text } from "@/components/Text";
 
 import { DreamSectionResponse } from "@/api/dto";
@@ -18,17 +19,48 @@ export function ResultSectionRenderer({ section }: { section: DreamSectionRespon
 function renderContent(kind: string, content: unknown) {
   switch (kind) {
     case "symbols":
-      return <SymbolList content={content} />;
+      return <DetailStrip kind={kind} content={content} />;
     case "emotions":
-      return <EmotionList content={content} />;
+      return <DetailStrip kind={kind} content={content} />;
     case "entities":
-      return <EntityList content={content} />;
+      return <DetailStrip kind={kind} content={content} />;
     case "list":
       return <TextList content={content} />;
     case "text":
     default:
       return <Paragraph content={content} />;
   }
+}
+
+function DetailStrip({ kind, content }: { kind: string; content: unknown }) {
+  const theme = useTheme();
+  const [selected, setSelected] = useState(0);
+  const items = Array.isArray(content) ? content : [];
+  if (!items.length) return null;
+  const activeIndex = Math.min(selected, items.length - 1);
+  const active = asRecord(items[activeIndex]);
+  const label = (item: unknown) => {
+    const record = asRecord(item);
+    return toText(record.title ?? record.symbol ?? record.name ?? "Detail");
+  };
+  const description = toText(active.body ?? active.meaning ?? active.evidence);
+  const intensity = active.value ?? active.intensity;
+  return <View style={styles.detailStrip}>
+    <View style={styles.selectors} accessibilityRole="tablist">
+      {items.map((item, index) => <Pressable key={index} accessibilityRole="tab"
+        accessibilityState={{ selected: index === activeIndex }} onPress={() => setSelected(index)}
+        style={[styles.selector, { borderColor: index === activeIndex ? theme.colors.primary : theme.colors.border,
+          backgroundColor: index === activeIndex ? theme.colors.primary : theme.colors.surface }]}>
+        <Text style={[styles.itemTitle, { color: index === activeIndex ? theme.colors.primaryText : theme.colors.text }]}>{label(item)}</Text>
+      </Pressable>)}
+    </View>
+    <View style={[styles.detail, { borderColor: theme.colors.border }]}>
+      {description ? <Paragraph content={description} /> : null}
+      {active.personalRelevance ? <Paragraph content={active.personalRelevance} /> : null}
+      {active.evidence && toText(active.evidence) !== description ? <Paragraph content={active.evidence} /> : null}
+      {kind === "emotions" && typeof intensity === "number" ? <Text style={[styles.body, { color: theme.colors.mutedText }]}>Intensity {intensity}</Text> : null}
+    </View>
+  </View>;
 }
 
 function Paragraph({ content }: { content: unknown }) {
@@ -50,66 +82,6 @@ function TextList({ content }: { content: unknown }) {
   );
 }
 
-function SymbolList({ content }: { content: unknown }) {
-  const theme = useTheme();
-  const items = Array.isArray(content) ? content : [];
-  return (
-    <View style={styles.list}>
-      {items.map((item, index) => {
-        const record = asRecord(item);
-        return (
-          <View key={`${record.symbol ?? index}`} style={styles.item}>
-            <Text style={[styles.itemTitle, { color: theme.colors.text }]}>{toText(record.title ?? record.symbol ?? "Symbol")}</Text>
-            <Text style={[styles.body, { color: theme.colors.mutedText }]}>{toText(record.body ?? record.meaning ?? item)}</Text>
-            {record.personalRelevance ? <Text style={[styles.body, { color: theme.colors.mutedText }]}>{toText(record.personalRelevance)}</Text> : null}
-          </View>
-        );
-      })}
-    </View>
-  );
-}
-
-function EmotionList({ content }: { content: unknown }) {
-  const theme = useTheme();
-  const items = Array.isArray(content) ? content : [];
-  return (
-    <View style={styles.list}>
-      {items.map((item, index) => {
-        const record = asRecord(item);
-        const intensity = record.value ?? record.intensity;
-        return (
-          <View key={`${record.name ?? index}`} style={styles.item}>
-            <Text style={[styles.itemTitle, { color: theme.colors.text }]}>{toText(record.title ?? record.name ?? "Emotion")}</Text>
-            <Text style={[styles.body, { color: theme.colors.mutedText }]}>
-              {typeof intensity === "number" ? `Intensity ${toText(intensity)}` : toText(record.body ?? record.evidence ?? item)}
-            </Text>
-            {record.evidence ? (
-              <Text style={[styles.body, { color: theme.colors.mutedText }]}>{toText(record.evidence)}</Text>
-            ) : null}
-          </View>
-        );
-      })}
-    </View>
-  );
-}
-
-function EntityList({ content }: { content: unknown }) {
-  const theme = useTheme();
-  const items = Array.isArray(content) ? content : [];
-  return (
-    <View style={styles.list}>
-      {items.map((item, index) => {
-        const record = asRecord(item);
-        return (
-          <View key={`${toText(record.title ?? index)}-${index}`} style={styles.item}>
-            <Text style={[styles.itemTitle, { color: theme.colors.text }]}>{toText(record.title ?? "Detail")}</Text>
-            <Text style={[styles.body, { color: theme.colors.mutedText }]}>{toText(record.body ?? item)}</Text>
-          </View>
-        );
-      })}
-    </View>
-  );
-}
 
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" ? (value as Record<string, unknown>) : {};
@@ -137,18 +109,18 @@ function toText(value: unknown): string {
 
 const styles = StyleSheet.create({
   section: {
-    borderRadius: 8,
-    borderWidth: 1,
-    gap: 10,
-    padding: 14
+    borderTopWidth: 1,
+    gap: 16,
+    paddingVertical: 24
   },
   title: {
     fontSize: 18,
     fontWeight: "700"
   },
   body: {
-    fontSize: 15,
-    lineHeight: 22
+    fontSize: 16,
+    lineHeight: 26,
+    maxWidth: 720
   },
   list: {
     gap: 10
@@ -159,5 +131,9 @@ const styles = StyleSheet.create({
   itemTitle: {
     fontSize: 15,
     fontWeight: "700"
-  }
+  },
+  detailStrip: { gap: 16 },
+  selectors: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  selector: { minHeight: 44, maxWidth: "100%", justifyContent: "center", paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8, borderWidth: 1 },
+  detail: { borderLeftWidth: 2, paddingLeft: 16, gap: 8 }
 });

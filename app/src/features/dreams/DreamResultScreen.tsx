@@ -3,6 +3,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { Image, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
 import { Text } from "@/components/Text";
+import ChevronDown from "lucide-react-native/icons/chevron-down";
 
 import { useApiClient } from "@/api/apiContext";
 import { ApiError } from "@/api/client";
@@ -65,7 +66,7 @@ export function DreamResultScreen() {
     <AppShell>
       <ScrollView contentContainerStyle={styles.screen}>
         <BrandMark detail="A reflection, not a prediction." />
-        <View style={[styles.hero, { backgroundColor: theme.colors.lavender }]}>
+        <View style={styles.hero}>
           <Text style={[styles.title, { color: theme.colors.text }]}>{dream.data?.title ?? "Dream result"}</Text>
           <Text style={[styles.disclaimer, { color: theme.colors.mutedText }]} testID="result-disclaimer">
             Dream DNA is for reflection and entertainment. It is not medical, mental health, or safety advice.
@@ -82,9 +83,9 @@ export function DreamResultScreen() {
 
         {result ? (
           <View style={styles.content}>
-          <View style={[styles.summaryCard, { backgroundColor: theme.colors.primary }]}>
-            <Text style={[styles.summaryLabel, { color: theme.colors.primaryText }]}>What this dream may be holding</Text>
-            <Text testID="dream-summary" style={[styles.summary, { color: theme.colors.primaryText }]}>{result.summary}</Text>
+          <View style={[styles.summaryCard, { borderColor: theme.colors.primary }]}>
+            <Text style={[styles.summaryLabel, { color: theme.colors.primary }]}>Your interpretation</Text>
+            <Text testID="dream-summary" style={[styles.summary, { color: theme.colors.text }]}>{result.summary}</Text>
           </View>
           <SafetyCard safety={result.safety} />
           {elevatedSafety
@@ -130,6 +131,7 @@ function JournalDetailsEditor({ dream }: { dream: DreamResponse | undefined }) {
   const [tags, setTags] = useState("");
   const [occurredAt, setOccurredAt] = useState("");
   const [journalNote, setJournalNote] = useState("");
+  const [editing, setEditing] = useState(false);
   useEffect(() => {
     setMood(dream?.mood ?? "");
     setTags(dream?.tags?.join(", ") ?? "");
@@ -156,7 +158,11 @@ function JournalDetailsEditor({ dream }: { dream: DreamResponse | undefined }) {
 
   return (
     <View style={[styles.journalEditor, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
-      <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Journal details</Text>
+      <Pressable accessibilityRole="button" accessibilityState={{ expanded: editing }} onPress={() => setEditing(!editing)} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", minHeight: 48 }}>
+        <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Journal details</Text>
+        <ChevronDown size={20} color={theme.colors.primary} style={{ transform: [{ rotate: editing ? "180deg" : "0deg" }] }} />
+      </Pressable>
+      {editing ? <>
       <TextInput accessibilityLabel="Journal mood" onChangeText={setMood} placeholder="Mood" placeholderTextColor={theme.colors.mutedText} style={[styles.input, { borderColor: theme.colors.border, color: theme.colors.text }]} value={mood} />
       <TextInput accessibilityLabel="Journal tags" onChangeText={setTags} placeholder="Tags, separated by commas" placeholderTextColor={theme.colors.mutedText} style={[styles.input, { borderColor: theme.colors.border, color: theme.colors.text }]} value={tags} />
       <TextInput accessibilityLabel="Dream date" onChangeText={setOccurredAt} placeholder="Dream date, YYYY-MM-DD" placeholderTextColor={theme.colors.mutedText} style={[styles.input, { borderColor: theme.colors.border, color: theme.colors.text }]} value={occurredAt} />
@@ -165,6 +171,7 @@ function JournalDetailsEditor({ dream }: { dream: DreamResponse | undefined }) {
       <Pressable accessibilityRole="button" onPress={() => save.mutate()} style={[styles.imageButton, { backgroundColor: theme.colors.primary }]} testID="save-journal-details">
         <Text style={[styles.buttonText, { color: theme.colors.primaryText }]}>{save.isPending ? "Saving" : "Save journal details"}</Text>
       </Pressable>
+      </> : null}
     </View>
   );
 }
@@ -246,14 +253,16 @@ function formatImageDuration(milliseconds: number) {
 
 const styles = StyleSheet.create({
   screen: {
+    width: "100%",
+    maxWidth: 920,
+    alignSelf: "center",
     gap: 16,
     padding: 20,
     paddingBottom: 28
   },
   hero: {
-    marginHorizontal: -20,
-    gap: 8,
-    padding: 18
+    gap: 12,
+    paddingVertical: 20
   },
   title: {
     fontSize: 30,
@@ -268,40 +277,39 @@ const styles = StyleSheet.create({
     lineHeight: 22
   },
   content: {
-    gap: 12
+    gap: 8
   },
   summaryCard: {
-    borderRadius: 8,
-    gap: 8,
-    padding: 18
+    borderLeftWidth: 3,
+    gap: 10,
+    paddingLeft: 20,
+    paddingVertical: 8,
+    marginBottom: 24
   },
   summaryLabel: {
-    fontSize: 12,
-    fontWeight: "800",
-    textTransform: "uppercase"
+    fontSize: 14,
+    fontWeight: "700"
   },
   summary: {
     fontSize: 20,
     fontWeight: "700",
-    lineHeight: 25
+    lineHeight: 30,
+    maxWidth: 720
   },
   questions: {
-    borderRadius: 8,
-    borderWidth: 1,
-    gap: 8,
-    padding: 14
+    borderTopWidth: 1,
+    gap: 12,
+    paddingVertical: 24
   },
   imagePanel: {
-    borderRadius: 8,
-    borderWidth: 1,
+    borderTopWidth: 1,
     gap: 10,
-    padding: 14
+    paddingVertical: 24
   },
   journalEditor: {
-    borderRadius: 8,
-    borderWidth: 1,
+    borderTopWidth: 1,
     gap: 10,
-    padding: 14
+    paddingVertical: 16
   },
   input: {
     borderRadius: 8,

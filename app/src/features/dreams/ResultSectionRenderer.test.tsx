@@ -1,9 +1,18 @@
-import { render, screen } from "@testing-library/react-native";
+import { fireEvent, render, screen } from "@testing-library/react-native";
 
 import { ResultSectionRenderer } from "@/features/dreams/ResultSectionRenderer";
 import { ThemeProvider } from "@/theme/ThemeProvider";
 
 describe("ResultSectionRenderer", () => {
+  it("switches between people without losing their explanations", () => {
+    render(<ThemeProvider><ResultSectionRenderer section={{ kind: "entities", title: "People", content: [
+      { title: "Alex", body: "A familiar companion" }, { title: "Maria", body: "Someone offering direction" }
+    ] }} /></ThemeProvider>);
+    expect(screen.getByText("A familiar companion")).toBeTruthy();
+    fireEvent.press(screen.getByRole("tab", { name: "Maria" }));
+    expect(screen.getByText("Someone offering direction")).toBeTruthy();
+    expect(screen.queryByText("A familiar companion")).toBeNull();
+  });
   it("handles text, symbols, emotions, and list sections", () => {
     render(
       <ThemeProvider>

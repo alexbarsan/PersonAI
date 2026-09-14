@@ -94,8 +94,8 @@ function mapCreateError(error: Error) {
 }
 
 const styles = StyleSheet.create({
-  panel: { borderRadius: 8, borderWidth: 1, gap: 10, padding: 16 },
-  eyebrow: { fontSize: 11, fontWeight: "800", textTransform: "uppercase" },
+  panel: { borderTopWidth: 1, gap: 14, paddingVertical: 24 },
+  eyebrow: { fontSize: 12, fontWeight: "700" },
   title: { fontSize: 19, fontWeight: "700" },
   body: { fontSize: 15, lineHeight: 22 },
   error: { fontSize: 13, lineHeight: 18 },

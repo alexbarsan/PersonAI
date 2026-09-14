@@ -25,6 +25,17 @@ test("happy path: onboarding, submit dream, view result", async ({ page }) => {
   await expect(page.getByText("The Quiet Shoreline", { exact: true })).toBeVisible();
   await expect(page.getByTestId("dream-summary")).toHaveText("The dream points to uncertainty and a wish for steadier ground.");
   await expect(page.getByText("Guidance")).toBeVisible();
+  await expect(page.getByRole("tab", { name: "water", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Journal details", exact: true }).click();
+  await expect(page.getByLabel("Journal note", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Journal details", exact: true }).click();
+  await page.getByTestId("dream-summary").scrollIntoViewIfNeeded();
+  await page.screenshot({ path: "test-results/interpretation-redesign-desktop.png", fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByTestId("dream-summary").scrollIntoViewIfNeeded();
+  await page.screenshot({ path: "test-results/interpretation-redesign-mobile.png", fullPage: true });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+  await page.setViewportSize({ width: 1280, height: 900 });
   await expect(page.getByRole("button", { name: "Cognitive Analysis" })).toBeVisible();
   await page.getByText("Not for me", { exact: true }).click();
   await page.getByText("Too generic", { exact: true }).click();
