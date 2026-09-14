@@ -62,25 +62,27 @@ export function DeepInterpretationPanel({ dreamId, enabled }: { dreamId: string;
       ) : null}
       {result ? (
         <View style={styles.result} testID="deep-interpretation-result">
-          <View style={[styles.summary, { backgroundColor: theme.colors.lavender }]}>
-            <Text style={[styles.summaryText, { color: theme.colors.text }]}>{result.result.summary}</Text>
+          <View style={[styles.interpretation, { borderColor: theme.colors.primary }]}>
+            <Text style={[styles.interpretationTitle, { color: theme.colors.primary }]}>Interpretation</Text>
+            <Text style={[styles.summaryText, { color: theme.colors.text }]}>{getCognitiveInterpretation(result)}</Text>
           </View>
-          {result.result.sections.map((section, index) => <ResultSectionRenderer key={`${section.title}-${index}`} section={section} />)}
-          {result.sources.length > 0 ? (
-            <View style={styles.sources}>
-              <Text style={[styles.sourceTitle, { color: theme.colors.text }]}>Related journal patterns</Text>
-              {result.sources.map((source) => (
-                <Pressable key={source.id} accessibilityRole="button" onPress={() => router.push(`/dreams/${source.id}`)}>
-                  <Text style={[styles.source, { color: theme.colors.primary }]} numberOfLines={2}>{source.summary}</Text>
-                </Pressable>
-              ))}
-            </View>
-          ) : null}
+          {result.result.sections
+            .filter((section) => section.title.trim().toLowerCase() === "cognitive symbols")
+            .map((section, index) => <ResultSectionRenderer key={`${section.title}-${index}`} section={section} />)}
           <Text style={[styles.caveat, { color: theme.colors.mutedText }]}>A reflective reading, not a diagnosis or prediction.</Text>
         </View>
       ) : null}
     </View>
   );
+}
+
+function getCognitiveInterpretation(result: DeepInterpretationResponse) {
+  const interpretation = result.result.sections.find(
+    (section) => section.title.trim().toLowerCase() === "interpretation" && typeof section.content === "string"
+  );
+  return typeof interpretation?.content === "string" && interpretation.content.trim()
+    ? interpretation.content
+    : result.result.summary;
 }
 
 function mapCreateError(error: Error) {
@@ -104,10 +106,8 @@ const styles = StyleSheet.create({
   buttonText: { fontSize: 15, fontWeight: "800" },
   disabled: { opacity: 0.6 },
   result: { gap: 12 },
-  summary: { borderRadius: 6, padding: 14 },
+  interpretation: { borderLeftWidth: 3, gap: 8, paddingLeft: 16, paddingVertical: 4 },
+  interpretationTitle: { fontSize: 15, fontWeight: "700" },
   summaryText: { fontSize: 17, fontWeight: "700", lineHeight: 24 },
-  sources: { gap: 8 },
-  sourceTitle: { fontSize: 15, fontWeight: "700" },
-  source: { fontSize: 14, lineHeight: 20 },
   caveat: { fontSize: 12, lineHeight: 18 }
 });

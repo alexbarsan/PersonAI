@@ -26,7 +26,7 @@ public sealed class DeepInterpretationHandler(
     ILogger<DeepInterpretationHandler> logger)
 {
     private const string PersonaId = "deep-dream-interpreter";
-    private const string PersonaVersion = "1.1.0";
+    private const string PersonaVersion = "1.2.0";
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     public async Task<DeepInterpretationResponse?> GetAsync(Guid dreamId, CancellationToken cancellationToken)

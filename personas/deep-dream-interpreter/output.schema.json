@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dreamlens.local/schemas/cognitive-analysis-output-v1.2.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "interpretation",
+    "cognitiveSymbols",
+    "followUpQuestions",
+    "safety"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.2"
+    },
+    "interpretation": {
+      "type": "string",
+      "minLength": 1
+    },
+    "cognitiveSymbols": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["symbol", "psychologicalMeaning", "dreamEvidence"],
+        "properties": {
+          "symbol": { "type": "string", "minLength": 1, "maxLength": 120 },
+          "psychologicalMeaning": { "type": "string", "minLength": 1 },
+          "dreamEvidence": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "followUpQuestions": {
+      "type": "array",
+      "maxItems": 0
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["selfHarmRisk", "notes"],
+      "properties": {
+        "selfHarmRisk": {
+          "type": "string",
+          "enum": ["none", "low", "elevated"]
+        },
+        "notes": { "type": "string" },
+        "categories": {
+          "type": "array",
+          "maxItems": 6,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["category", "confidence", "severity"],
+            "properties": {
+              "category": {
+                "type": "string",
+                "enum": [
+                  "self-harm-or-suicide",
+                  "threats-to-others",
+                  "sexual-violence-or-coercion",
+                  "possible-minor-sexual-content",
+                  "abuse-or-trauma",
+                  "explicit-adult-sexual-content"
+                ]
+              },
+              "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+              "severity": { "type": "string", "enum": ["review", "high"] }
+            }
+          }
+        }
+      }
+    }
+  }
+}

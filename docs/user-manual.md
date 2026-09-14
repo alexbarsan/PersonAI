@@ -13,7 +13,7 @@ Dream DNA is a wellness and entertainment app for reflective dream interpretatio
 7. Optionally choose Voice capture, record a dream note, stop the recording, and choose whether to keep the recording. By default, it is deleted after transcription.
 8. Select Transcribe recording and review the transcript inserted into Dream text.
 9. Submit the dream.
-10. Read the result sections: summary, symbols, emotions, themes, interpretation, guidance, and follow-up questions.
+10. Read the summary and available interpretation details. Empty categories are omitted, and Themes, Scenarios, and Alternative interpretations are not shown on the result page.
 11. Select **Helpful** or **Not for me** below the interpretation. A dislike asks what did not work and accepts an optional written detail. You can change previously saved feedback.
 
 ## Journal
@@ -38,7 +38,7 @@ Voice transcription is a Premium feature. A recording can be up to three minutes
 
 Free users receive an interpretation generated with the standard model. Premium users receive their main interpretation directly from the stronger Premium model, without first generating the Free interpretation.
 
-On a completed dream, **Cognitive Analysis** offers an optional second reading focused on possible thought patterns, attention, agency, uncertainty, and emotional responses. It uses relevant journal context only when dream-history consent is enabled, is saved after the first request, and has a daily Premium limit. Free users see **Cognitive Analysis** as a link to the Premium screen.
+On a completed dream, **Cognitive Analysis** offers an optional cognitive and psychological reading focused on possible thought patterns, attention, agency, uncertainty, and emotional responses. It shows the focused interpretation and a short list of evidence-linked cognitive symbols from the dream. It uses relevant journal context only when dream-history consent is enabled, is saved after the first request, and has a daily Premium limit. Free users see **Cognitive Analysis** as a link to the Premium screen.
 
 The landing page includes a daily dream thought. While an interpretation or Cognitive Analysis is being prepared, Dream DNA shows a few short facts about dreaming.
 

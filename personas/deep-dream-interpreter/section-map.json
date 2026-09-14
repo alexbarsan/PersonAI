@@ -1,0 +1,13 @@
+{
+  "summary": "$.interpretation",
+  "sections": [
+    {
+      "kind": "symbols",
+      "title": "Cognitive symbols",
+      "source": "$.cognitiveSymbols",
+      "titleField": "symbol",
+      "bodyFields": ["psychologicalMeaning", "dreamEvidence"]
+    }
+  ],
+  "followUpQuestions": "$.followUpQuestions"
+}

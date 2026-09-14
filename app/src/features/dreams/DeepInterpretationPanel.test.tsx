@@ -38,7 +38,9 @@ describe("DeepInterpretationPanel", () => {
     await waitFor(() => expect(createDeepInterpretation).toHaveBeenCalledWith("dream_mock_1"));
     expect(await screen.findByTestId("deep-interpretation-result")).toBeTruthy();
     expect(screen.getByText(mockDeepInterpretation.result.summary)).toBeTruthy();
-    expect(screen.getByText("A river appeared beside an open door.")).toBeTruthy();
+    expect(screen.getByText("Cognitive symbols")).toBeTruthy();
+    expect(screen.getByText("Open door")).toBeTruthy();
+    expect(screen.queryByText("A river appeared beside an open door.")).toBeNull();
   });
 });
 

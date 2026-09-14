@@ -8,12 +8,35 @@ import { useTheme } from "@/theme/ThemeProvider";
 export function ResultSectionRenderer({ section }: { section: DreamSectionResponse }) {
   const theme = useTheme();
 
+  if (!isSectionVisible(section)) {
+    return null;
+  }
+
   return (
     <View style={[styles.section, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
       <Text style={[styles.title, { color: theme.colors.text }]}>{section.title}</Text>
       {renderContent(section.kind, section.content)}
     </View>
   );
+}
+
+const hiddenSectionTitles = new Set([
+  "themes",
+  "scenarios",
+  "alternative interpretation",
+  "alternative interpretations"
+]);
+
+export function isSectionVisible(section: DreamSectionResponse) {
+  return !hiddenSectionTitles.has(section.title.trim().toLowerCase()) && hasContent(section.content);
+}
+
+function hasContent(value: unknown): boolean {
+  if (typeof value === "string") return value.trim().length > 0;
+  if (typeof value === "number" || typeof value === "boolean") return true;
+  if (Array.isArray(value)) return value.some(hasContent);
+  if (value && typeof value === "object") return Object.values(value).some(hasContent);
+  return false;
 }
 
 function renderContent(kind: string, content: unknown) {

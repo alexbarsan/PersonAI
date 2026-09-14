@@ -61,7 +61,7 @@ public sealed class DreamEndpointTests
     [Fact]
     public async Task PremiumUserCanCreateAndReuseDeepInterpretationWithRelatedDreamContext()
     {
-        var chatClient = new StaticDreamChatClient(CanonicalAiOutput);
+        var chatClient = new StaticDreamChatClient(CognitiveAnalysisAiOutput);
         using var app = CreateDreamApp(
             chatClient,
             premiumSubjects: ["subject-a"],
@@ -84,9 +84,12 @@ public sealed class DreamEndpointTests
         var created = await createdResponse.Content.ReadFromJsonAsync<DeepInterpretationResponse>();
         Assert.NotNull(created);
         Assert.Equal("deepseek-v4-pro", created.Model);
+        Assert.Equal("The dream may reflect attention moving between uncertainty and a growing sense of agency.", created.Result.Summary);
+        Assert.Equal("Cognitive symbols", Assert.Single(created.Result.Sections).Title);
         Assert.Equal(relatedId, Assert.Single(created.Sources).Id);
         Assert.Single(chatClient.Calls);
         Assert.Equal("deepseek-v4-pro", chatClient.Calls[0].Options?.ModelId);
+        Assert.Contains("Provide a cognitive and psychological interpretation only.", chatClient.Calls[0].Messages.Single().Text);
         Assert.Contains("A familiar river returned beside an open door.", chatClient.Calls[0].Messages.Single().Text);
         Assert.DoesNotContain("Another user's private dream.", chatClient.Calls[0].Messages.Single().Text);
         var ledger = Assert.Single(await app.GetCostLedgerRowsAsync());
@@ -100,7 +103,7 @@ public sealed class DreamEndpointTests
     [Fact]
     public async Task DeepInterpretationRequiresPremiumAndDoesNotCallProvider()
     {
-        var chatClient = new StaticDreamChatClient(CanonicalAiOutput);
+        var chatClient = new StaticDreamChatClient(CognitiveAnalysisAiOutput);
         using var app = CreateDreamApp(chatClient, embeddingsEnabled: true);
         using var client = app.CreateAuthenticatedClient("subject-a");
         await PutProfileAsync(client);
@@ -139,7 +142,7 @@ public sealed class DreamEndpointTests
     [Fact]
     public async Task DeepInterpretationEnforcesCompletedDailyQuota()
     {
-        var chatClient = new StaticDreamChatClient(CanonicalAiOutput);
+        var chatClient = new StaticDreamChatClient(CognitiveAnalysisAiOutput);
         using var app = CreateDreamApp(
             chatClient,
             premiumSubjects: ["subject-a"],
@@ -1785,6 +1788,25 @@ public sealed class DreamEndpointTests
         "notes": ""
       },
       "confidence": 0.74
+    }
+    """;
+
+    private const string CognitiveAnalysisAiOutput = """
+    {
+      "schemaVersion": "1.2",
+      "interpretation": "The dream may reflect attention moving between uncertainty and a growing sense of agency.",
+      "cognitiveSymbols": [
+        {
+          "symbol": "open door",
+          "psychologicalMeaning": "A possible representation of perceived choice and agency.",
+          "dreamEvidence": "The door appears beside the river as the dreamer considers moving forward."
+        }
+      ],
+      "followUpQuestions": [],
+      "safety": {
+        "selfHarmRisk": "none",
+        "notes": ""
+      }
     }
     """;
 

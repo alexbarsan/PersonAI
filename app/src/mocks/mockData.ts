@@ -118,17 +118,12 @@ export const mockDeepInterpretation: DeepInterpretationResponse = {
   id: "deep_interpretation_mock_1",
   dreamId: mockDream.id,
   result: {
-    summary: "Across this dream and your recent patterns, water may mark moments when change feels close but not yet settled.",
+    summary: "The dream may reflect attention moving between uncertainty and a growing sense of agency.",
     sections: [
       {
-        kind: "text",
-        title: "Interpretation",
-        content: "The river and open path may hold two possibilities at once: uncertainty about change and curiosity about where it leads."
-      },
-      {
-        kind: "list",
-        title: "Alternative interpretations",
-        content: ["Water may simply reflect a vivid sensory memory rather than a recurring emotional pattern."]
+        kind: "symbols",
+        title: "Cognitive symbols",
+        content: [{ title: "Open door", body: ["A possible representation of perceived choice and agency.", "The door appears beside the river as the dreamer considers moving forward."] }]
       }
     ],
     followUpQuestions: ["What was changing in your life when water began appearing?"],
