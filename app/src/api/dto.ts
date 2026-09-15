@@ -62,11 +62,21 @@ export type AskDreamsResponse = {
   sampleSize: number;
 };
 
+export type AskDreamMemoryStatusResponse = {
+  isReady: boolean;
+  completedDreams: number;
+  indexedDreams: number;
+  pendingDreams: number;
+  message: string;
+};
+
 export type AskDreamSourceResponse = {
   id: string;
+  title: string;
   summary: string;
   occurredAt: string | null;
   createdAt: string;
+  retrievalRank: number;
 };
 
 export type DreamResponse = {

@@ -11,9 +11,18 @@ public sealed record AskDreamsResponse(
 
 public sealed record AskDreamSourceResponse(
     Guid Id,
+    string Title,
     string Summary,
     string? OccurredAt,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    int RetrievalRank);
+
+public sealed record AskDreamMemoryStatusResponse(
+    bool IsReady,
+    int CompletedDreams,
+    int IndexedDreams,
+    int PendingDreams,
+    string Message);
 
 public sealed record AskDreamsResult(
     AskDreamsResponse? Response,

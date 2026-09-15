@@ -1,6 +1,6 @@
 import { rest } from "msw";
 
-import { mockAnonymizationRequest, mockAskDreams, mockDailyDreamContent, mockDeepInterpretation, mockDream, mockDreamFeedback, mockDreamImage, mockDreamObservation, mockEntitlement, mockInsights, mockJournal, mockMe, mockProfile, mockUserDataExport } from "@/mocks/mockData";
+import { mockAnonymizationRequest, mockAskDreams, mockAskDreamMemoryStatus, mockDailyDreamContent, mockDeepInterpretation, mockDream, mockDreamFeedback, mockDreamImage, mockDreamObservation, mockEntitlement, mockInsights, mockJournal, mockMe, mockProfile, mockUserDataExport } from "@/mocks/mockData";
 
 export const handlers = [
   rest.get("http://localhost/v1/dream-content", (_, response, context) => response(context.json(mockDailyDreamContent))),
@@ -10,6 +10,7 @@ export const handlers = [
     response(context.json(await request.json()))),
   rest.post("http://localhost/v1/dreams", (_, response, context) => response(context.json(mockDream))),
   rest.post("http://localhost/v1/dreams/ask", (_, response, context) => response(context.json(mockAskDreams))),
+  rest.get("http://localhost/v1/dreams/ask/status", (_, response, context) => response(context.json(mockAskDreamMemoryStatus))),
   rest.get("http://localhost/v1/dreams", (_, response, context) => response(context.json(mockJournal))),
   rest.post("http://localhost/v1/dreams/:id/image", (_, response, context) => response(context.status(202), context.json(mockDreamImage))),
   rest.get("http://localhost/v1/dreams/:id/image", (_, response, context) => response(context.json(mockDreamImage))),

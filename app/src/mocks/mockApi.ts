@@ -1,6 +1,6 @@
 import type { ApiClient } from "@/api/client";
 import { ApiError } from "@/api/errors";
-import { mockAdminOperations, mockAnonymizationRequest, mockAskDreams, mockDailyDreamContent, mockDeepInterpretation, mockDream, mockDreamFeedback, mockDreamImage, mockDreamObservation, mockEntitlement, mockInsights, mockJournal, mockMe, mockProfile, mockSensitiveSafetyReviews, mockUserDataExport } from "@/mocks/mockData";
+import { mockAdminOperations, mockAnonymizationRequest, mockAskDreams, mockAskDreamMemoryStatus, mockDailyDreamContent, mockDeepInterpretation, mockDream, mockDreamFeedback, mockDreamImage, mockDreamObservation, mockEntitlement, mockInsights, mockJournal, mockMe, mockProfile, mockSensitiveSafetyReviews, mockUserDataExport } from "@/mocks/mockData";
 
 export const mockApiClient: ApiClient = {
   getDailyDreamContent: async () => mockDailyDreamContent,
@@ -17,6 +17,7 @@ export const mockApiClient: ApiClient = {
     return { ...mockDream, text: request.text };
   },
   askDreams: async () => mockAskDreams,
+  getAskDreamMemoryStatus: async () => mockAskDreamMemoryStatus,
   listDreams: async (filters = {}) => {
     const filtered = mockJournal.items.filter(item => {
       const date = (item.occurredAt ?? item.createdAt).slice(0, 10);

@@ -20,6 +20,7 @@ public sealed class AskDreamsHandler(
     IAskQuotaService askQuotaService,
     IEmbeddingProvider embeddingProvider,
     SemanticMemoryService semanticMemory,
+    GetAskDreamMemoryStatusHandler memoryStatusHandler,
     IPersonaRegistry personaRegistry,
     IPromptRenderer promptRenderer,
     IOutputValidator outputValidator,
@@ -57,15 +58,16 @@ public sealed class AskDreamsHandler(
             return AskDreamsResult.Failure(StatusCodes.Status409Conflict, "consent", "AI processing and dream history consent are required.");
         }
 
-        if (!embeddingOptions.Value.Enabled)
-        {
-            return MemoryUnavailable();
-        }
-
         var entitlement = entitlementService.GetEntitlement(currentUser.Subject);
         if (entitlement.Tier != EntitlementTier.Premium)
         {
             return AskDreamsResult.Failure(StatusCodes.Status403Forbidden, "entitlement", "Ask Dream DNA is a Premium feature.");
+        }
+
+        var memoryStatus = await memoryStatusHandler.HandleAsync(cancellationToken);
+        if (!memoryStatus.IsReady)
+        {
+            return AskDreamsResult.Failure(StatusCodes.Status409Conflict, "memory_not_ready", memoryStatus.Message);
         }
 
         var reservation = await askQuotaService.TryReserveAsync(
@@ -94,7 +96,7 @@ public sealed class AskDreamsHandler(
             dbContext.AiCostLedger.Add(CreateFailedEmbeddingLedger(exception, Stopwatch.GetElapsedTime(embeddingStarted)));
             await dbContext.SaveChangesAsync(cancellationToken);
             await ReleaseReservationAsync(reservation.Id, cancellationToken);
-            return MemoryUnavailable();
+            return AskDreamsResult.Failure(StatusCodes.Status503ServiceUnavailable, "memory_unavailable", "Dream memory is temporarily unavailable. Please try again.");
         }
 
         var matches = await semanticMemory.FindSimilarAsync(
@@ -113,7 +115,7 @@ public sealed class AskDreamsHandler(
         if (sources.Length == 0)
         {
             await ReleaseReservationAsync(reservation.Id, cancellationToken);
-            return MemoryUnavailable();
+            return AskDreamsResult.Failure(StatusCodes.Status409Conflict, "memory_not_ready", "Your relevant dreams are still being indexed. Refresh the memory status and try again shortly.");
         }
 
         var persona = await personaRegistry.GetAsync(PersonaId, cancellationToken);
@@ -175,8 +177,16 @@ public sealed class AskDreamsHandler(
             return AskDreamsResult.Failure(StatusCodes.Status503ServiceUnavailable, "answer", "Dream DNA could not answer safely right now. Please try again.");
         }
 
+        var retrievalRanks = sources.Select((source, index) => new { source.Id, Rank = index + 1 })
+            .ToDictionary(item => item.Id, item => item.Rank);
         var linkedSources = sources.Where(source => modelOutput.ReferencedDreamIds.Contains(source.Id))
-            .Select(source => new AskDreamSourceResponse(source.Id, DreamMapper.ReadSummary(source)!, source.OccurredAt, source.CreatedAt))
+            .Select(source => new AskDreamSourceResponse(
+                source.Id,
+                DreamTitleGenerator.Create(source.Title, DreamMapper.ReadSummary(source), source.Text),
+                DreamMapper.ReadSummary(source)!,
+                source.OccurredAt,
+                source.CreatedAt,
+                retrievalRanks[source.Id]))
             .ToArray();
         dbContext.AiCostLedger.Add(CreateAskLedger("completed", null, attempts, inputTokens, outputTokens, Stopwatch.GetElapsedTime(askStarted)));
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -256,11 +266,6 @@ public sealed class AskDreamsHandler(
             return false;
         }
     }
-
-    private static AskDreamsResult MemoryUnavailable() => AskDreamsResult.Failure(
-        StatusCodes.Status503ServiceUnavailable,
-        "memory",
-        "Your semantic dream memory is not ready yet. Try again after your dream history has been indexed.");
 
     private static int ToInt(long? value) => value is null ? 0 : checked((int)value.Value);
 

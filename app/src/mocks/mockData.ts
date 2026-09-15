@@ -38,11 +38,21 @@ export const mockAskDreams: AskDreamsResponse = {
   caveat: "This is a reflective pattern from a small sample, not a diagnosis or prediction.",
   sources: [{
     id: "dream_mock_1",
+    title: "The Quiet Shoreline",
     summary: "The dream points to uncertainty and a wish for steadier ground.",
     occurredAt: "2026-07-01",
-    createdAt: "2026-07-01T08:00:00Z"
+    createdAt: "2026-07-01T08:00:00Z",
+    retrievalRank: 1
   }],
   sampleSize: 1
+};
+
+export const mockAskDreamMemoryStatus = {
+  isReady: true,
+  completedDreams: 1,
+  indexedDreams: 1,
+  pendingDreams: 0,
+  message: "Your dream memory is ready."
 };
 
 export const mockMe: MeResponse = {

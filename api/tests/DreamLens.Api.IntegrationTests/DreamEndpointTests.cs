@@ -250,7 +250,10 @@ public sealed class DreamEndpointTests
         var result = await response.Content.ReadFromJsonAsync<AskDreamsResponse>();
         Assert.NotNull(result);
         Assert.Equal(1, result.SampleSize);
-        Assert.Equal(AskSourceDreamId, Assert.Single(result.Sources).Id);
+        var source = Assert.Single(result.Sources);
+        Assert.Equal(AskSourceDreamId, source.Id);
+        Assert.Equal(1, source.RetrievalRank);
+        Assert.False(string.IsNullOrWhiteSpace(source.Title));
         var ledger = await app.GetCostLedgerRowsAsync();
         Assert.Equal(["dream.query-embedding", "dream.ask"], ledger.Select(row => row.OperationType).ToArray());
         Assert.All(ledger, row => Assert.Equal("subject-a", row.UserSubject));
@@ -265,10 +268,29 @@ public sealed class DreamEndpointTests
 
         var response = await client.PostAsJsonAsync("/v1/dreams/ask", new AskDreamsRequest("What pattern repeats?"));
 
-        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
         var ledger = await app.GetCostLedgerRowsAsync();
-        Assert.Single(ledger);
-        Assert.Equal("dream.query-embedding", ledger[0].OperationType);
+        Assert.Empty(ledger);
+    }
+
+    [Fact]
+    public async Task AskDreamMemoryStatusReturnsOnlyTheCurrentUsersActiveIndex()
+    {
+        using var app = CreateDreamApp(new StaticDreamChatClient("should not be used"), embeddingsEnabled: true, premiumSubjects: ["subject-a"]);
+        using var client = app.CreateAuthenticatedClient("subject-a");
+        await PutProfileAsync(client);
+        await app.AddSemanticDreamAsync(Guid.NewGuid(), "subject-a", "A river appeared during a period of change.");
+        await app.AddSemanticDreamAsync(Guid.NewGuid(), "subject-b", "Another user's private dream must not affect readiness.");
+
+        var response = await client.GetAsync("/v1/dreams/ask/status");
+        var status = await response.Content.ReadFromJsonAsync<AskDreamMemoryStatusResponse>();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.NotNull(status);
+        Assert.True(status.IsReady);
+        Assert.Equal(1, status.CompletedDreams);
+        Assert.Equal(1, status.IndexedDreams);
+        Assert.Equal(0, status.PendingDreams);
     }
 
     [Fact]
@@ -1333,6 +1355,7 @@ public sealed class DreamEndpointTests
                     services.AddScoped<UpdateDreamFeedbackHandler>();
                     services.AddScoped<SemanticMemoryService>();
                     services.AddScoped<AskDreamsHandler>();
+                    services.AddScoped<GetAskDreamMemoryStatusHandler>();
                     services.AddScoped<DeepInterpretationHandler>();
                     services.AddSingleton<IDreamImagePromptComposer, DreamImagePromptComposer>();
                     services.AddScoped<RequestDreamImageHandler>();

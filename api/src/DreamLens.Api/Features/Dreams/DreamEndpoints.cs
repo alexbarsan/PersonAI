@@ -79,6 +79,13 @@ public static class DreamEndpoints
             .WithName("AskDreamHistory")
             .WithSummary("Answers a reflective question using owner-scoped semantic dream memory.");
 
+        group.MapGet("ask/status", async (
+            [FromServices] GetAskDreamMemoryStatusHandler handler,
+            CancellationToken cancellationToken) =>
+            Results.Ok(await handler.HandleAsync(cancellationToken)))
+            .WithName("GetAskDreamMemoryStatus")
+            .WithSummary("Returns the current user's semantic dream-memory readiness without asking an AI question.");
+
         group.MapGet("{id:guid}", async (
             Guid id,
             [FromServices] GetDreamHandler handler,
