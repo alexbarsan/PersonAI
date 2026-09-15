@@ -158,10 +158,6 @@ export function LandingScreen({ onStart, pending, error, mock }: Props) {
           <Text style={[s.heroStatement, mobile && s.heroStatementMobile]}>
             A personal map of your subconscious over time.
           </Text>
-          <Text style={s.heroBody}>
-            A few seconds is enough to keep a dream from disappearing. Remember
-            it. Explore its meaning. Discover what connects your nights.
-          </Text>
           <DailyDreamQuote />
           <View style={s.heroActions}>
             {start(mock ? "mock-sign-in" : "cognito-sign-in")}
@@ -504,7 +500,6 @@ const s = StyleSheet.create({
     marginBottom: 16,
   },
   heroStatementMobile: { fontSize: 24, lineHeight: 31, maxWidth: 320 },
-  heroBody: { fontSize: 17, lineHeight: 26, maxWidth: 455, color: "#345d4e" },
   heroActions: { gap: 12, alignItems: "flex-start", marginTop: 24 },
   heroFootnote: { fontSize: 12, color: "#345d4e" },
   button: {

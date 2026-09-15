@@ -1,13 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
-import { Image, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Image, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from "react-native";
 import { Text } from "@/components/Text";
 
 import { useApiClient } from "@/api/apiContext";
 import { ApiError } from "@/api/client";
 import { DreamImageResponse } from "@/api/dto";
 import { AppShell, BrandMark } from "@/components/AppShell";
-import { ResultSectionRenderer } from "@/features/dreams/ResultSectionRenderer";
+import { isSectionVisible, ResultSectionRenderer } from "@/features/dreams/ResultSectionRenderer";
 import { InterpretationFeedbackPanel } from "@/features/dreams/InterpretationFeedbackPanel";
 import { DeepInterpretationPanel } from "@/features/dreams/DeepInterpretationPanel";
 import { DreamingFacts } from "@/features/content/DailyDreamContent";
@@ -73,6 +73,10 @@ export function DreamResultScreen() {
     onSuccess: (updated) => queryClient.setQueryData(["dream", id], updated)
   });
   const isInterpreting = dream.data?.status === "pending" || dream.data?.status === "processing";
+  const { width } = useWindowDimensions();
+  const detailSections = result?.sections.filter(isDetailSection) ?? [];
+  const narrativeSections = result?.sections.filter((section) => isSectionVisible(section) && !isDetailSection(section) && !isInterpretationSection(section)) ?? [];
+  const compactReadingLayout = width < 760;
 
   return (
     <AppShell>
@@ -107,14 +111,23 @@ export function DreamResultScreen() {
 
         {result ? (
           <View style={styles.content}>
-          <View style={[styles.summaryCard, { borderColor: theme.colors.primary }]}>
-            <Text style={[styles.summaryLabel, { color: theme.colors.primary }]}>Your interpretation</Text>
-            <Text testID="dream-summary" style={[styles.summary, { color: theme.colors.text }]}>{result.summary}</Text>
-          </View>
           <SafetyCard safety={result.safety} />
+          <View style={[styles.readingLayout, compactReadingLayout && styles.readingLayoutCompact]}>
+            {elevatedSafety || detailSections.length === 0 ? null : (
+              <View style={[styles.detailRail, compactReadingLayout && styles.detailRailCompact]}>
+                {detailSections.map((section, index) => (
+                  <ResultSectionRenderer key={`${section.title}-${index}`} section={section} />
+                ))}
+              </View>
+            )}
+            <View style={styles.interpretationColumn}>
+              <View style={styles.interpretation}>
+                <Text style={[styles.interpretationTitle, { color: theme.colors.text }]}>Interpretation</Text>
+                <Text testID="dream-summary" style={[styles.summary, { color: theme.colors.text }]}>{result.summary}</Text>
+              </View>
           {elevatedSafety
             ? null
-            : result.sections.map((section, index) => (
+            : narrativeSections.map((section, index) => (
                 <ResultSectionRenderer key={`${section.title}-${index}`} section={section} />
               ))}
           {elevatedSafety || result.followUpQuestions.length === 0 ? null : (
@@ -127,6 +140,8 @@ export function DreamResultScreen() {
               ))}
             </View>
           )}
+            </View>
+          </View>
           <InterpretationFeedbackPanel dreamId={dream.data!.id} />
           {elevatedSafety ? null : <DeepInterpretationPanel dreamId={dream.data!.id} enabled={hasPremiumDreamFeatures} />}
           {elevatedSafety ? null : (
@@ -144,6 +159,15 @@ export function DreamResultScreen() {
       </ScrollView>
     </AppShell>
   );
+}
+
+function isDetailSection(section: { title: string }) {
+  return ["symbols", "emotions", "people", "locations", "objects"].includes(section.title.trim().toLowerCase())
+    && isSectionVisible(section as Parameters<typeof isSectionVisible>[0]);
+}
+
+function isInterpretationSection(section: { title: string }) {
+  return section.title.trim().toLowerCase() === "interpretation";
 }
 
 function DreamImagePanel({
@@ -290,14 +314,42 @@ const styles = StyleSheet.create({
     lineHeight: 22
   },
   content: {
-    gap: 8
+    gap: 24
   },
-  summaryCard: {
-    borderLeftWidth: 3,
+  readingLayout: {
+    alignItems: "flex-start",
+    flexDirection: "row",
+    gap: 36
+  },
+  readingLayoutCompact: {
+    flexDirection: "column-reverse",
+    gap: 24
+  },
+  detailRail: {
+    flexBasis: 250,
+    flexGrow: 0,
+    flexShrink: 0,
+    maxWidth: 280,
+    width: 250
+  },
+  detailRailCompact: {
+    alignSelf: "stretch",
+    flexBasis: "auto",
+    maxWidth: "100%",
+    width: "100%"
+  },
+  interpretationColumn: {
+    flex: 1,
+    minWidth: 0
+  },
+  interpretation: {
     gap: 10,
-    paddingLeft: 20,
-    paddingVertical: 8,
-    marginBottom: 24
+    paddingBottom: 24
+  },
+  interpretationTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+    lineHeight: 30
   },
   originalDream: {
     borderRadius: 8,
@@ -346,10 +398,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     minHeight: 42,
     paddingHorizontal: 16
-  },
-  summaryLabel: {
-    fontSize: 14,
-    fontWeight: "700"
   },
   summary: {
     fontSize: 20,

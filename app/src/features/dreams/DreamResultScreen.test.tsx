@@ -38,6 +38,10 @@ describe("DreamResultScreen", () => {
     expect(screen.getByTestId("result-disclaimer")).toBeTruthy();
     expect(screen.getByText(mockDream.title)).toBeTruthy();
     expect(screen.getByText(mockDream.result!.summary)).toBeTruthy();
+    expect(screen.getByText("Interpretation")).toBeTruthy();
+    expect(screen.queryByText("Your interpretation")).toBeNull();
+    expect(screen.getByText("Symbols")).toBeTruthy();
+    expect(screen.getByText("Emotions")).toBeTruthy();
     expect(screen.getByText("Guidance")).toBeTruthy();
   });
 
