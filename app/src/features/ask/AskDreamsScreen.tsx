@@ -41,7 +41,7 @@ export function AskDreamsScreen() {
       <ScrollView contentContainerStyle={styles.screen} keyboardShouldPersistTaps="handled">
         <BrandMark detail="Explore patterns grounded in your own dream journal." />
         <View style={[styles.intro, { backgroundColor: theme.colors.sage }]}>
-          <Text style={[styles.title, { color: theme.colors.text }]}>Ask your dream history</Text>
+          <Text accessibilityRole="header" style={[styles.title, { color: theme.colors.text }]}>Ask your dream history</Text>
           <Text style={[styles.body, { color: theme.colors.mutedText }]}>Dream DNA finds relevant dreams first, then answers from those memories.</Text>
         </View>
 

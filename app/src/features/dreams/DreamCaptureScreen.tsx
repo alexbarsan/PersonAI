@@ -75,7 +75,7 @@ export function DreamCaptureScreen({ onSubmitted }: DreamCaptureScreenProps) {
       <ScrollView contentContainerStyle={styles.screen}>
         <BrandMark detail="Capture while it is still close." />
         <View style={[styles.hero, { backgroundColor: theme.colors.lavender }]}>
-          <Text style={[styles.title, { color: theme.colors.text }]}>What stayed with you?</Text>
+          <Text accessibilityRole="header" style={[styles.title, { color: theme.colors.text }]}>What stayed with you?</Text>
           <Text style={[styles.subtitle, { color: theme.colors.mutedText }]}>Start with one image, feeling, place, or person. The details can arrive later.</Text>
         </View>
         <View style={[styles.form, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>

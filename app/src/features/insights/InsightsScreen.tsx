@@ -38,7 +38,7 @@ export function InsightsScreen() {
       <ScrollView contentContainerStyle={styles.screen}>
         <BrandMark detail="A personal map of your subconscious, over time." />
         <View style={[styles.hero, { backgroundColor: theme.colors.lavender }]}>
-          <Text style={[styles.title, { color: theme.colors.text }]}>
+          <Text accessibilityRole="header" style={[styles.title, { color: theme.colors.text }]}>
             Your dream map
           </Text>
           <Text style={[styles.subtitle, { color: theme.colors.mutedText }]}>
@@ -80,13 +80,14 @@ export function InsightsScreen() {
             </View>
             {insights.data.factGroups.length > 0 ? (
               <>
-                <View style={styles.tabs}>
+                <View accessibilityRole="tablist" style={styles.tabs}>
                   {[
                     { type: "all", title: "Everything" },
                     ...insights.data.factGroups,
                   ].map((group) => (
                     <Pressable
                       key={group.type}
+                      aria-selected={groupFilter === group.type}
                       accessibilityRole="tab"
                       accessibilityState={{
                         selected: groupFilter === group.type,

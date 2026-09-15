@@ -70,7 +70,7 @@ function DetailStrip({ kind, content }: { kind: string; content: unknown }) {
   const intensity = active.value ?? active.intensity;
   return <View style={styles.detailStrip}>
     <View style={styles.selectors} accessibilityRole="tablist">
-      {items.map((item, index) => <Pressable key={index} accessibilityRole="tab"
+      {items.map((item, index) => <Pressable key={index} aria-selected={index === activeIndex} accessibilityLabel={`${kind}: ${label(item)}`} accessibilityRole="tab"
         accessibilityState={{ selected: index === activeIndex }} onPress={() => setSelected(index)}
         style={[styles.selector, { borderColor: index === activeIndex ? theme.colors.primary : theme.colors.border,
           backgroundColor: index === activeIndex ? theme.colors.primary : theme.colors.surface }]}>

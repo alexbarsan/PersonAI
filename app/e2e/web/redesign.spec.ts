@@ -74,7 +74,7 @@ test("landing offers a working web entry, honest store placeholders and interact
     path: "test-results/dream-dna-journal-desktop.png",
     fullPage: true,
   });
-  await page.getByRole("button", { name: "Map", exact: true }).click();
+  await page.getByRole("link", { name: "Map", exact: true }).click();
   await expect(
     page.getByText("Dreams recorded", { exact: true }),
   ).toBeVisible();
@@ -93,7 +93,7 @@ test("the Dream DNA brand returns a signed-in visitor home", async ({ page }) =>
   await page.goto("/");
   await page.getByTestId("mock-sign-in").click();
   await expect(page.getByText("Today's dream", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Journal", exact: true }).click();
+  await page.getByRole("link", { name: "Journal", exact: true }).click();
   await expect(page.getByText("Your dreams", { exact: true })).toBeVisible();
 
   await page.getByRole("link", { name: "Dream DNA home", exact: true }).first().click();
@@ -130,7 +130,7 @@ for (const width of [375, 390, 768]) {
       fullPage: true,
     });
     await noHorizontalOverflow(page);
-    const navigation = page.getByRole("button", {
+    const navigation = page.getByRole("link", {
       name: "Journal",
       exact: true,
     });
@@ -145,7 +145,7 @@ for (const width of [375, 390, 768]) {
     await noHorizontalOverflow(page);
     await page.getByRole("button", { name: "Clear search", exact: true }).click();
     await expect(page.getByLabel("Search dreams")).toHaveValue("");
-    await page.getByRole("button", { name: "Ask", exact: true }).click();
+    await page.getByRole("link", { name: "Ask", exact: true }).click();
     await expect(page.getByText("Available with Premium", { exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Explore Premium", exact: true })).toBeVisible();
     await page.screenshot({

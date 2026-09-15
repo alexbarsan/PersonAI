@@ -25,7 +25,7 @@ test("happy path: onboarding, submit dream, view result", async ({ page }) => {
   await expect(page.getByText("The Quiet Shoreline", { exact: true })).toBeVisible();
   await expect(page.getByTestId("dream-summary")).toHaveText("The dream points to uncertainty and a wish for steadier ground.");
   await expect(page.getByText("Guidance")).toBeVisible();
-  await expect(page.getByRole("tab", { name: "water", exact: true })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "symbols: water", exact: true })).toBeVisible();
   await expect(page.getByText("Original dream", { exact: true })).toBeVisible();
   await expect(page.getByText("I was walking through a quiet station while holding a blue notebook.", { exact: true }).last()).toBeVisible();
   await page.getByTestId("dream-summary").scrollIntoViewIfNeeded();

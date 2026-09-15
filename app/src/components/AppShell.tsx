@@ -1,5 +1,5 @@
 import { PropsWithChildren } from "react";
-import { Link, router, usePathname } from "expo-router";
+import { Link, usePathname } from "expo-router";
 import {
   Platform,
   Pressable,
@@ -59,50 +59,48 @@ export function AppShell({
           >
             Your inner world, remembered.
           </Text>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => router.push("/dreams/capture")}
-            style={[styles.capture, { backgroundColor: theme.colors.primary }]}
-          >
-            <Plus size={18} color="white" />
-            <Text style={styles.captureText}>Capture a dream</Text>
-          </Pressable>
-          <View style={styles.sideLinks}>
+          <Link href="/dreams/capture" asChild>
+            <Pressable
+              accessibilityLabel="Capture a dream"
+              accessibilityRole="link"
+              style={StyleSheet.flatten([styles.capture, { backgroundColor: theme.colors.primary }])}
+            >
+              <Plus size={18} color="white" />
+              <Text style={styles.captureText}>Capture a dream</Text>
+            </Pressable>
+          </Link>
+          <View accessibilityLabel="Primary navigation" style={styles.sideLinks}>
             {destinations.map(({ href, label, icon: Icon }) => {
               const active =
                 href === "/" ? pathname === "/" : pathname.startsWith(href);
-              return (
-                <Pressable
-                  key={href}
-                  accessibilityLabel={label}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: active }}
-                  onPress={() => router.push(href)}
+              return <Link key={href} href={href} asChild><Pressable
+                accessibilityLabel={label}
+                accessibilityRole="link"
+                accessibilityState={{ selected: active }}
+                style={StyleSheet.flatten([
+                  styles.sideItem,
+                  active && { backgroundColor: theme.colors.sage },
+                ])}
+              >
+                <Icon
+                  size={21}
+                  color={
+                    active ? theme.colors.primary : theme.colors.mutedText
+                  }
+                />
+                <Text
                   style={[
-                    styles.sideItem,
-                    active && { backgroundColor: theme.colors.sage },
+                    styles.sideLabel,
+                    {
+                      color: active
+                        ? theme.colors.primary
+                        : theme.colors.mutedText,
+                    },
                   ]}
                 >
-                  <Icon
-                    size={21}
-                    color={
-                      active ? theme.colors.primary : theme.colors.mutedText
-                    }
-                  />
-                  <Text
-                    style={[
-                      styles.sideLabel,
-                      {
-                        color: active
-                          ? theme.colors.primary
-                          : theme.colors.mutedText,
-                      },
-                    ]}
-                  >
-                    {label}
-                  </Text>
-                </Pressable>
-              );
+                  {label}
+                </Text>
+              </Pressable></Link>;
             })}
           </View>
           <View style={styles.sidebarFoot}>
@@ -126,6 +124,7 @@ export function AppShell({
         <View style={styles.content}>{children}</View>
         {showNavigation && !desktop ? (
           <View
+            accessibilityLabel="Primary navigation"
             style={[
               styles.navigation,
               {
@@ -138,43 +137,39 @@ export function AppShell({
             {destinations.map(({ href, label, icon: Icon }) => {
               const active =
                 href === "/" ? pathname === "/" : pathname.startsWith(href);
-              return (
-                <Pressable
-                  key={href}
-                  accessibilityLabel={label}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: active }}
-                  onPress={() => router.push(href)}
-                  style={styles.navItem}
+              return <Link key={href} href={href} asChild><Pressable
+                accessibilityLabel={label}
+                accessibilityRole="link"
+                accessibilityState={{ selected: active }}
+                style={styles.navItem}
+              >
+                <View
+                  style={[
+                    styles.navIcon,
+                    active && { backgroundColor: theme.colors.sage },
+                  ]}
                 >
-                  <View
-                    style={[
-                      styles.navIcon,
-                      active && { backgroundColor: theme.colors.sage },
-                    ]}
-                  >
-                    <Icon
-                      size={21}
-                      strokeWidth={active ? 2.3 : 1.7}
-                      color={
-                        active ? theme.colors.primary : theme.colors.mutedText
-                      }
-                    />
-                  </View>
-                  <Text
-                    style={[
-                      styles.navLabel,
-                      {
-                        color: active
-                          ? theme.colors.primary
-                          : theme.colors.mutedText,
-                      },
-                    ]}
-                  >
-                    {label}
-                  </Text>
-                </Pressable>
-              );
+                  <Icon
+                    size={21}
+                    strokeWidth={active ? 2.3 : 1.7}
+                    color={
+                      active ? theme.colors.primary : theme.colors.mutedText
+                    }
+                  />
+                </View>
+                <Text
+                  style={[
+                    styles.navLabel,
+                    {
+                      color: active
+                        ? theme.colors.primary
+                        : theme.colors.mutedText,
+                    },
+                  ]}
+                >
+                  {label}
+                </Text>
+              </Pressable></Link>;
             })}
           </View>
         ) : null}

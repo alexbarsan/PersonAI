@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { router } from "expo-router";
+import { Link, router } from "expo-router";
 import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
 import ArrowRight from "lucide-react-native/icons/arrow-right";
@@ -34,7 +34,7 @@ export function JournalListScreen() {
       <ScrollView contentContainerStyle={styles.screen} keyboardShouldPersistTaps="handled">
         <BrandMark detail="Your remembered places, people, and feelings." />
         <View style={[styles.hero, { backgroundColor: theme.colors.sage }]}>
-          <Text style={[styles.title, { color: theme.colors.text }]}>Your dreams</Text>
+          <Text accessibilityRole="header" style={[styles.title, { color: theme.colors.text }]}>Your dreams</Text>
           <Text style={[styles.subtitle, { color: theme.colors.mutedText }]}>A private record that grows more useful with time.</Text>
           <Pressable accessibilityRole="button" onPress={() => router.push("/dreams/capture")} style={[styles.newDream, { backgroundColor: theme.colors.primary }]}>
             <Plus size={18} color={theme.colors.primaryText} />
@@ -62,7 +62,7 @@ export function JournalListScreen() {
         <View style={styles.list}>
           {journal.data?.items.map((item) => (
             <View key={item.id} style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
-              <Pressable accessibilityRole="button" onPress={() => router.push(`/journal/${item.id}`)} style={styles.cardLink} testID={`journal-item-${item.id}`}>
+              <Link href={`/journal/${item.id}`} asChild><Pressable accessibilityLabel={`Open dream: ${item.title}`} accessibilityRole="link" style={styles.cardLink} testID={`journal-item-${item.id}`}>
                 <View style={[styles.dateBadge, { backgroundColor: theme.colors.lavender }]}>
                   <Text style={[styles.dateBadgeText, { color: theme.colors.text }]}>{formatDreamDate(item.occurredAt ?? item.createdAt)}</Text>
                 </View>
@@ -72,7 +72,7 @@ export function JournalListScreen() {
                   {item.mood ? <Text style={[styles.meta, { color: theme.colors.mutedText }]}>{item.mood}</Text> : null}
                 </View>
                 <ArrowRight size={18} color={theme.colors.mutedText} />
-              </Pressable>
+              </Pressable></Link>
             </View>
           ))}
         </View>
