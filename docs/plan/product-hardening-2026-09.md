@@ -20,6 +20,6 @@
 
 ## Evidence and constraints
 
-- Dream ownership is already enforced by `UserSubject` filtering. Existing dreams are preserved; no destructive data migration is planned.
+- Dream ownership is already enforced by `UserSubject` filtering. Existing dreams are preserved; no destructive data migration is planned. Historical DreamFacts are not automatically backfilled: pre-S22 records retain rendered interpretation JSON rather than the raw structured schema required to produce accurate, provenance-bearing facts. Re-extracting rendered text would degrade map quality; re-asking AI would change historical output and add cost. Relationship analytics must therefore use verified normalized facts only.
 - Primary interpretation uses the same durable job framework as image, embedding, safety, and voice work. The production request contract is `202 Accepted` plus `GET /v1/dreams/{id}` polling; controlled test mode retains the former synchronous path for legacy contract coverage.
 - Billing is not connected. Plans will describe only configured entitlement capabilities and will not simulate purchases.
