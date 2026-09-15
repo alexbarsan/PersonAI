@@ -37,10 +37,34 @@ public static class DreamEndpoints
 
             return result.IsCompleted
                 ? Results.Ok(result.Dream)
-                : Results.Json(result.Dream, statusCode: StatusCodes.Status503ServiceUnavailable);
+                : result.ErrorStatusCode == StatusCodes.Status503ServiceUnavailable
+                    ? Results.Json(result.Dream, statusCode: result.ErrorStatusCode)
+                : Results.Accepted($"/v1/dreams/{result.Dream!.Id}", result.Dream);
         })
             .WithName("SubmitDream")
             .WithSummary("Submits a dream and returns an interpretation result.");
+
+        group.MapPost("{id:guid}/retry", async (
+            Guid id,
+            [FromServices] DreamInterpretationLifecycleHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var dream = await handler.RetryAsync(id, cancellationToken);
+            return dream is null ? Results.NotFound() : Results.Accepted($"/v1/dreams/{id}", dream);
+        })
+            .WithName("RetryDreamInterpretation")
+            .WithSummary("Retries a failed interpretation for an owned dream.");
+
+        group.MapPost("{id:guid}/cancel", async (
+            Guid id,
+            [FromServices] DreamInterpretationLifecycleHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var dream = await handler.CancelAsync(id, cancellationToken);
+            return dream is null ? Results.NotFound() : Results.Ok(dream);
+        })
+            .WithName("CancelDreamInterpretation")
+            .WithSummary("Cancels a queued or processing interpretation for an owned dream.");
 
         group.MapPost("ask", async (
             AskDreamsRequest request,

@@ -9,9 +9,19 @@ public sealed record SubmitDreamResult(
     Dictionary<string, string[]> Errors,
     int ErrorStatusCode = StatusCodes.Status400BadRequest)
 {
-    public static SubmitDreamResult Valid(DreamResponse dream)
+    public static SubmitDreamResult Accepted(DreamResponse dream)
     {
-        return new SubmitDreamResult(true, dream.Status == "completed", dream, []);
+        return new SubmitDreamResult(true, false, dream, [], StatusCodes.Status202Accepted);
+    }
+
+    public static SubmitDreamResult Completed(DreamResponse dream)
+    {
+        return new SubmitDreamResult(true, true, dream, [], StatusCodes.Status200OK);
+    }
+
+    public static SubmitDreamResult Failed(DreamResponse dream)
+    {
+        return new SubmitDreamResult(true, false, dream, [], StatusCodes.Status503ServiceUnavailable);
     }
 
     public static SubmitDreamResult Invalid(Dictionary<string, string[]> errors)

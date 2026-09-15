@@ -1,41 +1,25 @@
-using System.Diagnostics;
 using System.Text.Json;
-using DreamLens.Api.Features.Profile;
-using DreamLens.Api.Features.Safety;
 using DreamLens.Api.Infrastructure.Identity;
-using DreamLens.Api.Infrastructure.Embeddings;
-using DreamLens.Api.Infrastructure.Images;
-using DreamLens.Api.Infrastructure.Observability;
 using DreamLens.Api.Infrastructure.Jobs;
 using DreamLens.Api.Infrastructure.Monetization;
 using DreamLens.Api.Infrastructure.Persistence;
 using DreamLens.Api.Infrastructure.Quotas;
-using DreamLens.Api.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using PersonaKit.Context;
-using PersonaKit.Pipeline;
 using PersonaKit.Providers.DeepSeek;
-using PersonaKit.Providers.Usage;
 
 namespace DreamLens.Api.Features.Dreams;
 
 public sealed class SubmitDreamHandler(
     DreamLensDbContext dbContext,
     ICurrentUser currentUser,
-    IStringEncryptor encryptor,
-    IInterpretationPipeline interpretationPipeline,
     IEntitlementService entitlementService,
     IDreamQuotaService quotaService,
-    IOptions<EmbeddingOptions> embeddingOptions,
-    IOptions<ImageGenerationOptions> imageGenerationOptions,
-    IOptions<ImagePromptSafetyOptions> imagePromptSafetyOptions,
     IOptions<DeepSeekOptions> deepSeekOptions,
     IOptions<DeepInterpretationOptions> deepInterpretationOptions,
-    IOptions<UsageCostOptions> usageCostOptions,
-    IOptions<SensitiveSafetyOptions> sensitiveSafetyOptions,
-    SensitiveSafetyEventFactory sensitiveSafetyEventFactory,
-    AsyncJobService? asyncJobService = null)
+    IOptions<PrimaryInterpretationOptions> primaryInterpretationOptions,
+    DreamInterpretationJobHandler interpretationJobHandler,
+    AsyncJobService asyncJobService)
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -52,7 +36,6 @@ public sealed class SubmitDreamHandler(
         var profile = await dbContext.UserProfiles
             .AsNoTracking()
             .SingleOrDefaultAsync(candidate => candidate.UserSubject == currentUser.Subject, cancellationToken);
-
         if (profile is null)
         {
             return SubmitDreamResult.Invalid(new Dictionary<string, string[]>
@@ -71,147 +54,53 @@ public sealed class SubmitDreamHandler(
 
         if (!await quotaService.CanSubmitDreamAsync(currentUser.Subject, cancellationToken))
         {
-            DreamLensMeters.QuotaRejections.Add(1);
             return SubmitDreamResult.QuotaExceeded();
         }
 
-        var traits = JsonSerializer.Deserialize<ProfileTraitsDto>(encryptor.Decrypt(profile.EncryptedTraitsJson), JsonOptions)
-            ?? ProfileTraitsDto.Empty;
         var dreamText = request.Text!.Trim();
         var entitlement = entitlementService.GetEntitlement(currentUser.Subject);
         var isPremium = entitlement.Tier == EntitlementTier.Premium;
-        var personaId = isPremium ? "premium-dream-interpreter" : "dream-interpreter";
-        var personaVersion = isPremium ? "1.0.0" : "1.1.0";
-        var model = isPremium ? deepInterpretationOptions.Value.Model : deepSeekOptions.Value.Model;
-        var started = Stopwatch.GetTimestamp();
-        var interpretation = await interpretationPipeline.InterpretAsync(
-            new InterpretationRequest(
-                personaId,
-                new ContextBuildRequest(
-                    Guid.NewGuid().ToString(),
-                    NormalizeLocale(profile.Language),
-                    new ContextPersona(personaId, personaVersion),
-                    new ContextUserSource(
-                        profile.UserSubject,
-                        null,
-                        null,
-                        profile.Age,
-                        profile.Sex,
-                        profile.GenderIdentity,
-                        profile.Language,
-                        profile.Timezone,
-                        new ContextTraits(
-                            traits.Fears,
-                            traits.Allergies,
-                            traits.Interests,
-                            traits.Occupation,
-                            traits.RelationshipStatus,
-                            traits.CulturalBackground,
-                            traits.SleepPattern,
-                            traits.StressLevel,
-                            traits.RecentLifeEvents),
-                        new ContextConsent(
-                            profile.ConsentAiProcessing,
-                            profile.ConsentSensitiveTraits,
-                            profile.ConsentHistoryUse)),
-                    null,
-                    new DreamInput(
-                        dreamText,
-                        Normalize(request.Mood),
-                        request.SleepQuality,
-                        NormalizeArray(request.Tags),
-                        Normalize(request.OccurredAt))),
-                isPremium
-                    ? new InterpretationExecutionOptions(
-                        model,
-                        Math.Clamp(deepInterpretationOptions.Value.MaxOutputTokens, 512, 16_384),
-                        0.8f)
-                    : null),
-            cancellationToken);
-        var latency = Stopwatch.GetElapsedTime(started);
-
-        var result = interpretation.Result is null ? null : MapResult(interpretation.Result);
+        var route = new DreamInterpretationJobHandler.DreamInterpretationJobPayload(
+            Guid.Empty,
+            isPremium,
+            isPremium ? "premium-dream-interpreter" : "dream-interpreter",
+            isPremium ? "1.0.0" : "1.1.0",
+            isPremium ? deepInterpretationOptions.Value.Model : deepSeekOptions.Value.Model,
+            isPremium ? Math.Clamp(deepInterpretationOptions.Value.MaxOutputTokens, 512, 16_384) : null);
         var record = new DreamRecord
         {
             UserSubject = currentUser.Subject,
             Text = dreamText,
-            Title = DreamTitleGenerator.FromInterpretation(interpretation.Result?.RawJson, result?.Summary, dreamText),
+            Title = DreamTitleGenerator.Create(null, null, dreamText),
             Mood = Normalize(request.Mood),
             SleepQuality = request.SleepQuality,
             TagsJson = JsonSerializer.Serialize(NormalizeArray(request.Tags), JsonOptions),
             OccurredAt = Normalize(request.OccurredAt),
-            Status = interpretation.Status == InterpretationStatus.Completed ? "completed" : "failed",
-            ResultJson = result is null ? null : JsonSerializer.Serialize(result, JsonOptions),
-            ErrorMessage = interpretation.ErrorMessage
+            Status = DreamStatuses.Pending
         };
-
         dbContext.Dreams.Add(record);
-        if (record.Status == "completed" && interpretation.Result is not null)
-        {
-            dbContext.DreamFacts.AddRange(DreamFactExtractor.Extract(record, interpretation.Result.RawJson));
-            var safetyEvents = sensitiveSafetyEventFactory.Create(record, dreamText, result?.Safety);
-            dbContext.SensitiveDreamSafetyEvents.AddRange(safetyEvents);
-            var notifications = safetyEvents
-                .Where(safetyEvent => safetyEvent.ReviewRequired)
-                .Select(safetyEvent => new SensitiveReviewNotification
-                {
-                    SafetyEventId = safetyEvent.Id,
-                    DreamId = safetyEvent.DreamId,
-                    SubjectPseudonym = safetyEvent.SubjectPseudonym,
-                    Category = safetyEvent.Category,
-                    Confidence = safetyEvent.Confidence,
-                    Route = "privacy-review"
-                })
-                .ToArray();
-            dbContext.SensitiveReviewNotifications.AddRange(notifications);
-            DreamLensMeters.SensitiveSafetyReviewsPending.Add(notifications.Length);
-        }
-        DreamImageSafetyRecord? imageSafety = null;
-        if (record.Status == "completed"
-            && imagePromptSafetyOptions.Value.Enabled
-            && (imageGenerationOptions.Value.Free.Enabled || imageGenerationOptions.Value.Premium.Enabled))
-        {
-            imageSafety = new DreamImageSafetyRecord
-            {
-                DreamId = record.Id,
-                UserSubject = record.UserSubject,
-                Provider = imagePromptSafetyOptions.Value.Provider,
-                Model = imagePromptSafetyOptions.Value.Model
-            };
-            dbContext.DreamImageSafety.Add(imageSafety);
-        }
-
-        dbContext.AiCostLedger.Add(CreateLedgerRecord(record, interpretation, latency, isPremium, model));
-        if (record.Status == "failed")
-        {
-            DreamLensMeters.ProviderFailures.Add(1, new KeyValuePair<string, object?>("provider", "DeepSeek"));
-        }
-
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        if (profile.ConsentHistoryUse && embeddingOptions.Value.Enabled && asyncJobService is not null)
+        var payload = route with { DreamId = record.Id };
+        if (!primaryInterpretationOptions.Value.AsyncEnabled)
         {
-            await asyncJobService.EnqueueAsync(
-                $"{AsyncJobTypes.DreamEmbedding}:{record.Id}:{embeddingOptions.Value.Version}",
-                AsyncJobTypes.DreamEmbedding,
-                record.UserSubject,
-                record.Id,
-                new DreamEmbeddingJobHandler.DreamEmbeddingJobPayload(record.Id),
+            await interpretationJobHandler.HandleAsync(
+                new AsyncJobMessage(Guid.Empty, AsyncJobTypes.DreamInterpretation, record.UserSubject, JsonSerializer.Serialize(payload, JsonOptions)),
                 cancellationToken);
+            return record.Status == DreamStatuses.Completed
+                ? SubmitDreamResult.Completed(DreamMapper.Map(record))
+                : SubmitDreamResult.Failed(DreamMapper.Map(record));
         }
 
-        if (imageSafety is not null && asyncJobService is not null)
-        {
-            await asyncJobService.EnqueueAsync(
-                $"{AsyncJobTypes.DreamImageSafety}:{record.Id}:{imagePromptSafetyOptions.Value.Model}",
-                AsyncJobTypes.DreamImageSafety,
-                record.UserSubject,
-                imageSafety.Id,
-                new DreamImageSafetyJobHandler.DreamImageSafetyJobPayload(imageSafety.Id),
-                cancellationToken);
-        }
+        var job = await asyncJobService.EnqueueAsync(
+            $"{AsyncJobTypes.DreamInterpretation}:{record.Id}",
+            AsyncJobTypes.DreamInterpretation,
+            record.UserSubject,
+            record.Id,
+            payload,
+            cancellationToken);
 
-        return SubmitDreamResult.Valid(DreamMapper.Map(record, result));
+        return SubmitDreamResult.Accepted(DreamMapper.Map(record, processing: DreamProcessingResponse.FromJob(job)));
     }
 
     private static Dictionary<string, string[]> Validate(SubmitDreamRequest request)
@@ -234,81 +123,14 @@ public sealed class SubmitDreamHandler(
         return errors;
     }
 
-    private DreamResultResponse MapResult(InterpretationResult result)
-    {
-        using var document = JsonDocument.Parse(result.RawJson);
-        var safety = document.RootElement.TryGetProperty("safety", out var safetyElement)
-            ? SensitiveSafetyParser.Parse(safetyElement, sensitiveSafetyOptions.Value)
-            : null;
+    private static string[] NormalizeArray(string[]? values) => values?
+        .Select(Normalize)
+        .Where(value => value is not null)
+        .Cast<string>()
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .Take(16)
+        .ToArray() ?? [];
 
-        return new DreamResultResponse(
-            result.Summary,
-            result.Sections.Select(section => new DreamSectionResponse(section.Kind, section.Title, section.Content)).ToArray(),
-            result.FollowUpQuestions,
-            safety);
-    }
-
-    private AiCostLedgerRecord CreateLedgerRecord(
-        DreamRecord dream,
-        InterpretationResponse interpretation,
-        TimeSpan latency,
-        bool isPremium,
-        string model)
-    {
-        var run = interpretation.Run;
-        var inputTokens = run?.InputTokens;
-        var outputTokens = run?.OutputTokens;
-
-        return new AiCostLedgerRecord
-        {
-            UserSubject = currentUser.Subject,
-            DreamId = dream.Id,
-            Provider = "DeepSeek",
-            Model = model,
-            PersonaId = run?.PersonaId ?? (isPremium ? "premium-dream-interpreter" : "dream-interpreter"),
-            OperationType = isPremium ? "dream.premium-interpretation" : "dream.interpretation",
-            Status = interpretation.Status == InterpretationStatus.Completed ? "completed" : "failed",
-            FailureKind = run?.FailureKind?.ToString(),
-            AttemptCount = run?.AttemptCount ?? 0,
-            InputTokens = inputTokens,
-            OutputTokens = outputTokens,
-            TotalTokens = inputTokens + outputTokens,
-            LatencyMilliseconds = Math.Max(0, (long)latency.TotalMilliseconds),
-            EstimatedCostUsd = EstimateCost(inputTokens, outputTokens, isPremium)
-        };
-    }
-
-    private decimal EstimateCost(int? inputTokens, int? outputTokens, bool isPremium)
-    {
-        var inputCost = isPremium
-            ? deepInterpretationOptions.Value.InputCostPerMillionTokensUsd
-            : usageCostOptions.Value.InputCostPerMillionTokens;
-        var outputCost = isPremium
-            ? deepInterpretationOptions.Value.OutputCostPerMillionTokensUsd
-            : usageCostOptions.Value.OutputCostPerMillionTokens;
-        var input = (inputTokens ?? 0) * inputCost / 1_000_000m;
-        var output = (outputTokens ?? 0) * outputCost / 1_000_000m;
-        return input + output;
-    }
-
-    private static string NormalizeLocale(string language)
-    {
-        return string.Equals(language, "en", StringComparison.OrdinalIgnoreCase) ? "en-US" : language;
-    }
-
-    private static string[] NormalizeArray(string[]? values)
-    {
-        return values?
-            .Select(Normalize)
-            .Where(value => value is not null)
-            .Cast<string>()
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .Take(16)
-            .ToArray() ?? [];
-    }
-
-    private static string? Normalize(string? value)
-    {
-        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
-    }
+    private static string? Normalize(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Diagnostics;
 using Amazon.SQS;
 using Amazon.SQS.Model;
+using DreamLens.Api.Features.Dreams;
 using DreamLens.Api.Infrastructure.Images;
 using DreamLens.Api.Infrastructure.Observability;
 using DreamLens.Api.Infrastructure.Persistence;
@@ -123,6 +124,7 @@ public sealed class AsyncJobWorker(
             logger.LogError(exception, "Async job {JobId} failed on attempt {Attempt}.", job.Id, job.AttemptCount);
             if (!retryable)
             {
+                await MarkTargetFailedAsync(db, job, cancellationToken);
                 DreamLensMeters.AsyncJobsFailed.Add(1, JobTypeTag(job.JobType));
                 await sqs.DeleteMessageAsync(queueUrl, message.ReceiptHandle, cancellationToken);
                 RecordDuration("failed", job.JobType, started);
@@ -173,6 +175,25 @@ public sealed class AsyncJobWorker(
         }
 
         return claimed;
+    }
+
+    private static async Task MarkTargetFailedAsync(
+        DreamLensDbContext db,
+        AsyncJobRecord job,
+        CancellationToken cancellationToken)
+    {
+        if (job.JobType != AsyncJobTypes.DreamInterpretation || job.TargetId is not { } dreamId)
+        {
+            return;
+        }
+
+        await db.Dreams
+            .Where(dream => dream.Id == dreamId
+                && dream.UserSubject == job.UserSubject
+                && dream.Status != DreamStatuses.Canceled)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(dream => dream.Status, DreamStatuses.Failed)
+                .SetProperty(dream => dream.ErrorMessage, "Your interpretation could not be completed. Please try again."), cancellationToken);
     }
 
     private static KeyValuePair<string, object?> JobTypeTag(string jobType) => new("job.type", jobType);

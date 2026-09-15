@@ -15,11 +15,11 @@
 ## Delivery phases
 
 1. **Trust contracts**: immutable dream routes, durable Ask quota reservations, account-timezone entitlement status, journal pagination, prompt provenance, reliability states.
-2. **Main journey**: shared draft/composer behavior, compact read-only journal, reordered dream detail, shared entitlement presentation, private-processing language.
+2. **Main journey**: shared draft/composer behavior, compact read-only journal, reordered dream detail, shared entitlement presentation, private-processing language. Completed 2026-09-15: primary interpretation is a durable SQS job in production. Submission returns an owner-scoped pending dream, the worker persists completion/failure, and clients poll the canonical dream route with retry and cancellation controls.
 3. **Exploration and validation**: Map normalization/provenance and observations, Ask recovery/source UX, onboarding/auth route handling, responsive/accessibility and native validation inventory.
 
 ## Evidence and constraints
 
 - Dream ownership is already enforced by `UserSubject` filtering. Existing dreams are preserved; no destructive data migration is planned.
-- AI interpretation is currently synchronous. Image, embedding, safety, and voice work already use durable jobs. Moving primary interpretation to a job is a separate compatibility-sensitive change and remains explicitly tracked until its request/status contract can be added without breaking current clients.
+- Primary interpretation uses the same durable job framework as image, embedding, safety, and voice work. The production request contract is `202 Accepted` plus `GET /v1/dreams/{id}` polling; controlled test mode retains the former synchronous path for legacy contract coverage.
 - Billing is not connected. Plans will describe only configured entitlement capabilities and will not simulate purchases.

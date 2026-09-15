@@ -72,7 +72,7 @@ export type AskDreamSourceResponse = {
 export type DreamResponse = {
   id: string;
   createdAt: string;
-  status: "completed" | "failed";
+  status: "pending" | "processing" | "completed" | "failed" | "canceled";
   result: DreamResultResponse | null;
   errorMessage: string | null;
   title: string;
@@ -82,6 +82,16 @@ export type DreamResponse = {
   occurredAt?: string | null;
   journalNote?: string | null;
   text?: string | null;
+  processing?: DreamProcessingResponse | null;
+};
+
+export type DreamProcessingResponse = {
+  jobId: string;
+  status: "pending" | "processing" | "completed" | "failed";
+  attemptCount: number;
+  startedAt: string | null;
+  canRetry: boolean;
+  canCancel: boolean;
 };
 
 export type DreamFeedbackRating = "like" | "dislike";

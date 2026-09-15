@@ -1,12 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
-import { router } from "expo-router";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
 import { Text } from "@/components/Text";
 
-import { useApiClient } from "@/api/apiContext";
 import { ApiError } from "@/api/client";
 import { AppShell, BrandMark } from "@/components/AppShell";
 import { ChoiceOption, ChoiceSet, FivePointScale, TagEditor } from "@/components/FieldControls";
@@ -15,7 +12,8 @@ import { VoiceCapturePanel } from "@/features/dreams/VoiceCapturePanel";
 import { DreamingFacts } from "@/features/content/DailyDreamContent";
 import { defaultDreamCaptureValues, DreamCaptureValues, dreamCaptureSchema } from "@/features/dreams/dreamCaptureSchema";
 import { useDreamDraftStore } from "@/state/dreamDraftStore";
-import { useDreamResultStore } from "@/state/dreamResultStore";
+import { useAuthStore } from "@/auth/authStore";
+import { useDreamSubmission } from "@/features/dreams/useDreamSubmission";
 import { useTheme } from "@/theme/ThemeProvider";
 
 type DreamCaptureScreenProps = { onSubmitted?: (dreamId: string) => void };
@@ -29,9 +27,8 @@ const moodOptions: ChoiceOption[] = [
 ];
 
 export function DreamCaptureScreen({ onSubmitted }: DreamCaptureScreenProps) {
-  const api = useApiClient();
   const theme = useTheme();
-  const rememberDream = useDreamResultStore((state) => state.rememberDream);
+  const subject = useAuthStore((state) => state.user?.subject);
   const draftText = useDreamDraftStore((state) => state.text);
   const draftMood = useDreamDraftStore((state) => state.mood);
   const draftSleepQuality = useDreamDraftStore((state) => state.sleepQuality);
@@ -39,11 +36,14 @@ export function DreamCaptureScreen({ onSubmitted }: DreamCaptureScreenProps) {
   const draftOccurredAt = useDreamDraftStore((state) => state.occurredAt);
   const hasDraftHydrated = useDreamDraftStore((state) => state.hasHydrated);
   const setDraftFields = useDreamDraftStore((state) => state.setFields);
-  const clearDraft = useDreamDraftStore((state) => state.clearDraft);
+  const adoptForUser = useDreamDraftStore((state) => state.adoptForUser);
   const form = useForm<DreamCaptureValues>({
     resolver: zodResolver(dreamCaptureSchema),
     defaultValues: { ...defaultDreamCaptureValues, text: draftText, mood: draftMood, sleepQuality: draftSleepQuality, tags: draftTags, occurredAt: draftOccurredAt }
   });
+  useEffect(() => {
+    if (subject) adoptForUser(subject);
+  }, [adoptForUser, subject]);
   useEffect(() => {
     if (!hasDraftHydrated || form.formState.isDirty) return;
     form.reset({ text: draftText, mood: draftMood, sleepQuality: draftSleepQuality, tags: draftTags, occurredAt: draftOccurredAt });
@@ -61,14 +61,10 @@ export function DreamCaptureScreen({ onSubmitted }: DreamCaptureScreenProps) {
     });
     return () => subscription.unsubscribe();
   }, [form, hasDraftHydrated, setDraftFields]);
-  const submitDream = useMutation({ mutationFn: (values: DreamCaptureValues) => api.submitDream(toSubmitDreamRequest(values)) });
+  const submitDream = useDreamSubmission(onSubmitted);
   const onSubmit = form.handleSubmit(async (values) => {
     try {
-      const dream = await submitDream.mutateAsync(values);
-      rememberDream(dream);
-      clearDraft();
-      if (onSubmitted) return onSubmitted(dream.id);
-      router.push(`/dreams/${dream.id}`);
+      await submitDream.submit(toSubmitDreamRequest(values));
     } catch {
       // The mutation state renders the actionable API error in the form.
     }
@@ -90,7 +86,7 @@ export function DreamCaptureScreen({ onSubmitted }: DreamCaptureScreenProps) {
           <DreamTagField control={form.control} label="Tags" name="tags" placeholder="Add a tag" />
           <Field control={form.control} label="Occurred at" name="occurredAt" placeholder="2026-07-01" />
            {submitDream.isError ? <ErrorMessage error={submitDream.error} /> : null}
-           {submitDream.isPending ? <DreamingFacts label="While your interpretation takes shape" /> : null}
+           {submitDream.isPending ? <DreamingFacts label="Preparing your private interpretation" /> : null}
            <Pressable accessibilityRole="button" disabled={submitDream.isPending} onPress={onSubmit} testID="submit-dream" style={[styles.button, { backgroundColor: theme.colors.primary }]}>
             <Text style={[styles.buttonText, { color: theme.colors.primaryText }]}>{submitDream.isPending ? "Interpreting" : "Interpret dream"}</Text>
           </Pressable>

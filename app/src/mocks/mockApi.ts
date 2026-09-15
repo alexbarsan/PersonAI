@@ -35,6 +35,8 @@ export const mockApiClient: ApiClient = {
     };
   },
   getDream: async () => mockDream,
+  retryDreamInterpretation: async () => mockDream,
+  cancelDreamInterpretation: async () => ({ ...mockDream, status: "canceled", result: null, processing: null }),
   getDreamFeedback: async () => mockDreamFeedback,
   getDeepInterpretation: async () => mockDeepInterpretation,
   createDeepInterpretation: async () => mockDeepInterpretation,

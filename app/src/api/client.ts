@@ -46,6 +46,8 @@ export type ApiClient = {
   askDreams: (request: AskDreamsRequest) => Promise<AskDreamsResponse>;
   listDreams: (filters?: DreamJournalFilters) => Promise<DreamJournalResponse>;
   getDream: (id: string) => Promise<DreamResponse>;
+  retryDreamInterpretation: (id: string) => Promise<DreamResponse>;
+  cancelDreamInterpretation: (id: string) => Promise<DreamResponse>;
   getDreamFeedback: (id: string) => Promise<DreamFeedbackResponse>;
   getDeepInterpretation: (id: string) => Promise<DeepInterpretationResponse>;
   createDeepInterpretation: (id: string) => Promise<DeepInterpretationResponse>;
@@ -145,6 +147,8 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
       }),
     listDreams: (filters = {}) => request<DreamJournalResponse>(`/v1/dreams${toQueryString(filters)}`),
     getDream: (id) => request<DreamResponse>(`/v1/dreams/${id}`),
+    retryDreamInterpretation: (id) => request<DreamResponse>(`/v1/dreams/${id}/retry`, { method: "POST" }),
+    cancelDreamInterpretation: (id) => request<DreamResponse>(`/v1/dreams/${id}/cancel`, { method: "POST" }),
     getDreamFeedback: (id) => request<DreamFeedbackResponse>(`/v1/dreams/${id}/feedback`),
     getDeepInterpretation: (id) => request<DeepInterpretationResponse>(`/v1/dreams/${id}/deep-interpretation`),
     createDeepInterpretation: (id) => request<DeepInterpretationResponse>(`/v1/dreams/${id}/deep-interpretation`, { method: "POST" }),

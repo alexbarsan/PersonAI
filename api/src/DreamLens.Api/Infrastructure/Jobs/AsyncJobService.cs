@@ -68,6 +68,26 @@ public sealed class AsyncJobService(
         return job;
     }
 
+    public async Task<AsyncJobRecord?> RestartAsync(
+        Guid jobId,
+        string userSubject,
+        CancellationToken cancellationToken)
+    {
+        var job = await dbContext.AsyncJobs.SingleOrDefaultAsync(
+            candidate => candidate.Id == jobId
+                && candidate.UserSubject == userSubject
+                && (candidate.Status == AsyncJobStatuses.Failed
+                    || candidate.Status == AsyncJobStatuses.Completed),
+            cancellationToken);
+        if (job is null)
+        {
+            return null;
+        }
+
+        await RequeueAsync(job, cancellationToken);
+        return job;
+    }
+
     public async Task<AsyncJobRecord?> RequeueForOperationsAsync(
         Guid jobId,
         CancellationToken cancellationToken)

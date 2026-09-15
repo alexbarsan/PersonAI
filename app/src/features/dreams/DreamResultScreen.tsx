@@ -10,6 +10,7 @@ import { AppShell, BrandMark } from "@/components/AppShell";
 import { ResultSectionRenderer } from "@/features/dreams/ResultSectionRenderer";
 import { InterpretationFeedbackPanel } from "@/features/dreams/InterpretationFeedbackPanel";
 import { DeepInterpretationPanel } from "@/features/dreams/DeepInterpretationPanel";
+import { DreamingFacts } from "@/features/content/DailyDreamContent";
 import { SafetyCard } from "@/features/dreams/SafetyCard";
 import { useDreamResultStore } from "@/state/dreamResultStore";
 import { useAuthStore } from "@/auth/authStore";
@@ -26,8 +27,12 @@ export function DreamResultScreen() {
   const dream = useQuery({
     queryKey: ["dream", id],
     queryFn: () => api.getDream(id!),
-    enabled: Boolean(id) && !cachedDream,
-    initialData: cachedDream ?? undefined
+    enabled: Boolean(id),
+    initialData: cachedDream ?? undefined,
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      return status === "pending" || status === "processing" ? 1500 : false;
+    }
   });
   const result = dream.data?.result;
   const elevatedSafety = result?.safety?.selfHarmRisk === "elevated";
@@ -59,6 +64,15 @@ export function DreamResultScreen() {
       queryClient.setQueryData<DreamImageResponse>(["dream-image", id], created);
     }
   });
+  const retryInterpretation = useMutation({
+    mutationFn: () => api.retryDreamInterpretation(id!),
+    onSuccess: (updated) => queryClient.setQueryData(["dream", id], updated)
+  });
+  const cancelInterpretation = useMutation({
+    mutationFn: () => api.cancelDreamInterpretation(id!),
+    onSuccess: (updated) => queryClient.setQueryData(["dream", id], updated)
+  });
+  const isInterpreting = dream.data?.status === "pending" || dream.data?.status === "processing";
 
   return (
     <AppShell>
@@ -73,18 +87,26 @@ export function DreamResultScreen() {
 
         {dream.isLoading ? <Text style={[styles.body, { color: theme.colors.mutedText }]}>Loading result</Text> : null}
         {dream.isError ? <Text style={[styles.body, { color: theme.colors.warning }]}>Result could not be loaded.</Text> : null}
-        {dream.data?.status === "failed" ? (
-        <Text style={[styles.body, { color: theme.colors.warning }]}>
-          {dream.data.errorMessage ?? "The interpretation service could not produce a result."}
-        </Text>
-        ) : null}
+        {dream.data?.text ? <View style={[styles.originalDream, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+          <Text style={[styles.originalLabel, { color: theme.colors.mutedText }]}>Original dream</Text>
+          <Text selectable style={[styles.body, { color: theme.colors.text }]}>{dream.data.text}</Text>
+        </View> : null}
+        {isInterpreting ? <DreamInterpretationProgress
+          attemptCount={dream.data?.processing?.attemptCount ?? 0}
+          canCancel={dream.data?.processing?.canCancel === true}
+          isCanceling={cancelInterpretation.isPending}
+          onCancel={() => cancelInterpretation.mutate()}
+        /> : null}
+        {dream.data?.status === "failed" ? <DreamInterpretationFailure
+          message={dream.data.errorMessage}
+          canRetry={dream.data.processing?.canRetry === true}
+          isRetrying={retryInterpretation.isPending}
+          onRetry={() => retryInterpretation.mutate()}
+        /> : null}
+        {dream.data?.status === "canceled" ? <Text style={[styles.body, { color: theme.colors.mutedText }]}>Interpretation canceled. Your original dream remains in your journal.</Text> : null}
 
         {result ? (
           <View style={styles.content}>
-          {dream.data?.text ? <View style={[styles.originalDream, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
-            <Text style={[styles.originalLabel, { color: theme.colors.mutedText }]}>Original dream</Text>
-            <Text selectable style={[styles.body, { color: theme.colors.text }]}>{dream.data.text}</Text>
-          </View> : null}
           <View style={[styles.summaryCard, { borderColor: theme.colors.primary }]}>
             <Text style={[styles.summaryLabel, { color: theme.colors.primary }]}>Your interpretation</Text>
             <Text testID="dream-summary" style={[styles.summary, { color: theme.colors.text }]}>{result.summary}</Text>
@@ -183,6 +205,49 @@ function DreamImagePanel({
   );
 }
 
+function DreamInterpretationProgress({
+  attemptCount,
+  canCancel,
+  isCanceling,
+  onCancel
+}: {
+  attemptCount: number;
+  canCancel: boolean;
+  isCanceling: boolean;
+  onCancel: () => void;
+}) {
+  const theme = useTheme();
+  return <View style={[styles.progressPanel, { backgroundColor: theme.colors.lavender, borderColor: theme.colors.border }]} testID="dream-interpretation-progress">
+    <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Your interpretation is taking shape</Text>
+    <Text style={[styles.body, { color: theme.colors.mutedText }]}>You can leave this screen. Dream DNA will keep working and your journal will update when it is ready.</Text>
+    <DreamingFacts label="While it takes shape" />
+    {attemptCount > 1 ? <Text style={[styles.progressMeta, { color: theme.colors.mutedText }]}>Retry {attemptCount}</Text> : null}
+    {canCancel ? <Pressable accessibilityRole="button" disabled={isCanceling} onPress={onCancel} style={[styles.cancelButton, { borderColor: theme.colors.text }]}>
+      <Text style={[styles.cancelButtonText, { color: theme.colors.text }]}>{isCanceling ? "Canceling" : "Cancel interpretation"}</Text>
+    </Pressable> : null}
+  </View>;
+}
+
+function DreamInterpretationFailure({
+  message,
+  canRetry,
+  isRetrying,
+  onRetry
+}: {
+  message: string | null | undefined;
+  canRetry: boolean;
+  isRetrying: boolean;
+  onRetry: () => void;
+}) {
+  const theme = useTheme();
+  return <View style={[styles.failurePanel, { borderColor: theme.colors.warning }]}>
+    <Text style={[styles.body, { color: theme.colors.warning }]}>{message ?? "The interpretation service could not produce a result."}</Text>
+    {canRetry ? <Pressable accessibilityRole="button" disabled={isRetrying} onPress={onRetry} style={[styles.retryButton, { backgroundColor: theme.colors.primary }]}>
+      <Text style={[styles.buttonText, { color: theme.colors.primaryText }]}>{isRetrying ? "Retrying" : "Try again"}</Text>
+    </Pressable> : null}
+  </View>;
+}
+
 function mapImageError(error: Error) {
   if (error instanceof ApiError && error.status === 503) {
     return "Dream visuals are not available yet. Please try again later.";
@@ -244,6 +309,43 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "700",
     textTransform: "uppercase"
+  },
+  progressPanel: {
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 12,
+    padding: 16
+  },
+  progressMeta: {
+    fontSize: 12,
+    lineHeight: 17
+  },
+  cancelButton: {
+    alignItems: "center",
+    alignSelf: "flex-start",
+    borderRadius: 6,
+    borderWidth: 1,
+    justifyContent: "center",
+    minHeight: 40,
+    paddingHorizontal: 14
+  },
+  cancelButtonText: {
+    fontSize: 14,
+    fontWeight: "700"
+  },
+  failurePanel: {
+    borderLeftWidth: 3,
+    gap: 12,
+    paddingLeft: 16,
+    paddingVertical: 8
+  },
+  retryButton: {
+    alignItems: "center",
+    alignSelf: "flex-start",
+    borderRadius: 6,
+    justifyContent: "center",
+    minHeight: 42,
+    paddingHorizontal: 16
   },
   summaryLabel: {
     fontSize: 14,

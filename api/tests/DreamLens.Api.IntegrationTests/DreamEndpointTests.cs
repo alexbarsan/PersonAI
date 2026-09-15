@@ -184,6 +184,55 @@ public sealed class DreamEndpointTests
     }
 
     [Fact]
+    public async Task PrimaryInterpretationQueuesThenCompletesThroughTheDurableWorkerContract()
+    {
+        var chatClient = new StaticDreamChatClient(CanonicalAiOutput);
+        using var app = CreateDreamApp(chatClient, primaryInterpretationAsync: true);
+        using var client = app.CreateAuthenticatedClient("subject-a");
+        await PutProfileAsync(client);
+
+        var submittedResponse = await client.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest());
+        var submitted = await submittedResponse.Content.ReadFromJsonAsync<DreamResponse>();
+
+        Assert.Equal(HttpStatusCode.Accepted, submittedResponse.StatusCode);
+        Assert.NotNull(submitted);
+        Assert.Equal(DreamStatuses.Pending, submitted.Status);
+        Assert.NotNull(submitted.Processing);
+        Assert.True(submitted.Processing.CanCancel);
+        Assert.Empty(chatClient.Calls);
+        Assert.Equal(1, app.PublishedAsyncJobCount);
+
+        await app.ProcessPrimaryInterpretationAsync();
+        var completedResponse = await client.GetAsync($"/v1/dreams/{submitted.Id}");
+        var completed = await completedResponse.Content.ReadFromJsonAsync<DreamResponse>();
+
+        Assert.Equal(HttpStatusCode.OK, completedResponse.StatusCode);
+        Assert.NotNull(completed);
+        Assert.Equal(DreamStatuses.Completed, completed.Status);
+        Assert.NotNull(completed.Result);
+        Assert.Single(chatClient.Calls);
+        Assert.Single(await app.GetCostLedgerRowsAsync(), row => row.OperationType == "dream.interpretation" && row.Status == "completed");
+    }
+
+    [Fact]
+    public async Task OwnerCanCancelAQueuedPrimaryInterpretation()
+    {
+        using var app = CreateDreamApp(new StaticDreamChatClient(CanonicalAiOutput), primaryInterpretationAsync: true);
+        using var client = app.CreateAuthenticatedClient("subject-a");
+        await PutProfileAsync(client);
+        var submitted = await (await client.PostAsJsonAsync("/v1/dreams", CreateValidDreamRequest()))
+            .Content.ReadFromJsonAsync<DreamResponse>();
+
+        var canceledResponse = await client.PostAsync($"/v1/dreams/{submitted!.Id}/cancel", null);
+        var canceled = await canceledResponse.Content.ReadFromJsonAsync<DreamResponse>();
+
+        Assert.Equal(HttpStatusCode.OK, canceledResponse.StatusCode);
+        Assert.NotNull(canceled);
+        Assert.Equal(DreamStatuses.Canceled, canceled.Status);
+        Assert.False(canceled.Processing?.CanCancel);
+    }
+
+    [Fact]
     public async Task AskDreamHistoryUsesOnlyOwnedSemanticMemoryAndRecordsCosts()
     {
         var answer = $$"""
@@ -1162,7 +1211,8 @@ public sealed class DreamEndpointTests
         int freeImageDailyLimit = 1,
         bool imagePromptSafetyEnabled = false,
         int deepDailyLimit = 3,
-        string[]? quotaExemptSubjects = null)
+        string[]? quotaExemptSubjects = null,
+        bool primaryInterpretationAsync = false)
     {
         var databaseName = $"dream-tests-{Guid.NewGuid():N}";
         var factory = new WebApplicationFactory<Program>()
@@ -1207,6 +1257,7 @@ public sealed class DreamEndpointTests
                         ["DeepInterpretation:DailyLimit"] = deepDailyLimit.ToString(System.Globalization.CultureInfo.InvariantCulture),
                         ["DeepInterpretation:InputCostPerMillionTokensUsd"] = "1.32",
                         ["DeepInterpretation:OutputCostPerMillionTokensUsd"] = "3.96"
+                        ,["PrimaryInterpretation:AsyncEnabled"] = primaryInterpretationAsync.ToString()
                     });
                     if (premiumSubjects is not null)
                     {
@@ -1241,6 +1292,7 @@ public sealed class DreamEndpointTests
                 builder.ConfigureTestServices(services =>
                 {
                     services.PostConfigure<DeepInterpretationOptions>(configured => configured.DailyLimit = deepDailyLimit);
+                    services.PostConfigure<PrimaryInterpretationOptions>(configured => configured.AsyncEnabled = primaryInterpretationAsync);
                     services.Configure<SensitiveSafetyOptions>(_ => { });
                     services.RemoveAll<DbContextOptions<DreamLensDbContext>>();
                     services.RemoveAll<DreamLensDbContext>();
@@ -1266,6 +1318,8 @@ public sealed class DreamEndpointTests
                     services.AddScoped<DailyDreamContentSeeder>();
                     services.AddScoped<GetDailyDreamContentHandler>();
                     services.AddScoped<SubmitDreamHandler>();
+                    services.AddScoped<DreamInterpretationJobHandler>();
+                    services.AddScoped<DreamInterpretationLifecycleHandler>();
                     services.AddScoped<GetDreamHandler>();
                     services.AddScoped<GetDreamFactsHandler>();
                     services.AddScoped<GetSimilarDreamsHandler>();
@@ -1434,6 +1488,20 @@ public sealed class DreamEndpointTests
             var handler = scope.ServiceProvider.GetServices<IAsyncJobHandler>()
                 .Single(candidate => candidate.JobType == AsyncJobTypes.DreamImageSafety);
             await handler.HandleAsync(message, CancellationToken.None);
+        }
+
+        public async Task ProcessPrimaryInterpretationAsync()
+        {
+            var message = factory.Services.GetRequiredService<RecordingAsyncJobQueue>().Messages
+                .Single(job => job.JobType == AsyncJobTypes.DreamInterpretation);
+            await using var scope = factory.Services.CreateAsyncScope();
+            var handler = scope.ServiceProvider.GetRequiredService<DreamInterpretationJobHandler>();
+            await handler.HandleAsync(message, CancellationToken.None);
+            var dbContext = scope.ServiceProvider.GetRequiredService<DreamLensDbContext>();
+            var job = await dbContext.AsyncJobs.SingleAsync(candidate => candidate.Id == message.JobId);
+            job.Status = AsyncJobStatuses.Completed;
+            job.CompletedAt = DateTimeOffset.UtcNow;
+            await dbContext.SaveChangesAsync();
         }
 
         public async Task<int> CountInterpretationFeedbackAsync()

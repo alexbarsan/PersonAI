@@ -14,11 +14,13 @@ type DreamDraftFields = {
 };
 
 type DreamDraftState = DreamDraftFields & {
+  ownerSubject: string | null;
   savedAt: string | null;
   hasHydrated: boolean;
   setText: (text: string) => void;
   setMood: (mood: string) => void;
   setFields: (fields: Partial<DreamDraftFields>) => void;
+  adoptForUser: (subject: string) => void;
   saveDraft: () => void;
   clearDraft: () => void;
   setHydrated: (hasHydrated: boolean) => void;
@@ -62,13 +64,17 @@ export const useDreamDraftStore = create<DreamDraftState>()(
   persist(
     (set) => ({
       ...emptyDraft,
+      ownerSubject: null,
       savedAt: null,
       hasHydrated: false,
-      setText: (text) => set({ text }),
-      setMood: (mood) => set({ mood }),
-      setFields: (fields) => set(fields),
+      setText: (text) => set({ text, savedAt: new Date().toISOString() }),
+      setMood: (mood) => set({ mood, savedAt: new Date().toISOString() }),
+      setFields: (fields) => set({ ...fields, savedAt: new Date().toISOString() }),
+      adoptForUser: (subject) => set((state) => state.ownerSubject === subject
+        ? state
+        : { ...emptyDraft, ownerSubject: subject, savedAt: null }),
       saveDraft: () => set({ savedAt: new Date().toISOString() }),
-      clearDraft: () => set({ ...emptyDraft, savedAt: null }),
+      clearDraft: () => set((state) => ({ ...emptyDraft, ownerSubject: state.ownerSubject, savedAt: null })),
       setHydrated: (hasHydrated) => set({ hasHydrated })
     }),
     {
@@ -80,6 +86,7 @@ export const useDreamDraftStore = create<DreamDraftState>()(
         sleepQuality: state.sleepQuality,
         tags: state.tags,
         occurredAt: state.occurredAt,
+        ownerSubject: state.ownerSubject,
         savedAt: state.savedAt
       }),
       onRehydrateStorage: () => (state) => state?.setHydrated(true)

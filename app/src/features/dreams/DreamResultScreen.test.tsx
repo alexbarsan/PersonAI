@@ -62,6 +62,32 @@ describe("DreamResultScreen", () => {
     expect(screen.queryByText("This should not be shown.")).toBeNull();
   });
 
+  it("keeps the original dream visible while a queued interpretation is polled and can be canceled", async () => {
+    const pendingDream: DreamResponse = {
+      ...mockDream,
+      status: "pending",
+      result: null,
+      processing: {
+        jobId: "job_interpretation_1",
+        status: "pending",
+        attemptCount: 0,
+        startedAt: null,
+        canRetry: false,
+        canCancel: true
+      }
+    };
+    useDreamResultStore.getState().rememberDream(pendingDream);
+    const cancelDreamInterpretation = jest.fn(async () => ({ ...pendingDream, status: "canceled" as const, processing: null }));
+
+    renderWithProviders(<DreamResultScreen />, { ...mockApiClient, getDream: async () => pendingDream, cancelDreamInterpretation });
+
+    expect(await screen.findByTestId("dream-interpretation-progress")).toBeTruthy();
+    expect(screen.getByText("Original dream")).toBeTruthy();
+    fireEvent.press(screen.getByText("Cancel interpretation"));
+    expect(await screen.findByText("Interpretation canceled. Your original dream remains in your journal.")).toBeTruthy();
+    expect(cancelDreamInterpretation).toHaveBeenCalledWith(mockDream.id);
+  });
+
   it("shows the image action and completed visual for premium users", async () => {
     useDreamResultStore.getState().rememberDream(mockDream);
     const premiumApi: ApiClient = {

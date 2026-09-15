@@ -26,6 +26,8 @@ public static class JobServiceCollectionExtensions
         {
             services.AddScoped<AsyncJobService>();
             services.AddScoped<IAsyncJobHandler, DreamEmbeddingJobHandler>();
+            services.AddScoped<DreamInterpretationJobHandler>();
+            services.AddScoped<IAsyncJobHandler>(serviceProvider => serviceProvider.GetRequiredService<DreamInterpretationJobHandler>());
             services.AddScoped<IAsyncJobHandler, DreamImageSafetyJobHandler>();
             services.AddScoped<IAsyncJobHandler, DreamImageJobHandler>();
             services.AddScoped<IAsyncJobHandler, VoiceTranscriptionJobHandler>();

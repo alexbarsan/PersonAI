@@ -27,6 +27,8 @@ import { gardenSource } from "@/components/OwlMark";
 import { Text } from "@/components/Text";
 import { appConfig } from "@/core/config";
 import { useDreamDraftStore } from "@/state/dreamDraftStore";
+import { useDreamSubmission } from "@/features/dreams/useDreamSubmission";
+import { DreamingFacts } from "@/features/content/DailyDreamContent";
 import { VoiceCapturePanel } from "@/features/dreams/VoiceCapturePanel";
 import { LandingScreen } from "@/features/home/LandingScreen";
 import { useTheme } from "@/theme/ThemeProvider";
@@ -48,6 +50,7 @@ export function HomeScreen() {
   const signOut = useAuthStore((state) => state.signOut);
   const cognito = useCognitoSignIn();
   const draft = useDreamDraftStore();
+  const submitDream = useDreamSubmission();
   const wide = useWindowDimensions().width >= 1200;
   const me = useQuery({
     queryKey: ["me", user?.subject],
@@ -73,6 +76,9 @@ export function HomeScreen() {
     if (profile.error instanceof ApiError && profile.error.status === 404)
       router.replace("/onboarding");
   }, [profile.error]);
+  useEffect(() => {
+    if (user?.subject) draft.adoptForUser(user.subject);
+  }, [draft.adoptForUser, user?.subject]);
 
   if (isRestoring) {
     return <View style={s.sessionLoading}><Text style={[s.body, { color: theme.colors.mutedText }]}>Restoring your session</Text></View>;
@@ -213,19 +219,33 @@ export function HomeScreen() {
                   },
                 ]}
               />
+              <Pressable
+                accessibilityRole="button"
+                disabled={draft.text.trim().length < 10 || submitDream.isPending}
+                onPress={() => submitDream.submit({
+                  text: draft.text.trim(),
+                  mood: draft.mood.trim() || null,
+                  sleepQuality: draft.sleepQuality ? Number(draft.sleepQuality) : null,
+                  tags: draft.tags.split(",").map((tag) => tag.trim()).filter(Boolean),
+                  occurredAt: draft.occurredAt.trim() || null
+                })}
+                testID="submit-draft-dream"
+                style={{
+                  ...s.primaryAction,
+                  backgroundColor: theme.colors.primary,
+                  opacity: draft.text.trim().length < 10 || submitDream.isPending ? 0.55 : 1
+                }}
+              >
+                <Text style={s.primaryActionText}>
+                  {submitDream.isPending ? "Saving your dream" : "Interpret this dream"}
+                </Text>
+                <ArrowRight size={18} color="white" />
+              </Pressable>
+              {submitDream.isPending ? <DreamingFacts label="Preparing your private interpretation" /> : null}
+              {submitDream.isError ? <Text style={[s.body, { color: theme.colors.warning }]}>Dream submission could not be started. Your private draft is still saved here.</Text> : null}
               <Link href="/dreams/capture" asChild>
-                <Pressable
-                  accessibilityRole="button"
-                  testID="go-dream-capture"
-                  style={{
-                    ...s.primaryAction,
-                    backgroundColor: theme.colors.primary,
-                  }}
-                >
-                  <Text style={s.primaryActionText}>
-                    Continue with this dream
-                  </Text>
-                  <ArrowRight size={18} color="white" />
+                <Pressable accessibilityRole="button" testID="go-dream-capture" style={s.detailAction}>
+                  <Text style={[s.saveText, { color: theme.colors.primary }]}>Add details before interpreting</Text>
                 </Pressable>
               </Link>
               <View
@@ -479,6 +499,13 @@ const s = StyleSheet.create({
     fontSize: 15,
     fontWeight: "700",
     flexShrink: 1,
+  },
+  detailAction: {
+    alignItems: "center",
+    alignSelf: "flex-start",
+    justifyContent: "center",
+    minHeight: 40,
+    paddingHorizontal: 4
   },
   textAction: {
     flexDirection: "row",

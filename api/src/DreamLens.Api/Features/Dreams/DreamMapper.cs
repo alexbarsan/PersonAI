@@ -7,7 +7,10 @@ public static class DreamMapper
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
-    public static DreamResponse Map(DreamRecord record, DreamResultResponse? result = null)
+    public static DreamResponse Map(
+        DreamRecord record,
+        DreamResultResponse? result = null,
+        DreamProcessingResponse? processing = null)
     {
         result ??= ReadResult(record);
 
@@ -23,7 +26,8 @@ public static class DreamMapper
             ReadTags(record),
             record.OccurredAt,
             record.JournalNote,
-            record.Text);
+            record.Text,
+            processing);
     }
 
     public static string? ReadSummary(DreamRecord record)

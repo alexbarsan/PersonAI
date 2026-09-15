@@ -82,6 +82,7 @@ if (dreamEndpointsEnabled)
     builder.Services.AddScoped<GetDailyDreamContentHandler>();
     builder.Services.AddHostedService<DailyDreamContentSeedService>();
     builder.Services.Configure<DeepInterpretationOptions>(builder.Configuration.GetSection("DeepInterpretation"));
+    builder.Services.Configure<PrimaryInterpretationOptions>(builder.Configuration.GetSection("PrimaryInterpretation"));
     builder.Services.Configure<SensitiveSafetyOptions>(builder.Configuration.GetSection("SensitiveSafety"));
     builder.Services.AddSingleton<SensitiveSafetyEventFactory>();
     if (!workerOnly)
@@ -90,6 +91,7 @@ if (dreamEndpointsEnabled)
     }
     builder.Services.AddScoped<IDreamQuotaService, EfDreamQuotaService>();
     builder.Services.AddScoped<SubmitDreamHandler>();
+    builder.Services.AddScoped<DreamInterpretationLifecycleHandler>();
     builder.Services.AddScoped<GetDreamHandler>();
     builder.Services.AddScoped<GetDreamFactsHandler>();
     builder.Services.AddScoped<GetSimilarDreamsHandler>();

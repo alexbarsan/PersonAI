@@ -21,7 +21,34 @@ public sealed record DreamResponse(
     string[]? Tags = null,
     string? OccurredAt = null,
     string? JournalNote = null,
-    string? Text = null);
+    string? Text = null,
+    DreamProcessingResponse? Processing = null);
+
+public sealed record DreamProcessingResponse(
+    Guid JobId,
+    string Status,
+    int AttemptCount,
+    DateTimeOffset? StartedAt,
+    bool CanRetry,
+    bool CanCancel)
+{
+    public static DreamProcessingResponse FromJob(Infrastructure.Jobs.AsyncJobRecord job) => new(
+        job.Id,
+        job.Status,
+        job.AttemptCount,
+        job.FirstStartedAt,
+        job.Status == Infrastructure.Jobs.AsyncJobStatuses.Failed,
+        job.Status is Infrastructure.Jobs.AsyncJobStatuses.Pending or Infrastructure.Jobs.AsyncJobStatuses.Processing);
+}
+
+public static class DreamStatuses
+{
+    public const string Pending = "pending";
+    public const string Processing = "processing";
+    public const string Completed = "completed";
+    public const string Failed = "failed";
+    public const string Canceled = "canceled";
+}
 
 public sealed record DreamResultResponse(
     string Summary,
