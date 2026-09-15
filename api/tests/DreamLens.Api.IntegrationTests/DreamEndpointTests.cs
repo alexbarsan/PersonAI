@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using DreamLens.Api.Features.Dreams;
+using DreamLens.Api.Features.Entitlements;
 using DreamLens.Api.Features.AdminMetrics;
 using DreamLens.Api.Features.AdminOperations;
 using DreamLens.Api.Features.Content;
@@ -188,7 +189,7 @@ public sealed class DreamEndpointTests
         var answer = $$"""
             {"answer":"Water appears near transitions in the indexed dream.","observations":["The source connects water and uncertainty."],"caveat":"This is a reflective observation, not a diagnosis.","referencedDreamIds":["{{AskSourceDreamId}}"]}
             """;
-        using var app = CreateDreamApp(new StaticDreamChatClient(answer), embeddingsEnabled: true);
+        using var app = CreateDreamApp(new StaticDreamChatClient(answer), embeddingsEnabled: true, premiumSubjects: ["subject-a"]);
         using var client = app.CreateAuthenticatedClient("subject-a");
         await PutProfileAsync(client);
         await app.AddSemanticDreamAsync(AskSourceDreamId, "subject-a", "A river appeared during a period of change.");
@@ -209,7 +210,7 @@ public sealed class DreamEndpointTests
     [Fact]
     public async Task AskDreamHistoryFailsClosedWhenMemoryIsNotReady()
     {
-        using var app = CreateDreamApp(new StaticDreamChatClient("should not be used"), embeddingsEnabled: true);
+        using var app = CreateDreamApp(new StaticDreamChatClient("should not be used"), embeddingsEnabled: true, premiumSubjects: ["subject-a"]);
         using var client = app.CreateAuthenticatedClient("subject-a");
         await PutProfileAsync(client);
 
@@ -219,6 +220,29 @@ public sealed class DreamEndpointTests
         var ledger = await app.GetCostLedgerRowsAsync();
         Assert.Single(ledger);
         Assert.Equal("dream.query-embedding", ledger[0].OperationType);
+    }
+
+    [Fact]
+    public async Task PremiumAskDreamHistoryAllowsThreeQuestionsThenReturnsQuotaStatus()
+    {
+        var answer = $$"""
+            {"answer":"Water appears near transitions in the indexed dream.","observations":[],"caveat":"A reflective observation.","referencedDreamIds":["{{AskSourceDreamId}}"]}
+            """;
+        using var app = CreateDreamApp(new StaticDreamChatClient(answer), embeddingsEnabled: true, premiumSubjects: ["subject-a"]);
+        using var client = app.CreateAuthenticatedClient("subject-a");
+        await PutProfileAsync(client);
+        await app.AddSemanticDreamAsync(AskSourceDreamId, "subject-a", "A river appeared during a period of change.");
+
+        var first = await client.PostAsJsonAsync("/v1/dreams/ask", new AskDreamsRequest("When does water appear first?"));
+        var second = await client.PostAsJsonAsync("/v1/dreams/ask", new AskDreamsRequest("When does water appear second?"));
+        var third = await client.PostAsJsonAsync("/v1/dreams/ask", new AskDreamsRequest("When does water appear third?"));
+        var fourth = await client.PostAsJsonAsync("/v1/dreams/ask", new AskDreamsRequest("When does water appear fourth?"));
+
+        Assert.Equal(HttpStatusCode.OK, first.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, second.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, third.StatusCode);
+        Assert.Equal(HttpStatusCode.TooManyRequests, fourth.StatusCode);
+        Assert.Equal(3, await app.CountAskQuestionUsagesAsync());
     }
 
     [Fact]
@@ -565,7 +589,7 @@ public sealed class DreamEndpointTests
     }
 
     [Fact]
-    public async Task UserCanUpdateJournalMetadataAndFilterTheirJournal()
+    public async Task DreamJournalIsReadOnlyAndCanBeFiltered()
     {
         using var app = CreateDreamApp(new StaticDreamChatClient(CanonicalAiOutput));
         using var client = app.CreateAuthenticatedClient("subject-a");
@@ -581,16 +605,10 @@ public sealed class DreamEndpointTests
             occurredAt = "2026-06-15",
             journalNote = "I remembered the water after breakfast."
         });
-        var updated = await update.Content.ReadFromJsonAsync<DreamResponse>();
-        var filtered = await (await client.GetAsync("/v1/dreams?query=breakfast&mood=curious&tag=water"))
+        var filtered = await (await client.GetAsync("/v1/dreams?query=falling"))
             .Content.ReadFromJsonAsync<DreamJournalResponse>();
 
-        Assert.Equal(HttpStatusCode.OK, update.StatusCode);
-        Assert.NotNull(updated);
-        Assert.Equal("curious", updated.Mood);
-        Assert.Equal(4, updated.SleepQuality);
-        Assert.Contains("water", updated.Tags!);
-        Assert.Equal("I remembered the water after breakfast.", updated.JournalNote);
+        Assert.Equal(HttpStatusCode.NotFound, update.StatusCode);
         Assert.NotNull(filtered);
         Assert.Single(filtered.Items);
         Assert.Equal(dream.Id, filtered.Items[0].Id);
@@ -813,7 +831,7 @@ public sealed class DreamEndpointTests
     }
 
     [Fact]
-    public async Task DeleteDreamRemovesOwnDreamAndCannotDeleteAnotherUsersDream()
+    public async Task DreamDeletionIsNotExposed()
     {
         using var app = CreateDreamApp(new StaticDreamChatClient(CanonicalAiOutput));
         using var userA = app.CreateAuthenticatedClient("subject-a");
@@ -827,11 +845,13 @@ public sealed class DreamEndpointTests
 
         var otherDelete = await userA.DeleteAsync($"/v1/dreams/{other!.Id}");
         var ownDelete = await userA.DeleteAsync($"/v1/dreams/{own!.Id}");
-        var fetchDeleted = await userA.GetAsync($"/v1/dreams/{own.Id}");
+        var fetchOwn = await userA.GetAsync($"/v1/dreams/{own!.Id}");
+        var fetchOther = await userA.GetAsync($"/v1/dreams/{other!.Id}");
 
-        Assert.Equal(HttpStatusCode.NotFound, otherDelete.StatusCode);
-        Assert.Equal(HttpStatusCode.NoContent, ownDelete.StatusCode);
-        Assert.Equal(HttpStatusCode.NotFound, fetchDeleted.StatusCode);
+        Assert.Equal(HttpStatusCode.MethodNotAllowed, otherDelete.StatusCode);
+        Assert.Equal(HttpStatusCode.MethodNotAllowed, ownDelete.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, fetchOwn.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, fetchOther.StatusCode);
     }
 
     [Fact]
@@ -1239,6 +1259,8 @@ public sealed class DreamEndpointTests
                     services.AddScoped<IAsyncJobHandler, DreamImageSafetyJobHandler>();
                     services.AddScoped<IAnonymizedUserAccessService, AnonymizedUserAccessService>();
                     services.AddScoped<IDreamQuotaService, EfDreamQuotaService>();
+                    services.AddScoped<IAskQuotaService, AskQuotaService>();
+                    services.AddScoped<GetEntitlementHandler>();
                     services.AddScoped<GetProfileHandler>();
                     services.AddScoped<UpdateProfileHandler>();
                     services.AddScoped<DailyDreamContentSeeder>();
@@ -1374,6 +1396,13 @@ public sealed class DreamEndpointTests
             using var scope = factory.Services.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<DreamLensDbContext>();
             return await dbContext.AiCostLedger.CountAsync();
+        }
+
+        public async Task<int> CountAskQuestionUsagesAsync()
+        {
+            using var scope = factory.Services.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<DreamLensDbContext>();
+            return await dbContext.AskQuestionUsages.CountAsync();
         }
 
         public async Task<int> CountVoiceCapturesAsync()

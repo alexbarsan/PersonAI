@@ -143,22 +143,11 @@ for (const width of [375, 390, 768]) {
       page.getByText("No matching dreams", { exact: true }),
     ).toBeVisible();
     await noHorizontalOverflow(page);
-    await page.getByRole("button", { name: "Clear filters", exact: true }).click();
+    await page.getByRole("button", { name: "Clear search", exact: true }).click();
     await expect(page.getByLabel("Search dreams")).toHaveValue("");
     await page.getByRole("button", { name: "Ask", exact: true }).click();
-    await page
-      .getByRole("button", {
-        name: "Which places keep returning?",
-        exact: true,
-      })
-      .click();
-    await expect(page.getByLabel("Dream history question")).toHaveValue(
-      "Which places keep returning?",
-    );
-    await page
-      .getByRole("button", { name: "Ask Dream DNA", exact: true })
-      .click();
-    await expect(page.getByText("Dreams used", { exact: true })).toBeVisible();
+    await expect(page.getByText("Available with Premium", { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Explore Premium", exact: true })).toBeVisible();
     await page.screenshot({
       path: `test-results/dream-dna-ask-${width}.png`,
       fullPage: true,

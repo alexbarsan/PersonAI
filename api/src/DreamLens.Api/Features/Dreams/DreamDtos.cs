@@ -20,7 +20,8 @@ public sealed record DreamResponse(
     int? SleepQuality = null,
     string[]? Tags = null,
     string? OccurredAt = null,
-    string? JournalNote = null);
+    string? JournalNote = null,
+    string? Text = null);
 
 public sealed record DreamResultResponse(
     string Summary,
@@ -69,7 +70,7 @@ public sealed record DeepInterpretationResult(
         new(null, statusCode, new Dictionary<string, string[]> { [key] = [message] });
 }
 
-public sealed record DreamJournalResponse(DreamJournalItemResponse[] Items);
+public sealed record DreamJournalResponse(DreamJournalItemResponse[] Items, int Total, bool HasMore);
 
 public sealed record DreamJournalItemResponse(
     Guid Id,
@@ -78,7 +79,8 @@ public sealed record DreamJournalItemResponse(
     string Title,
     string? Summary,
     string? Mood,
-    string? OccurredAt);
+    string? OccurredAt,
+    string Excerpt);
 
 public sealed record UpdateDreamJournalRequest(
     string? Mood,

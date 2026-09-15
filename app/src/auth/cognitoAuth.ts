@@ -116,21 +116,25 @@ export function useCognitoSignIn() {
 
 export function useCognitoSessionRestoration() {
   const setSession = useAuthStore((state) => state.setSession);
+  const finishRestoring = useAuthStore((state) => state.finishRestoring);
 
   useEffect(() => {
-    if (appConfig.mockApi) return;
+    if (appConfig.mockApi) {
+      finishRestoring();
+      return;
+    }
     let active = true;
 
     const restore = async () => {
-      const stored = await readStoredAuthSession();
-      if (!stored || !active) return;
-
-      if (stored.expiresAt > Date.now() + 120_000) {
-        setSession(stored.bearerToken, createUserFromToken(stored.bearerToken));
-        return;
-      }
-
       try {
+        const stored = await readStoredAuthSession();
+        if (!stored || !active) return;
+
+        if (stored.expiresAt > Date.now() + 120_000) {
+          setSession(stored.bearerToken, createUserFromToken(stored.bearerToken));
+          return;
+        }
+
         const discovery = createCognitoDiscovery(appConfig.cognitoDomain);
         if (!discovery || !appConfig.cognitoClientId) throw new Error("Cognito is not configured.");
         const refreshed = await AuthSession.refreshAsync(
@@ -148,6 +152,8 @@ export function useCognitoSessionRestoration() {
       } catch {
         await clearStoredAuthSession();
         if (active) useAuthStore.getState().signOut();
+      } finally {
+        if (active) finishRestoring();
       }
     };
 
@@ -157,7 +163,7 @@ export function useCognitoSessionRestoration() {
       active = false;
       clearInterval(interval);
     };
-  }, [setSession]);
+  }, [finishRestoring, setSession]);
 }
 
 export function createCognitoDiscovery(cognitoDomain: string) {

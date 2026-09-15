@@ -22,8 +22,6 @@ export const handlers = [
     const body = await request.json() as Record<string, unknown>;
     return response(context.json({ ...body, updatedAt: "2026-09-05T08:00:00Z" }));
   }),
-  rest.put("http://localhost/v1/dreams/:id/journal", (_, response, context) => response(context.json(mockDream))),
-  rest.delete("http://localhost/v1/dreams/:id", (_, response, context) => response(context.status(204))),
   rest.get("http://localhost/v1/insights", (_, response, context) => response(context.json(mockInsights))),
   rest.get("http://localhost/v1/entitlements", (_, response, context) => response(context.json(mockEntitlement))),
   rest.get("http://localhost/v1/privacy/export", (_, response, context) => response(context.json(mockUserDataExport))),

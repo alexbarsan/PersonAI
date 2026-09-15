@@ -17,7 +17,6 @@ import {
   SensitiveSafetyRawAccessResponse,
   SensitiveSafetyReviewResponse,
   SubmitDreamRequest,
-  UpdateDreamJournalRequest,
   UpdateDreamFeedbackRequest,
   UserDataExportResponse,
   AdminOperationsActionResponse,
@@ -51,11 +50,9 @@ export type ApiClient = {
   getDeepInterpretation: (id: string) => Promise<DeepInterpretationResponse>;
   createDeepInterpretation: (id: string) => Promise<DeepInterpretationResponse>;
   updateDreamFeedback: (id: string, request: UpdateDreamFeedbackRequest) => Promise<DreamFeedbackResponse>;
-  updateDreamJournal: (id: string, request: UpdateDreamJournalRequest) => Promise<DreamResponse>;
   requestDreamImage: (id: string, request?: RequestDreamImageRequest) => Promise<DreamImageResponse>;
   getDreamImage: (id: string) => Promise<DreamImageResponse>;
   waitForDreamImage: (id: string, after: string) => Promise<DreamImageResponse>;
-  deleteDream: (id: string) => Promise<void>;
   getInsights: () => Promise<InsightsResponse>;
   getEntitlements: () => Promise<EntitlementResponse>;
   exportUserData: () => Promise<UserDataExportResponse>;
@@ -156,11 +153,6 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
         method: "PUT",
         body: JSON.stringify(body)
       }),
-    updateDreamJournal: (id, body) =>
-      request<DreamResponse>(`/v1/dreams/${id}/journal`, {
-        method: "PUT",
-        body: JSON.stringify(body)
-      }),
     requestDreamImage: (id, body = {}) =>
       request<DreamImageResponse>(`/v1/dreams/${id}/image`, {
         method: "POST",
@@ -168,10 +160,6 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
       }),
     getDreamImage: (id) => request<DreamImageResponse>(`/v1/dreams/${id}/image`),
     waitForDreamImage: (id, after) => request<DreamImageResponse>(`/v1/dreams/${id}/image/wait?after=${encodeURIComponent(after)}&timeoutSeconds=20`),
-    deleteDream: (id) =>
-      request<void>(`/v1/dreams/${id}`, {
-        method: "DELETE"
-      }),
     getInsights: () => request<InsightsResponse>("/v1/insights"),
     getEntitlements: () => request<EntitlementResponse>("/v1/entitlements"),
     exportUserData: () => request<UserDataExportResponse>("/v1/privacy/export"),
@@ -230,7 +218,9 @@ function extensionFor(contentType: string) {
 function toQueryString(filters: DreamJournalFilters) {
   const parameters = new URLSearchParams();
   Object.entries(filters).forEach(([key, value]) => {
-    if (value?.trim()) {
+    if (typeof value === "number") {
+      parameters.set(key, String(value));
+    } else if (value?.trim()) {
       parameters.set(key, value.trim());
     }
   });

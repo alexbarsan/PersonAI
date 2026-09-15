@@ -1,13 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
-import { Image, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
+import { Image, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { Text } from "@/components/Text";
-import ChevronDown from "lucide-react-native/icons/chevron-down";
 
 import { useApiClient } from "@/api/apiContext";
 import { ApiError } from "@/api/client";
-import { DreamImageResponse, DreamResponse } from "@/api/dto";
+import { DreamImageResponse } from "@/api/dto";
 import { AppShell, BrandMark } from "@/components/AppShell";
 import { ResultSectionRenderer } from "@/features/dreams/ResultSectionRenderer";
 import { InterpretationFeedbackPanel } from "@/features/dreams/InterpretationFeedbackPanel";
@@ -83,6 +81,10 @@ export function DreamResultScreen() {
 
         {result ? (
           <View style={styles.content}>
+          {dream.data?.text ? <View style={[styles.originalDream, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+            <Text style={[styles.originalLabel, { color: theme.colors.mutedText }]}>Original dream</Text>
+            <Text selectable style={[styles.body, { color: theme.colors.text }]}>{dream.data.text}</Text>
+          </View> : null}
           <View style={[styles.summaryCard, { borderColor: theme.colors.primary }]}>
             <Text style={[styles.summaryLabel, { color: theme.colors.primary }]}>Your interpretation</Text>
             <Text testID="dream-summary" style={[styles.summary, { color: theme.colors.text }]}>{result.summary}</Text>
@@ -115,64 +117,10 @@ export function DreamResultScreen() {
               requestError={requestImage.error}
             />
           )}
-          <JournalDetailsEditor dream={dream.data} />
           </View>
         ) : null}
       </ScrollView>
     </AppShell>
-  );
-}
-
-function JournalDetailsEditor({ dream }: { dream: DreamResponse | undefined }) {
-  const api = useApiClient();
-  const theme = useTheme();
-  const queryClient = useQueryClient();
-  const [mood, setMood] = useState("");
-  const [tags, setTags] = useState("");
-  const [occurredAt, setOccurredAt] = useState("");
-  const [journalNote, setJournalNote] = useState("");
-  const [editing, setEditing] = useState(false);
-  useEffect(() => {
-    setMood(dream?.mood ?? "");
-    setTags(dream?.tags?.join(", ") ?? "");
-    setOccurredAt(dream?.occurredAt ?? "");
-    setJournalNote(dream?.journalNote ?? "");
-  }, [dream]);
-  const save = useMutation({
-    mutationFn: () => api.updateDreamJournal(dream!.id, {
-      mood: mood || null,
-      tags: tags.split(",").map((tag) => tag.trim()).filter(Boolean),
-      occurredAt: occurredAt || null,
-      journalNote: journalNote || null,
-      sleepQuality: dream?.sleepQuality ?? null
-    }),
-    onSuccess: (updated) => {
-      queryClient.setQueryData(["dream", dream?.id], updated);
-      queryClient.invalidateQueries({ queryKey: ["journal"] });
-    }
-  });
-
-  if (!dream) {
-    return null;
-  }
-
-  return (
-    <View style={[styles.journalEditor, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
-      <Pressable accessibilityRole="button" accessibilityState={{ expanded: editing }} onPress={() => setEditing(!editing)} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", minHeight: 48 }}>
-        <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Journal details</Text>
-        <ChevronDown size={20} color={theme.colors.primary} style={{ transform: [{ rotate: editing ? "180deg" : "0deg" }] }} />
-      </Pressable>
-      {editing ? <>
-      <TextInput accessibilityLabel="Journal mood" onChangeText={setMood} placeholder="Mood" placeholderTextColor={theme.colors.mutedText} style={[styles.input, { borderColor: theme.colors.border, color: theme.colors.text }]} value={mood} />
-      <TextInput accessibilityLabel="Journal tags" onChangeText={setTags} placeholder="Tags, separated by commas" placeholderTextColor={theme.colors.mutedText} style={[styles.input, { borderColor: theme.colors.border, color: theme.colors.text }]} value={tags} />
-      <TextInput accessibilityLabel="Dream date" onChangeText={setOccurredAt} placeholder="Dream date, YYYY-MM-DD" placeholderTextColor={theme.colors.mutedText} style={[styles.input, { borderColor: theme.colors.border, color: theme.colors.text }]} value={occurredAt} />
-      <TextInput accessibilityLabel="Journal note" multiline onChangeText={setJournalNote} placeholder="Personal note" placeholderTextColor={theme.colors.mutedText} style={[styles.noteInput, { borderColor: theme.colors.border, color: theme.colors.text }]} textAlignVertical="top" value={journalNote} />
-      {save.isError ? <Text style={[styles.error, { color: theme.colors.warning }]}>Journal details could not be saved.</Text> : null}
-      <Pressable accessibilityRole="button" onPress={() => save.mutate()} style={[styles.imageButton, { backgroundColor: theme.colors.primary }]} testID="save-journal-details">
-        <Text style={[styles.buttonText, { color: theme.colors.primaryText }]}>{save.isPending ? "Saving" : "Save journal details"}</Text>
-      </Pressable>
-      </> : null}
-    </View>
   );
 }
 
@@ -286,6 +234,17 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     marginBottom: 24
   },
+  originalDream: {
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 8,
+    padding: 16
+  },
+  originalLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    textTransform: "uppercase"
+  },
   summaryLabel: {
     fontSize: 14,
     fontWeight: "700"
@@ -305,25 +264,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     gap: 10,
     paddingVertical: 24
-  },
-  journalEditor: {
-    borderTopWidth: 1,
-    gap: 10,
-    paddingVertical: 16
-  },
-  input: {
-    borderRadius: 8,
-    borderWidth: 1,
-    fontSize: 16,
-    minHeight: 44,
-    paddingHorizontal: 12
-  },
-  noteInput: {
-    borderRadius: 8,
-    borderWidth: 1,
-    fontSize: 16,
-    minHeight: 88,
-    padding: 12
   },
   image: {
     aspectRatio: 1,

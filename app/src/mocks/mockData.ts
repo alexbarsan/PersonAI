@@ -81,6 +81,7 @@ export const mockDream: DreamResponse = {
   createdAt: "2026-07-01T08:00:00Z",
   status: "completed",
   title: "The Quiet Shoreline",
+  text: "I followed a river through a quiet city at dawn.",
   result: {
     summary: "The dream points to uncertainty and a wish for steadier ground.",
     sections: [
@@ -162,9 +163,12 @@ export const mockJournal: DreamJournalResponse = {
       title: mockDream.title,
       summary: mockDream.result?.summary ?? null,
       mood: "curious",
-      occurredAt: "2026-07-01"
+      occurredAt: "2026-07-01",
+      excerpt: "I followed a river through a quiet city at dawn."
     }
-  ]
+  ],
+  total: 1,
+  hasMore: false
 };
 
 export const mockInsights: InsightsResponse = {
@@ -197,7 +201,11 @@ export const mockEntitlement: EntitlementResponse = {
   tier: "free",
   dailyDreamLimit: 3,
   deepAnalysisEnabled: false,
-  quotaExempt: false
+  quotaExempt: false,
+  askDailyLimit: 0,
+  askRemaining: 0,
+  askResetsAt: "2026-09-16T00:00:00Z",
+  askQuotaExempt: false
 };
 
 export const mockAnonymizationRequest: AnonymizationRequestResponse = {

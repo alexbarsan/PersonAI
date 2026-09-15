@@ -58,16 +58,6 @@ describe("api client", () => {
     expect(saved.traits.fears).toEqual(["heights"]);
   });
 
-  it("deletes dreams through the API", async () => {
-    const client = createApiClient({
-      baseUrl: "http://localhost",
-      getAccessToken: () => "test-token",
-      mockMode: false
-    });
-
-    await expect(client.deleteDream("dream_mock_1")).resolves.toBeNull();
-  });
-
   it("asks a question over semantic dream memory", async () => {
     const client = createApiClient({
       baseUrl: "http://localhost",
@@ -141,18 +131,16 @@ describe("api client", () => {
     expect(changed.status).toBe("completed");
   });
 
-  it("updates journal metadata and prepares privacy actions", async () => {
+  it("prepares privacy actions", async () => {
     const client = createApiClient({
       baseUrl: "http://localhost",
       getAccessToken: () => "test-token",
       mockMode: false
     });
 
-    const updated = await client.updateDreamJournal("dream_mock_1", { journalNote: "Remember this." });
     const exported = await client.exportUserData();
     const anonymization = await client.requestAnonymization();
 
-    expect(updated.id).toBe("dream_mock_1");
     expect(exported.dreams).toHaveLength(1);
     expect(anonymization.status).toBe("pending");
   });

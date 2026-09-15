@@ -16,9 +16,11 @@ public static class DreamEndpoints
             [FromQuery] string? tag,
             [FromQuery] string? from,
             [FromQuery] string? to,
+            [FromQuery] int? page,
+            [FromQuery] int? pageSize,
             [FromServices] ListDreamsHandler handler,
             CancellationToken cancellationToken) =>
-            Results.Ok(await handler.HandleAsync(new DreamJournalQuery(query, mood, tag, from, to), cancellationToken)))
+            Results.Ok(await handler.HandleAsync(new DreamJournalQuery(query, mood, tag, from, to, page, pageSize), cancellationToken)))
             .WithName("ListDreams")
             .WithSummary("Lists dreams for the current user.");
 
@@ -63,22 +65,6 @@ public static class DreamEndpoints
         })
             .WithName("GetDream")
             .WithSummary("Returns one dream for the current user.");
-
-        group.MapPut("{id:guid}/journal", async (
-            Guid id,
-            UpdateDreamJournalRequest request,
-            [FromServices] UpdateDreamJournalHandler handler,
-            CancellationToken cancellationToken) =>
-        {
-            var result = await handler.HandleAsync(id, request, cancellationToken);
-            return result.Dream is not null
-                ? Results.Ok(result.Dream)
-                : result.StatusCode == StatusCodes.Status404NotFound
-                    ? Results.NotFound()
-                    : Results.Json(result.Errors, statusCode: result.StatusCode);
-        })
-            .WithName("UpdateDreamJournal")
-            .WithSummary("Updates journal metadata without reinterpreting the dream.");
 
         group.MapGet("{id:guid}/facts", async (
             Guid id,
@@ -189,17 +175,6 @@ public static class DreamEndpoints
         })
             .WithName("WaitForDreamImage")
             .WithSummary("Waits for the latest owned dream image status to change, with a bounded timeout.");
-
-        group.MapDelete("{id:guid}", async (
-            Guid id,
-            [FromServices] DeleteDreamHandler handler,
-            CancellationToken cancellationToken) =>
-        {
-            var deleted = await handler.HandleAsync(id, cancellationToken);
-            return deleted ? Results.NoContent() : Results.NotFound();
-        })
-            .WithName("DeleteDream")
-            .WithSummary("Deletes one dream for the current user.");
 
         return app;
     }

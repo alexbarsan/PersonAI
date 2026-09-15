@@ -4,4 +4,8 @@ public sealed record EntitlementResponse(
     string Tier,
     int DailyDreamLimit,
     bool DeepAnalysisEnabled,
-    bool QuotaExempt);
+    bool QuotaExempt,
+    int AskDailyLimit,
+    int? AskRemaining,
+    DateTimeOffset? AskResetsAt,
+    bool AskQuotaExempt);

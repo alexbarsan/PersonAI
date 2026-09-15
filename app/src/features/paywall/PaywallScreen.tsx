@@ -31,11 +31,9 @@ export function PaywallScreen() {
         <View style={[styles.plan, { backgroundColor: theme.colors.sage, borderColor: theme.colors.sage }]}>
           <Text style={[styles.planTitle, { color: theme.colors.text }]}>Premium</Text>
           <Text style={[styles.body, { color: theme.colors.text }]}>25 dream interpretations per day.</Text>
-          <Text style={[styles.detail, { color: theme.colors.mutedText }]}>Deep analysis, dream visuals, and data export when purchases are connected.</Text>
+          <Text style={[styles.detail, { color: theme.colors.mutedText }]}>Cognitive Analysis, dream visuals, data export, and three dream-history questions each day.</Text>
         </View>
-        <Pressable accessibilityRole="button" disabled style={[styles.button, { backgroundColor: theme.colors.primary }]}>
-          <Text style={[styles.buttonText, { color: theme.colors.primaryText }]}>Purchases not connected yet</Text>
-        </Pressable>
+        {tier !== "premium" ? <Text style={[styles.availability, { color: theme.colors.mutedText }]}>Subscriptions will be available here when purchases are connected.</Text> : null}
         <Link href="/" asChild><Pressable accessibilityRole="button" style={styles.back}><Text style={[styles.backText, { color: theme.colors.text }]}>Back to Today</Text></Pressable></Link>
       </ScrollView>
     </AppShell>
@@ -51,8 +49,7 @@ const styles = StyleSheet.create({
   planTitle: { fontSize: 18, fontWeight: "800" },
   body: { fontSize: 15, fontWeight: "700", lineHeight: 22 },
   detail: { fontSize: 14, lineHeight: 20 },
-  button: { alignItems: "center", borderRadius: 6, justifyContent: "center", minHeight: 52, paddingHorizontal: 16 },
-  buttonText: { fontSize: 15, fontWeight: "800" },
+  availability: { fontSize: 13, lineHeight: 19, textAlign: "center" },
   back: { alignItems: "center", minHeight: 40, justifyContent: "center" },
   backText: { fontSize: 14, fontWeight: "800" }
 });

@@ -5,15 +5,15 @@ import { PropsWithChildren } from "react";
 import { ApiClientProvider } from "@/api/apiContext";
 import { AskDreamsScreen } from "@/features/ask/AskDreamsScreen";
 import { mockApiClient } from "@/mocks/mockApi";
-import { mockAskDreams } from "@/mocks/mockData";
+import { mockAskDreams, mockEntitlement } from "@/mocks/mockData";
 import { ThemeProvider } from "@/theme/ThemeProvider";
 
 describe("AskDreamsScreen", () => {
   it("submits a question and renders linked evidence", async () => {
     const askDreams = jest.fn(async () => mockAskDreams);
-    renderWithProviders(<AskDreamsScreen />, { askDreams });
+    renderWithProviders(<AskDreamsScreen />, { askDreams, getEntitlements: async () => ({ ...mockEntitlement, tier: "premium", askDailyLimit: 3, askRemaining: 3, askResetsAt: "2026-09-16T00:00:00Z" }) });
 
-    fireEvent.changeText(screen.getByLabelText("Dream history question"), "When does water appear?");
+    fireEvent.changeText(await screen.findByLabelText("Dream history question"), "When does water appear?");
     fireEvent.press(screen.getByText("Ask Dream DNA"));
 
     await waitFor(() => expect(askDreams).toHaveBeenCalledWith({ question: "When does water appear?" }));

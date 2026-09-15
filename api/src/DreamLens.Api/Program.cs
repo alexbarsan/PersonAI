@@ -51,9 +51,12 @@ builder.Services.AddPersonaKitDeepSeekChatClient(builder.Configuration);
 AddDreamLensPersonaKitCore(builder.Services, builder.Configuration, builder.Environment);
 builder.Services.AddScoped<GetMeHandler>();
 builder.Services.AddScoped<GetEntitlementHandler>();
+builder.Services.Configure<AskDreamsOptions>(builder.Configuration.GetSection("AskDreams"));
 
-if (!string.IsNullOrWhiteSpace(PersistenceServiceCollectionExtensions.ResolveConnectionString(builder.Configuration)))
+var persistenceEnabled = !string.IsNullOrWhiteSpace(PersistenceServiceCollectionExtensions.ResolveConnectionString(builder.Configuration));
+if (persistenceEnabled)
 {
+    builder.Services.AddScoped<IAskQuotaService, AskQuotaService>();
     builder.Services.AddScoped<IAnonymizedUserAccessService, AnonymizedUserAccessService>();
     builder.Services.AddScoped<GetJobHandler>();
     builder.Services.AddScoped<RetryJobHandler>();
@@ -78,7 +81,6 @@ if (dreamEndpointsEnabled)
     builder.Services.AddScoped<DailyDreamContentSeeder>();
     builder.Services.AddScoped<GetDailyDreamContentHandler>();
     builder.Services.AddHostedService<DailyDreamContentSeedService>();
-    builder.Services.Configure<AskDreamsOptions>(builder.Configuration.GetSection("AskDreams"));
     builder.Services.Configure<DeepInterpretationOptions>(builder.Configuration.GetSection("DeepInterpretation"));
     builder.Services.Configure<SensitiveSafetyOptions>(builder.Configuration.GetSection("SensitiveSafety"));
     builder.Services.AddSingleton<SensitiveSafetyEventFactory>();
@@ -99,8 +101,6 @@ if (dreamEndpointsEnabled)
     builder.Services.AddScoped<GetDreamImageHandler>();
     builder.Services.AddSingleton<IDreamImagePromptComposer, DreamImagePromptComposer>();
     builder.Services.AddScoped<ListDreamsHandler>();
-    builder.Services.AddScoped<UpdateDreamJournalHandler>();
-    builder.Services.AddScoped<DeleteDreamHandler>();
     builder.Services.AddScoped<GetInsightsHandler>();
     builder.Services.AddScoped<SemanticMemoryService>();
     builder.Services.AddScoped<RequestAnonymizationHandler>();

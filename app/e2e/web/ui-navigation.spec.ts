@@ -15,9 +15,8 @@ test("signed-in navigation keeps core screens reachable", async ({ page }) => {
 
   await page.getByLabel("Ask").last().click();
   await expect(page.getByText("Ask your dream history", { exact: true })).toBeVisible();
-  await page.getByLabel("Dream history question").fill("When does water appear?");
-  await page.getByText("Ask Dream DNA", { exact: true }).click();
-  await expect(page.getByText("Dreams used", { exact: true })).toBeVisible();
+  await expect(page.getByText("Available with Premium", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Explore Premium", exact: true })).toBeVisible();
   await page.screenshot({ path: "test-results/ask-dream-dna-desktop.png", fullPage: true });
 
   await page.getByLabel("Profile").last().click();

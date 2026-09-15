@@ -26,9 +26,8 @@ test("happy path: onboarding, submit dream, view result", async ({ page }) => {
   await expect(page.getByTestId("dream-summary")).toHaveText("The dream points to uncertainty and a wish for steadier ground.");
   await expect(page.getByText("Guidance")).toBeVisible();
   await expect(page.getByRole("tab", { name: "water", exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Journal details", exact: true }).click();
-  await expect(page.getByLabel("Journal note", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Journal details", exact: true }).click();
+  await expect(page.getByText("Original dream", { exact: true })).toBeVisible();
+  await expect(page.getByText("I was walking through a quiet station while holding a blue notebook.", { exact: true }).last()).toBeVisible();
   await page.getByTestId("dream-summary").scrollIntoViewIfNeeded();
   await page.screenshot({ path: "test-results/interpretation-redesign-desktop.png", fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });

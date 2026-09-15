@@ -43,6 +43,7 @@ export function HomeScreen() {
   const theme = useTheme();
   const api = useApiClient();
   const user = useAuthStore((state) => state.user);
+  const isRestoring = useAuthStore((state) => state.isRestoring);
   const signIn = useAuthStore((state) => state.signInWithMockUser);
   const signOut = useAuthStore((state) => state.signOut);
   const cognito = useCognitoSignIn();
@@ -72,6 +73,10 @@ export function HomeScreen() {
     if (profile.error instanceof ApiError && profile.error.status === 404)
       router.replace("/onboarding");
   }, [profile.error]);
+
+  if (isRestoring) {
+    return <View style={s.sessionLoading}><Text style={[s.body, { color: theme.colors.mutedText }]}>Restoring your session</Text></View>;
+  }
 
   if (!user)
     return (
@@ -366,6 +371,7 @@ export function HomeScreen() {
 }
 
 const s = StyleSheet.create({
+  sessionLoading: { alignItems: "center", flex: 1, justifyContent: "center", padding: 20 },
   screen: { gap: 24, padding: 20, paddingBottom: 32 },
   greeting: {
     minHeight: 180,

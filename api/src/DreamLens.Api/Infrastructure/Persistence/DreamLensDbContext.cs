@@ -29,6 +29,8 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
 
     public DbSet<AiCostLedgerRecord> AiCostLedger => Set<AiCostLedgerRecord>();
 
+    public DbSet<AskQuestionUsageRecord> AskQuestionUsages => Set<AskQuestionUsageRecord>();
+
     public DbSet<DreamEmbedding> DreamEmbeddings => Set<DreamEmbedding>();
 
     public DbSet<AsyncJobRecord> AsyncJobs => Set<AsyncJobRecord>();
@@ -279,6 +281,18 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
                 .HasPrecision(18, 9);
             entity.Property(row => row.CreatedAt)
                 .IsRequired();
+        });
+
+        modelBuilder.Entity<AskQuestionUsageRecord>(entity =>
+        {
+            entity.ToTable("AskQuestionUsages");
+            entity.HasKey(usage => usage.Id);
+            entity.HasIndex(usage => new { usage.UserSubject, usage.ReservedAt, usage.Status });
+            entity.Property(usage => usage.UserSubject).HasMaxLength(256).IsRequired();
+            entity.Property(usage => usage.AccountTimezone).HasMaxLength(128).IsRequired();
+            entity.Property(usage => usage.AccountLocalDate).HasColumnType("date").IsRequired();
+            entity.Property(usage => usage.Status).HasMaxLength(16).IsRequired();
+            entity.Property(usage => usage.ReservedAt).IsRequired();
         });
 
         modelBuilder.Entity<DreamEmbedding>(entity =>

@@ -14,26 +14,23 @@ describe("JournalListScreen", () => {
     renderWithProviders(<JournalListScreen />);
 
     expect(await screen.findByText(mockJournal.items[0].title)).toBeTruthy();
-    expect(screen.getByText(/2026-07-01/)).toBeTruthy();
+    expect(screen.getByText("Jul 1")).toBeTruthy();
   });
 
   it("renders an empty state", async () => {
     renderWithProviders(<JournalListScreen />, {
-      listDreams: async (): Promise<DreamJournalResponse> => ({ items: [] })
+      listDreams: async (): Promise<DreamJournalResponse> => ({ items: [], total: 0, hasMore: false })
     });
 
     expect(await screen.findByText("No dreams yet")).toBeTruthy();
     expect(screen.getByText("Capture a dream to start building your private journal.")).toBeTruthy();
   });
 
-  it("deletes a journal item optimistically", async () => {
-    const deleteDream = jest.fn(async () => undefined);
-    renderWithProviders(<JournalListScreen />, { deleteDream });
+  it("keeps journal items read-only", async () => {
+    renderWithProviders(<JournalListScreen />);
 
     expect(await screen.findByText(mockJournal.items[0].title)).toBeTruthy();
-    fireEvent.press(screen.getByText("Delete"));
-
-    await waitFor(() => expect(deleteDream).toHaveBeenCalledWith(mockJournal.items[0].id));
+    expect(screen.queryByLabelText("Delete dream")).toBeNull();
   });
 });
 

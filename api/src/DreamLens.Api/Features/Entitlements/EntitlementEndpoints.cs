@@ -4,7 +4,8 @@ public static class EntitlementEndpoints
 {
     public static IEndpointRouteBuilder MapEntitlementEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapGet("/v1/entitlements", (GetEntitlementHandler handler) => Results.Ok(handler.Handle()))
+        app.MapGet("/v1/entitlements", async (GetEntitlementHandler handler, CancellationToken cancellationToken) =>
+                Results.Ok(await handler.HandleAsync(cancellationToken)))
             .RequireAuthorization()
             .WithName("GetEntitlements")
             .WithTags("Entitlements")

@@ -81,6 +81,7 @@ export type DreamResponse = {
   tags?: string[];
   occurredAt?: string | null;
   journalNote?: string | null;
+  text?: string | null;
 };
 
 export type DreamFeedbackRating = "like" | "dislike";
@@ -104,14 +105,8 @@ export type DreamJournalFilters = {
   tag?: string;
   from?: string;
   to?: string;
-};
-
-export type UpdateDreamJournalRequest = {
-  mood?: string | null;
-  sleepQuality?: number | null;
-  tags?: string[];
-  occurredAt?: string | null;
-  journalNote?: string | null;
+  page?: number;
+  pageSize?: number;
 };
 
 export type RequestDreamImageRequest = {
@@ -192,6 +187,8 @@ export type DeepInterpretationResponse = {
 
 export type DreamJournalResponse = {
   items: DreamJournalItemResponse[];
+  total: number;
+  hasMore: boolean;
 };
 
 export type DreamJournalItemResponse = {
@@ -202,6 +199,7 @@ export type DreamJournalItemResponse = {
   summary: string | null;
   mood: string | null;
   occurredAt: string | null;
+  excerpt: string;
 };
 
 export type InsightsResponse = {
@@ -258,6 +256,10 @@ export type EntitlementResponse = {
   dailyDreamLimit: number;
   deepAnalysisEnabled: boolean;
   quotaExempt?: boolean;
+  askDailyLimit?: number;
+  askRemaining?: number | null;
+  askResetsAt?: string | null;
+  askQuotaExempt?: boolean;
 };
 
 export type AnonymizationRequestResponse = {

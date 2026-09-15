@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { router } from "expo-router";
+import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
 import { Text } from "@/components/Text";
@@ -33,15 +34,39 @@ export function DreamCaptureScreen({ onSubmitted }: DreamCaptureScreenProps) {
   const rememberDream = useDreamResultStore((state) => state.rememberDream);
   const draftText = useDreamDraftStore((state) => state.text);
   const draftMood = useDreamDraftStore((state) => state.mood);
+  const draftSleepQuality = useDreamDraftStore((state) => state.sleepQuality);
+  const draftTags = useDreamDraftStore((state) => state.tags);
+  const draftOccurredAt = useDreamDraftStore((state) => state.occurredAt);
+  const hasDraftHydrated = useDreamDraftStore((state) => state.hasHydrated);
+  const setDraftFields = useDreamDraftStore((state) => state.setFields);
+  const clearDraft = useDreamDraftStore((state) => state.clearDraft);
   const form = useForm<DreamCaptureValues>({
     resolver: zodResolver(dreamCaptureSchema),
-    defaultValues: { ...defaultDreamCaptureValues, text: draftText, mood: draftMood }
+    defaultValues: { ...defaultDreamCaptureValues, text: draftText, mood: draftMood, sleepQuality: draftSleepQuality, tags: draftTags, occurredAt: draftOccurredAt }
   });
+  useEffect(() => {
+    if (!hasDraftHydrated || form.formState.isDirty) return;
+    form.reset({ text: draftText, mood: draftMood, sleepQuality: draftSleepQuality, tags: draftTags, occurredAt: draftOccurredAt });
+  }, [draftMood, draftOccurredAt, draftSleepQuality, draftTags, draftText, form, hasDraftHydrated]);
+  useEffect(() => {
+    const subscription = form.watch((values) => {
+      if (!hasDraftHydrated) return;
+      setDraftFields({
+        text: values.text ?? "",
+        mood: values.mood ?? "",
+        sleepQuality: values.sleepQuality ?? "",
+        tags: values.tags ?? "",
+        occurredAt: values.occurredAt ?? ""
+      });
+    });
+    return () => subscription.unsubscribe();
+  }, [form, hasDraftHydrated, setDraftFields]);
   const submitDream = useMutation({ mutationFn: (values: DreamCaptureValues) => api.submitDream(toSubmitDreamRequest(values)) });
   const onSubmit = form.handleSubmit(async (values) => {
     try {
       const dream = await submitDream.mutateAsync(values);
       rememberDream(dream);
+      clearDraft();
       if (onSubmitted) return onSubmitted(dream.id);
       router.push(`/dreams/${dream.id}`);
     } catch {
@@ -70,7 +95,7 @@ export function DreamCaptureScreen({ onSubmitted }: DreamCaptureScreenProps) {
             <Text style={[styles.buttonText, { color: theme.colors.primaryText }]}>{submitDream.isPending ? "Interpreting" : "Interpret dream"}</Text>
           </Pressable>
         </View>
-        <Text style={[styles.disclaimer, { color: theme.colors.mutedText }]}>Dream DNA is for reflection and entertainment, not medical or mental health advice. AI providers process relevant content; authorized administrators may review original dreams.</Text>
+        <Text style={[styles.disclaimer, { color: theme.colors.mutedText }]}>Your dream is private and processed by AI to create your interpretation. Dream DNA is for reflection and entertainment, not medical or mental health advice.</Text>
       </ScrollView>
     </AppShell>
   );

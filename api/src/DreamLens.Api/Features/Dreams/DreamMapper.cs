@@ -22,7 +22,8 @@ public static class DreamMapper
             record.SleepQuality,
             ReadTags(record),
             record.OccurredAt,
-            record.JournalNote);
+            record.JournalNote,
+            record.Text);
     }
 
     public static string? ReadSummary(DreamRecord record)

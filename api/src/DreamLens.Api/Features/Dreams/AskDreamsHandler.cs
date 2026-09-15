@@ -17,6 +17,7 @@ public sealed class AskDreamsHandler(
     DreamLensDbContext dbContext,
     ICurrentUser currentUser,
     IEntitlementService entitlementService,
+    IAskQuotaService askQuotaService,
     IEmbeddingProvider embeddingProvider,
     SemanticMemoryService semanticMemory,
     IPersonaRegistry personaRegistry,
@@ -62,22 +63,19 @@ public sealed class AskDreamsHandler(
         }
 
         var entitlement = entitlementService.GetEntitlement(currentUser.Subject);
-        var dailyLimit = entitlement.Tier == EntitlementTier.Premium
-            ? askOptions.Value.PremiumDailyLimit
-            : askOptions.Value.FreeDailyLimit;
-        if (!entitlement.QuotaExempt)
+        if (entitlement.Tier != EntitlementTier.Premium)
         {
-            var today = DateTimeOffset.UtcNow.Date;
-            var completedToday = await dbContext.AiCostLedger.AsNoTracking().CountAsync(
-                row => row.UserSubject == currentUser.Subject
-                    && row.OperationType == "dream.ask"
-                    && row.Status == "completed"
-                    && row.CreatedAt >= today,
-                cancellationToken);
-            if (completedToday >= dailyLimit)
-            {
-                return AskDreamsResult.Failure(StatusCodes.Status429TooManyRequests, "quota", "You have reached today's dream-history question limit.");
-            }
+            return AskDreamsResult.Failure(StatusCodes.Status403Forbidden, "entitlement", "Ask Dream DNA is a Premium feature.");
+        }
+
+        var reservation = await askQuotaService.TryReserveAsync(
+            currentUser.Subject,
+            profile.Timezone,
+            entitlement,
+            cancellationToken);
+        if (!reservation.Accepted)
+        {
+            return AskDreamsResult.Failure(StatusCodes.Status429TooManyRequests, "quota", "You have reached today's dream-history question limit.");
         }
 
         EmbeddingResult queryEmbedding;
@@ -95,6 +93,7 @@ public sealed class AskDreamsHandler(
         {
             dbContext.AiCostLedger.Add(CreateFailedEmbeddingLedger(exception, Stopwatch.GetElapsedTime(embeddingStarted)));
             await dbContext.SaveChangesAsync(cancellationToken);
+            await ReleaseReservationAsync(reservation.Id, cancellationToken);
             return MemoryUnavailable();
         }
 
@@ -113,6 +112,7 @@ public sealed class AskDreamsHandler(
             .ToArray();
         if (sources.Length == 0)
         {
+            await ReleaseReservationAsync(reservation.Id, cancellationToken);
             return MemoryUnavailable();
         }
 
@@ -171,6 +171,7 @@ public sealed class AskDreamsHandler(
         {
             dbContext.AiCostLedger.Add(CreateAskLedger("failed", failureKind ?? "Validation", attempts, inputTokens, outputTokens, Stopwatch.GetElapsedTime(askStarted)));
             await dbContext.SaveChangesAsync(cancellationToken);
+            await ReleaseReservationAsync(reservation.Id, cancellationToken);
             return AskDreamsResult.Failure(StatusCodes.Status503ServiceUnavailable, "answer", "Dream DNA could not answer safely right now. Please try again.");
         }
 
@@ -179,6 +180,10 @@ public sealed class AskDreamsHandler(
             .ToArray();
         dbContext.AiCostLedger.Add(CreateAskLedger("completed", null, attempts, inputTokens, outputTokens, Stopwatch.GetElapsedTime(askStarted)));
         await dbContext.SaveChangesAsync(cancellationToken);
+        if (reservation.Id is Guid reservationId)
+        {
+            await askQuotaService.CompleteAsync(reservationId, cancellationToken);
+        }
 
         return AskDreamsResult.Success(new AskDreamsResponse(
             modelOutput.Answer,
@@ -258,6 +263,9 @@ public sealed class AskDreamsHandler(
         "Your semantic dream memory is not ready yet. Try again after your dream history has been indexed.");
 
     private static int ToInt(long? value) => value is null ? 0 : checked((int)value.Value);
+
+    private Task ReleaseReservationAsync(Guid? reservationId, CancellationToken cancellationToken) =>
+        reservationId is Guid id ? askQuotaService.ReleaseAsync(id, cancellationToken) : Task.CompletedTask;
 
     private sealed record AskModelOutput(
         string Answer,

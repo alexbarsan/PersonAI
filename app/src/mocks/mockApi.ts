@@ -7,26 +7,33 @@ export const mockApiClient: ApiClient = {
   getMe: async () => mockMe,
   getProfile: async () => mockProfile,
   updateProfile: async (request) => request,
-  submitDream: async () => {
+  submitDream: async (request) => {
     if (readMockSubmitMode() === "provider-failure") {
       throw new ApiError("Mock provider failure", 503, {
         error: "provider_failure"
       });
     }
 
-    return mockDream;
+    return { ...mockDream, text: request.text };
   },
   askDreams: async () => mockAskDreams,
-  listDreams: async (filters = {}) => ({
-    items: mockJournal.items.filter(item => {
+  listDreams: async (filters = {}) => {
+    const filtered = mockJournal.items.filter(item => {
       const date = (item.occurredAt ?? item.createdAt).slice(0, 10);
       return (!filters.query || `${item.title} ${item.summary ?? ""}`.toLowerCase().includes(filters.query.toLowerCase()))
         && (!filters.mood || item.mood?.toLowerCase() === filters.mood.toLowerCase())
         && (!filters.tag || (item.id === mockDream.id && mockDream.tags?.some(tag => tag.toLowerCase() === filters.tag!.toLowerCase())))
         && (!filters.from || date >= filters.from)
         && (!filters.to || date <= filters.to);
-    })
-  }),
+    });
+    const page = filters.page ?? 1;
+    const pageSize = filters.pageSize ?? 25;
+    return {
+      items: filtered.slice((page - 1) * pageSize, page * pageSize),
+      total: filtered.length,
+      hasMore: page * pageSize < filtered.length
+    };
+  },
   getDream: async () => mockDream,
   getDreamFeedback: async () => mockDreamFeedback,
   getDeepInterpretation: async () => mockDeepInterpretation,
@@ -37,11 +44,9 @@ export const mockApiClient: ApiClient = {
     details: request.details ?? null,
     updatedAt: "2026-09-05T08:00:00Z"
   }),
-  updateDreamJournal: async (_, request) => ({ ...mockDream, ...request }),
   requestDreamImage: async () => mockDreamImage,
     getDreamImage: async () => mockDreamImage,
     waitForDreamImage: async () => mockDreamImage,
-  deleteDream: async () => undefined,
   getInsights: async () => mockInsights,
   getEntitlements: async () => mockEntitlement,
   exportUserData: async () => mockUserDataExport,

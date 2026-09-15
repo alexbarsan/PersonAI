@@ -20,7 +20,7 @@ describe("PaywallScreen", () => {
     expect(screen.getByText("Free")).toBeTruthy();
     expect(screen.getByText("3 dream interpretations per day.")).toBeTruthy();
     expect(screen.getByText("25 dream interpretations per day.")).toBeTruthy();
-    await waitFor(() => expect(screen.getByText("Purchases not connected yet")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("Subscriptions will be available here when purchases are connected.")).toBeTruthy());
   });
 });
 

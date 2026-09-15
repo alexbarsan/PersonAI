@@ -32,26 +32,46 @@ public sealed class ListDreamsHandler(DreamLensDbContext dbContext, ICurrentUser
             dreamsQuery = dreamsQuery.Where(dream => dream.TagsJson.Contains(tag));
         }
 
+        if (!string.IsNullOrWhiteSpace(query?.From))
+        {
+            var from = query.From.Trim();
+            dreamsQuery = dreamsQuery.Where(dream => dream.OccurredAt != null && string.Compare(dream.OccurredAt, from) >= 0);
+        }
+
+        if (!string.IsNullOrWhiteSpace(query?.To))
+        {
+            var to = query.To.Trim();
+            dreamsQuery = dreamsQuery.Where(dream => dream.OccurredAt != null && string.Compare(dream.OccurredAt, to) <= 0);
+        }
+
+        var page = Math.Max(1, query?.Page ?? 1);
+        var pageSize = Math.Clamp(query?.PageSize ?? 25, 1, 50);
+        var total = await dreamsQuery.CountAsync(cancellationToken);
         var dreams = await dreamsQuery
             .OrderByDescending(dream => dream.CreatedAt)
-            .Select(dream => new DreamJournalItemResponse(
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToArrayAsync(cancellationToken);
+
+        var mapped = dreams.Select(dream => new DreamJournalItemResponse(
                 dream.Id,
                 dream.CreatedAt,
                 dream.Status,
                 DreamTitleGenerator.Create(dream.Title, DreamMapper.ReadSummary(dream), dream.Text),
                 DreamMapper.ReadSummary(dream),
                 dream.Mood,
-                dream.OccurredAt))
-            .ToArrayAsync(cancellationToken);
-
-        var dateFilteredDreams = dreams
-            .Where(dream => string.IsNullOrWhiteSpace(query?.From)
-                || dream.OccurredAt is not null && string.CompareOrdinal(dream.OccurredAt, query.From) >= 0)
-            .Where(dream => string.IsNullOrWhiteSpace(query?.To)
-                || dream.OccurredAt is not null && string.CompareOrdinal(dream.OccurredAt, query.To) <= 0)
+                dream.OccurredAt,
+                CreateExcerpt(dream.Text)))
             .ToArray();
-        return new DreamJournalResponse(dateFilteredDreams);
+
+        return new DreamJournalResponse(mapped, total, page * pageSize < total);
+    }
+
+    private static string CreateExcerpt(string text)
+    {
+        var normalized = string.Join(' ', text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+        return normalized.Length <= 180 ? normalized : $"{normalized[..177]}...";
     }
 }
 
-public sealed record DreamJournalQuery(string? Query, string? Mood, string? Tag, string? From, string? To);
+public sealed record DreamJournalQuery(string? Query, string? Mood, string? Tag, string? From, string? To, int? Page = null, int? PageSize = null);
