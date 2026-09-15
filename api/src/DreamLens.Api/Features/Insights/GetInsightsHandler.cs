@@ -1,4 +1,5 @@
 using System.Text.Json;
+using DreamLens.Api.Features.Dreams;
 using DreamLens.Api.Infrastructure.Identity;
 using DreamLens.Api.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -7,6 +8,9 @@ namespace DreamLens.Api.Features.Insights;
 
 public sealed class GetInsightsHandler(DreamLensDbContext dbContext, ICurrentUser currentUser)
 {
+    private const int MinimumRelationshipPopulation = 6;
+    private const int MinimumRelationshipOccurrences = 3;
+    private const decimal MinimumRelationshipConfidence = 0.60m;
     private static readonly string[] FactTypeOrder = ["symbol", "emotion", "theme", "person", "location", "object", "scenario"];
 
     private static readonly IReadOnlyDictionary<string, string> FactGroupTitles = new Dictionary<string, string>
@@ -49,6 +53,7 @@ public sealed class GetInsightsHandler(DreamLensDbContext dbContext, ICurrentUse
             dates.Length == 0 ? null : new InsightDateRangeResponse(dates.Min(), dates.Max()),
             factGroups,
             BuildTimingPatterns(facts, dreamDates),
+            BuildRelationships(facts, dreams.Length, dreams.ToDictionary(dream => dream.Id)),
             BuildMonthlyDreamCounts(dates));
     }
 
@@ -142,6 +147,127 @@ public sealed class GetInsightsHandler(DreamLensDbContext dbContext, ICurrentUse
             .ToArray();
     }
 
+    private static RelationshipInsightResponse[] BuildRelationships(
+        IEnumerable<DreamFactRecord> facts,
+        int totalDreams,
+        IReadOnlyDictionary<Guid, DreamRecord> dreamsById)
+    {
+        if (totalDreams < MinimumRelationshipPopulation)
+        {
+            return [];
+        }
+
+        var qualified = facts
+            .Where(fact => FactGroupTitles.ContainsKey(fact.FactType)
+                && !string.Equals(fact.SourceField, "unknown", StringComparison.OrdinalIgnoreCase)
+                && fact.ExtractionConfidence >= MinimumRelationshipConfidence
+                && dreamsById.ContainsKey(fact.DreamId))
+            .GroupBy(fact => new RelationshipFactKey(fact.FactType, fact.NormalizedValue))
+            .SelectMany(group => group
+                .GroupBy(fact => fact.DreamId)
+                .Select(dreamFacts => dreamFacts
+                    .OrderByDescending(fact => fact.ExtractionConfidence)
+                    .ThenByDescending(fact => fact.DisplayValue.Length)
+                    .First()))
+            .ToArray();
+        if (qualified.Length == 0)
+        {
+            return [];
+        }
+
+        var patternCounts = qualified
+            .GroupBy(fact => new RelationshipFactKey(fact.FactType, fact.NormalizedValue))
+            .ToDictionary(group => group.Key, group => group.Select(fact => fact.DreamId).Distinct().Count());
+        var pairs = qualified
+            .GroupBy(fact => fact.DreamId)
+            .SelectMany(group =>
+            {
+                var items = group.ToArray();
+                return items.SelectMany((first, firstIndex) => items
+                    .Skip(firstIndex + 1)
+                    .Where(second => !string.Equals(first.FactType, second.FactType, StringComparison.OrdinalIgnoreCase))
+                    .Select(second => RelationshipPair.Create(first, second)));
+            })
+            .GroupBy(pair => pair.Key)
+            .Select(group => new { group.Key, Evidence = group.ToArray() })
+            .Select(group =>
+            {
+                var firstDreams = patternCounts[group.Key.First];
+                var secondDreams = patternCounts[group.Key.Second];
+                var sharedDreams = group.Evidence.Select(item => item.DreamId).Distinct().Count();
+                return new { group.Key, group.Evidence, FirstDreams = firstDreams, SecondDreams = secondDreams, SharedDreams = sharedDreams };
+            })
+            .Where(group => group.SharedDreams >= MinimumRelationshipOccurrences
+                && group.FirstDreams >= MinimumRelationshipOccurrences
+                && group.SecondDreams >= MinimumRelationshipOccurrences)
+            .Select(group => new
+            {
+                group.Key,
+                group.Evidence,
+                group.FirstDreams,
+                group.SecondDreams,
+                group.SharedDreams,
+                SharedOfSmallerPatternPercent = Math.Round(group.SharedDreams * 100m / Math.Min(group.FirstDreams, group.SecondDreams), 1)
+            })
+            .Where(group => group.SharedOfSmallerPatternPercent >= 50m)
+            .OrderByDescending(group => group.SharedDreams)
+            .ThenByDescending(group => group.SharedOfSmallerPatternPercent)
+            .ThenBy(group => group.Key.First.Type, StringComparer.Ordinal)
+            .ThenBy(group => group.Key.First.NormalizedValue, StringComparer.Ordinal)
+            .Take(5)
+            .Select(group => new RelationshipInsightResponse(
+                group.Key.First.Type,
+                FindDisplayValue(qualified, group.Key.First),
+                group.Key.Second.Type,
+                FindDisplayValue(qualified, group.Key.Second),
+                group.SharedDreams,
+                group.FirstDreams,
+                group.SecondDreams,
+                group.SharedOfSmallerPatternPercent,
+                group.Evidence
+                    .OrderByDescending(item => ReadObservedDate(dreamsById[item.DreamId]))
+                    .Take(5)
+                    .Select(item => new DreamRelationshipEvidenceResponse(
+                        item.DreamId,
+                        DreamTitleGenerator.Create(dreamsById[item.DreamId].Title, DreamMapper.ReadSummary(dreamsById[item.DreamId]), dreamsById[item.DreamId].Text),
+                        ReadObservedDate(dreamsById[item.DreamId]),
+                        item.First.ExtractionConfidence,
+                        item.Second.ExtractionConfidence))
+                    .ToArray()))
+            .ToArray();
+
+        return pairs;
+    }
+
+    private static string FindDisplayValue(IEnumerable<DreamFactRecord> facts, RelationshipFactKey key) => facts
+        .Where(fact => string.Equals(fact.FactType, key.Type, StringComparison.Ordinal)
+            && string.Equals(fact.NormalizedValue, key.NormalizedValue, StringComparison.Ordinal))
+        .OrderByDescending(fact => fact.DisplayValue.Length)
+        .Select(fact => fact.DisplayValue)
+        .First();
+
+    private sealed record RelationshipFactKey(string Type, string NormalizedValue);
+
+    private sealed record RelationshipPairKey(RelationshipFactKey First, RelationshipFactKey Second);
+
+    private sealed record RelationshipPair(RelationshipPairKey Key, Guid DreamId, DreamFactRecord First, DreamFactRecord Second)
+    {
+        public static RelationshipPair Create(DreamFactRecord first, DreamFactRecord second)
+        {
+            var firstKey = new RelationshipFactKey(first.FactType, first.NormalizedValue);
+            var secondKey = new RelationshipFactKey(second.FactType, second.NormalizedValue);
+            return Compare(firstKey, secondKey) <= 0
+                ? new RelationshipPair(new RelationshipPairKey(firstKey, secondKey), first.DreamId, first, second)
+                : new RelationshipPair(new RelationshipPairKey(secondKey, firstKey), first.DreamId, second, first);
+        }
+
+        private static int Compare(RelationshipFactKey left, RelationshipFactKey right)
+        {
+            var typeComparison = Array.IndexOf(FactTypeOrder, left.Type).CompareTo(Array.IndexOf(FactTypeOrder, right.Type));
+            return typeComparison != 0 ? typeComparison : string.Compare(left.NormalizedValue, right.NormalizedValue, StringComparison.Ordinal);
+        }
+    }
+
     private static MonthlyDreamCountResponse[] BuildMonthlyDreamCounts(IEnumerable<DateOnly> dates)
     {
         return dates
@@ -204,4 +330,7 @@ public sealed class GetInsightsHandler(DreamLensDbContext dbContext, ICurrentUse
             ? occurredAt
             : DateOnly.FromDateTime(dream.CreatedAt.UtcDateTime);
     }
+
+    private static DateOnly ReadObservedDate(DreamRecord dream) => ReadDreamDate(dream)
+        ?? DateOnly.FromDateTime(dream.CreatedAt.UtcDateTime);
 }

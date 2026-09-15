@@ -9,6 +9,7 @@ import {
   FactInsightGroupResponse,
   FactInsightResponse,
   DreamObservationResponse,
+  RelationshipInsightResponse,
   ThemeInsightResponse,
   TimingPatternInsightResponse,
 } from "@/api/dto";
@@ -142,6 +143,9 @@ export function InsightsScreen() {
             ) : null}
             {insights.data.timingPatterns.length > 0 ? (
               <TimingPanel patterns={insights.data.timingPatterns} />
+            ) : null}
+            {insights.data.relationships.length > 0 ? (
+              <RelationshipPanel relationships={insights.data.relationships} />
             ) : null}
             <Text style={[styles.note, { color: theme.colors.mutedText }]}>
               Patterns are reflective observations, not predictions or
@@ -423,6 +427,30 @@ function TimingPanel({
   );
 }
 
+function RelationshipPanel({ relationships }: { relationships: RelationshipInsightResponse[] }) {
+  const theme = useTheme();
+  const router = useRouter();
+  return (
+    <View style={[styles.panel, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+      <Text style={[styles.panelTitle, { color: theme.colors.text }]}>Patterns that appear together</Text>
+      <Text style={[styles.body, { color: theme.colors.mutedText }]}>These are co-occurrences in your journal, not explanations or causes.</Text>
+      {relationships.map((relationship) => (
+        <View key={`${relationship.firstType}-${relationship.firstValue}-${relationship.secondType}-${relationship.secondValue}`} style={[styles.relationship, { borderColor: theme.colors.border }]}>
+          <Text style={[styles.factName, { color: theme.colors.text }]}>{relationship.firstValue} + {relationship.secondValue}</Text>
+          <Text style={[styles.factMeta, { color: theme.colors.mutedText }]}>
+            Together in {relationship.sharedDreams} {relationship.sharedDreams === 1 ? "dream" : "dreams"}; {relationship.sharedOfSmallerPatternPercent}% of the less frequent pattern's observations.
+          </Text>
+          {relationship.evidence.map((dream) => (
+            <Pressable key={dream.dreamId} accessibilityRole="link" accessibilityLabel={`Open ${dream.title}`} onPress={() => router.push(`/dreams/${dream.dreamId}`)} style={styles.relationshipEvidence}>
+              <Text style={[styles.provenance, { color: theme.colors.primary }]}>{dream.title}</Text>
+            </Pressable>
+          ))}
+        </View>
+      ))}
+    </View>
+  );
+}
+
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("en", {
     month: "short",
@@ -472,6 +500,8 @@ const styles = StyleSheet.create({
   fact: { gap: 6 },
   provenance: { fontSize: 12, lineHeight: 18 },
   evidence: { borderTopWidth: 1, gap: 3, paddingTop: 12 },
+  relationship: { borderTopWidth: 1, gap: 6, paddingTop: 14 },
+  relationshipEvidence: { minHeight: 28, justifyContent: "center" },
   factHeader: {
     alignItems: "center",
     flexDirection: "row",

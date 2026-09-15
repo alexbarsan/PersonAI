@@ -27,6 +27,7 @@ describe("InsightsScreen", () => {
         dateRange: null,
         factGroups: [],
         timingPatterns: [],
+        relationships: [],
         monthlyDreamCounts: []
       })
     });
@@ -42,7 +43,15 @@ describe("InsightsScreen", () => {
 
     expect(await screen.findByText("Observed in your journal")).toBeTruthy();
     expect(await screen.findByText("Sources: symbols.symbol")).toBeTruthy();
-    expect(screen.getByText("The Quiet Shoreline")).toBeTruthy();
+    expect(screen.getAllByText("The Quiet Shoreline").length).toBeGreaterThan(0);
+  });
+
+  it("renders relationship observations with linked owner evidence", async () => {
+    renderWithProviders(<InsightsScreen />);
+
+    expect(await screen.findByText("Patterns that appear together")).toBeTruthy();
+    expect(screen.getByText("water + curiosity")).toBeTruthy();
+    expect(screen.getByLabelText("Open The Quiet Shoreline")).toBeTruthy();
   });
 });
 

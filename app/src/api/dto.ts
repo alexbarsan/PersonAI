@@ -230,6 +230,7 @@ export type InsightsResponse = {
   dateRange: InsightDateRangeResponse | null;
   factGroups: FactInsightGroupResponse[];
   timingPatterns: TimingPatternInsightResponse[];
+  relationships: RelationshipInsightResponse[];
   monthlyDreamCounts: MonthlyDreamCountResponse[];
 };
 
@@ -288,6 +289,24 @@ export type TimingPatternInsightResponse = {
   weekdayRate: number;
   weekendRate: number;
   weekdayToWeekendRatio: number;
+};
+
+export type RelationshipInsightResponse = {
+  firstType: string;
+  firstValue: string;
+  secondType: string;
+  secondValue: string;
+  sharedDreams: number;
+  firstDreams: number;
+  secondDreams: number;
+  sharedOfSmallerPatternPercent: number;
+  evidence: Array<{
+    dreamId: string;
+    title: string;
+    observedAt: string;
+    firstExtractionConfidence: number | null;
+    secondExtractionConfidence: number | null;
+  }>;
 };
 
 export type MonthlyDreamCountResponse = {

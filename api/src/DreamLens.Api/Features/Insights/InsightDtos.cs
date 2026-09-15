@@ -7,6 +7,7 @@ public sealed record InsightsResponse(
     InsightDateRangeResponse? DateRange,
     FactInsightGroupResponse[] FactGroups,
     TimingPatternInsightResponse[] TimingPatterns,
+    RelationshipInsightResponse[] Relationships,
     MonthlyDreamCountResponse[] MonthlyDreamCounts);
 
 public sealed record ThemeInsightResponse(string Name, int Count);
@@ -51,5 +52,23 @@ public sealed record TimingPatternInsightResponse(
     decimal WeekdayRate,
     decimal WeekendRate,
     decimal WeekdayToWeekendRatio);
+
+public sealed record RelationshipInsightResponse(
+    string FirstType,
+    string FirstValue,
+    string SecondType,
+    string SecondValue,
+    int SharedDreams,
+    int FirstDreams,
+    int SecondDreams,
+    decimal SharedOfSmallerPatternPercent,
+    DreamRelationshipEvidenceResponse[] Evidence);
+
+public sealed record DreamRelationshipEvidenceResponse(
+    Guid DreamId,
+    string Title,
+    DateOnly ObservedAt,
+    decimal? FirstExtractionConfidence,
+    decimal? SecondExtractionConfidence);
 
 public sealed record MonthlyDreamCountResponse(DateOnly Month, int Count);

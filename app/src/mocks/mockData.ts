@@ -214,6 +214,25 @@ export const mockInsights: InsightsResponse = {
     }
   ],
   timingPatterns: [],
+  relationships: [
+    {
+      firstType: "symbol",
+      firstValue: "water",
+      secondType: "emotion",
+      secondValue: "curiosity",
+      sharedDreams: 3,
+      firstDreams: 4,
+      secondDreams: 3,
+      sharedOfSmallerPatternPercent: 100,
+      evidence: [{
+        dreamId: mockDream.id,
+        title: mockDream.title,
+        observedAt: "2026-07-01",
+        firstExtractionConfidence: 0.82,
+        secondExtractionConfidence: 0.82
+      }]
+    }
+  ],
   monthlyDreamCounts: [{ month: "2026-07-01", count: 1 }]
 };
 

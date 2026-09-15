@@ -968,7 +968,10 @@ public sealed class DreamEndpointTests
             CreateFact(dreams[0].Id),
             CreateFact(dreams[1].Id),
             CreateFact(dreams[2].Id),
-            CreateFact(dreams[4].Id));
+            CreateFact(dreams[4].Id),
+            CreateRelationshipFact(dreams[0].Id),
+            CreateRelationshipFact(dreams[1].Id),
+            CreateRelationshipFact(dreams[2].Id));
 
         var response = await userA.GetAsync("/v1/insights");
         var insights = await response.Content.ReadFromJsonAsync<InsightsResponse>();
@@ -984,6 +987,12 @@ public sealed class DreamEndpointTests
         var scenarios = Assert.Single(insights.FactGroups, group => group.Type == "scenario");
         Assert.Contains(scenarios.Facts, fact => fact.Value == "being late" && fact.Count == 4 && fact.PercentageOfDreams == 66.7m);
         Assert.Contains(insights.TimingPatterns, pattern => pattern.Value == "being late" && pattern.WeekdayToWeekendRatio == 1.5m);
+        var relationship = Assert.Single(insights.Relationships, item => item.FirstValue == "anxiety" && item.SecondValue == "loss of control");
+        Assert.Equal("anxiety", relationship.FirstValue);
+        Assert.Equal("loss of control", relationship.SecondValue);
+        Assert.Equal(6, relationship.SharedDreams);
+        Assert.Equal(100m, relationship.SharedOfSmallerPatternPercent);
+        Assert.All(relationship.Evidence, evidence => Assert.Contains(evidence.DreamId, dreams.Select(dream => dream.Id)));
         Assert.Equal(HttpStatusCode.OK, observationResponse.StatusCode);
         Assert.NotNull(observation);
         Assert.Equal(4, observation.TotalDreams);
@@ -1838,6 +1847,7 @@ public sealed class DreamEndpointTests
         InsightDateRangeResponse? DateRange,
         FactInsightGroupResponse[] FactGroups,
         TimingPatternInsightResponse[] TimingPatterns,
+        RelationshipInsightResponse[] Relationships,
         MonthlyDreamCountResponse[] MonthlyDreamCounts);
 
     private sealed record SimilarDreamsResponse(Guid DreamId, SimilarDreamResponse[] Matches);
@@ -1877,6 +1887,19 @@ public sealed class DreamEndpointTests
         decimal WeekendRate,
         decimal WeekdayToWeekendRatio);
 
+    private sealed record RelationshipInsightResponse(
+        string FirstType,
+        string FirstValue,
+        string SecondType,
+        string SecondValue,
+        int SharedDreams,
+        int FirstDreams,
+        int SecondDreams,
+        decimal SharedOfSmallerPatternPercent,
+        DreamRelationshipEvidenceResponse[] Evidence);
+
+    private sealed record DreamRelationshipEvidenceResponse(Guid DreamId, string Title, DateOnly ObservedAt, decimal? FirstExtractionConfidence, decimal? SecondExtractionConfidence);
+
     private sealed record MonthlyDreamCountResponse(DateOnly Month, int Count);
 
     private static DreamFactRecord CreateFact(Guid dreamId)
@@ -1891,6 +1914,22 @@ public sealed class DreamEndpointTests
             ExtractionConfidence = 0.84m,
             SourceSchemaVersion = "1.1",
             SourceField = "scenarios",
+            NormalizationVersion = "v1"
+        };
+    }
+
+    private static DreamFactRecord CreateRelationshipFact(Guid dreamId)
+    {
+        return new DreamFactRecord
+        {
+            DreamId = dreamId,
+            UserSubject = "subject-a",
+            FactType = "symbol",
+            NormalizedValue = "stairs",
+            DisplayValue = "stairs",
+            ExtractionConfidence = 0.84m,
+            SourceSchemaVersion = "1.1",
+            SourceField = "symbols.symbol",
             NormalizationVersion = "v1"
         };
     }
