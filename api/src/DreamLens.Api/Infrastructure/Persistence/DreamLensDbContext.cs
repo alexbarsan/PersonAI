@@ -184,6 +184,8 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
             entity.Property(fact => fact.Score).HasPrecision(5, 4);
             entity.Property(fact => fact.ExtractionConfidence).HasPrecision(5, 4);
             entity.Property(fact => fact.SourceSchemaVersion).HasMaxLength(16).IsRequired();
+            entity.Property(fact => fact.SourceField).HasMaxLength(64).HasDefaultValue("unknown").IsRequired();
+            entity.Property(fact => fact.NormalizationVersion).HasMaxLength(16).HasDefaultValue("v1").IsRequired();
             entity.Property(fact => fact.CreatedAt).IsRequired();
         });
 

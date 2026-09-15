@@ -1,12 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { useRouter } from "expo-router";
 import { Text } from "@/components/Text";
 
 import { useApiClient } from "@/api/apiContext";
 import {
   FactInsightGroupResponse,
   FactInsightResponse,
+  DreamObservationResponse,
   ThemeInsightResponse,
   TimingPatternInsightResponse,
 } from "@/api/dto";
@@ -17,9 +19,18 @@ export function InsightsScreen() {
   const api = useApiClient();
   const theme = useTheme();
   const [groupFilter, setGroupFilter] = useState("all");
+  const [selectedObservation, setSelectedObservation] = useState<{
+    type: string;
+    value: string;
+  } | null>(null);
   const insights = useQuery({
     queryKey: ["insights"],
     queryFn: () => api.getInsights(),
+  });
+  const observation = useQuery({
+    queryKey: ["dream-observation", selectedObservation?.type, selectedObservation?.value],
+    queryFn: () => api.getDreamObservation(selectedObservation!.type, selectedObservation!.value),
+    enabled: selectedObservation !== null,
   });
 
   return (
@@ -107,9 +118,20 @@ export function InsightsScreen() {
                         groupFilter === "all" || group.type === groupFilter,
                     )
                     .map((group) => (
-                      <FactGroup key={group.type} group={group} />
+                      <FactGroup
+                        key={group.type}
+                        group={group}
+                        onSelect={(fact) => setSelectedObservation({ type: group.type, value: fact.value })}
+                      />
                     ))}
                 </View>
+                {selectedObservation ? (
+                  <ObservationPanel
+                    observation={observation.data}
+                    isLoading={observation.isLoading}
+                    isError={observation.isError}
+                  />
+                ) : null}
               </>
             ) : (
               <ThemePanel themes={insights.data.recurringThemes} />
@@ -169,7 +191,13 @@ function Stat({
   );
 }
 
-function FactGroup({ group }: { group: FactInsightGroupResponse }) {
+function FactGroup({
+  group,
+  onSelect,
+}: {
+  group: FactInsightGroupResponse;
+  onSelect: (fact: FactInsightResponse) => void;
+}) {
   const theme = useTheme();
   return (
     <View
@@ -185,17 +213,22 @@ function FactGroup({ group }: { group: FactInsightGroupResponse }) {
         {group.title}
       </Text>
       {group.facts.map((fact) => (
-        <FactRow key={fact.value} fact={fact} />
+        <FactRow key={fact.value} fact={fact} onPress={() => onSelect(fact)} />
       ))}
     </View>
   );
 }
 
-function FactRow({ fact }: { fact: FactInsightResponse }) {
+function FactRow({ fact, onPress }: { fact: FactInsightResponse; onPress: () => void }) {
   const theme = useTheme();
   const color = ["#7ca891", "#ae96ce", "#d98e75"][fact.value.length % 3];
   return (
-    <View style={styles.fact}>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`Show journal evidence for ${fact.value}`}
+      onPress={onPress}
+      style={styles.fact}
+    >
       <View style={styles.factHeader}>
         <Text style={[styles.factName, { color: theme.colors.text }]}>
           {fact.value}
@@ -222,7 +255,54 @@ function FactRow({ fact }: { fact: FactInsightResponse }) {
         {fact.averageScore === null
           ? ""
           : ` | average intensity ${Math.round(fact.averageScore * 100)}%`}
+        {fact.averageExtractionConfidence === null
+          ? ""
+          : ` | extraction confidence ${Math.round(fact.averageExtractionConfidence * 100)}%`}
       </Text>
+    </Pressable>
+  );
+}
+
+function ObservationPanel({
+  observation,
+  isLoading,
+  isError,
+}: {
+  observation?: DreamObservationResponse;
+  isLoading: boolean;
+  isError: boolean;
+}) {
+  const theme = useTheme();
+  const router = useRouter();
+  return (
+    <View style={[styles.panel, { backgroundColor: theme.colors.softInk, borderColor: theme.colors.border }]}>
+      <Text style={[styles.panelTitle, { color: theme.colors.text }]}>Observed in your journal</Text>
+      {isLoading ? <Text style={[styles.body, { color: theme.colors.mutedText }]}>Loading contributing dreams</Text> : null}
+      {isError ? <Text style={[styles.error, { color: theme.colors.warning }]}>This observation could not be loaded.</Text> : null}
+      {observation ? (
+        <>
+          <Text style={[styles.body, { color: theme.colors.mutedText }]}>
+            {observation.value} was extracted from {observation.totalDreams} {observation.totalDreams === 1 ? "dream" : "dreams"}
+            {observation.averageExtractionConfidence === null ? "." : ` with ${Math.round(observation.averageExtractionConfidence * 100)}% average extraction confidence.`}
+          </Text>
+          <Text style={[styles.provenance, { color: theme.colors.mutedText }]}>
+            Sources: {observation.sourceFields.join(", ")}
+          </Text>
+          {observation.evidence.map((item) => (
+            <Pressable
+              key={item.dreamId}
+              accessibilityRole="link"
+              onPress={() => router.push(`/dreams/${item.dreamId}`)}
+              style={[styles.evidence, { borderColor: theme.colors.border }]}
+            >
+              <Text style={[styles.factName, { color: theme.colors.text }]}>{item.title}</Text>
+              <Text style={[styles.factMeta, { color: theme.colors.mutedText }]}>
+                {formatDate(item.observedAt)} | {item.sourceField} | schema {item.sourceSchemaVersion}
+              </Text>
+            </Pressable>
+          ))}
+        </>
+      ) : null}
     </View>
   );
 }
@@ -389,6 +469,8 @@ const styles = StyleSheet.create({
   },
   panelTitle: { fontSize: 17, fontWeight: "800", lineHeight: 23 },
   fact: { gap: 6 },
+  provenance: { fontSize: 12, lineHeight: 18 },
+  evidence: { borderTopWidth: 1, gap: 3, paddingTop: 12 },
   factHeader: {
     alignItems: "center",
     flexDirection: "row",

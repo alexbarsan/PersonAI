@@ -185,16 +185,34 @@ export const mockInsights: InsightsResponse = {
     {
       type: "symbol",
       title: "Recurring symbols",
-      facts: [{ value: "water", count: 1, percentageOfDreams: 100, averageScore: null }]
+      facts: [{ value: "water", count: 1, percentageOfDreams: 100, averageScore: null, averageExtractionConfidence: 0.82, sourceFields: ["symbols.symbol"], lastObservedAt: "2026-07-01" }]
     },
     {
       type: "emotion",
       title: "Frequent emotions",
-      facts: [{ value: "curiosity", count: 1, percentageOfDreams: 100, averageScore: 0.7 }]
+      facts: [{ value: "curiosity", count: 1, percentageOfDreams: 100, averageScore: 0.7, averageExtractionConfidence: 0.82, sourceFields: ["emotions.name"], lastObservedAt: "2026-07-01" }]
     }
   ],
   timingPatterns: [],
   monthlyDreamCounts: [{ month: "2026-07-01", count: 1 }]
+};
+
+export const mockDreamObservation = {
+  type: "symbol",
+  value: "water",
+  totalDreams: 1,
+  averageExtractionConfidence: 0.82,
+  sourceFields: ["symbols.symbol"],
+  evidence: [{
+    dreamId: mockDream.id,
+    title: mockDream.title,
+    observedAt: "2026-07-01",
+    score: null,
+    extractionConfidence: 0.82,
+    sourceField: "symbols.symbol",
+    sourceSchemaVersion: "1.1",
+    normalizationVersion: "v1"
+  }]
 };
 
 export const mockEntitlement: EntitlementResponse = {

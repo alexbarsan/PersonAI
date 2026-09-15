@@ -1,6 +1,6 @@
 import type { ApiClient } from "@/api/client";
 import { ApiError } from "@/api/errors";
-import { mockAdminOperations, mockAnonymizationRequest, mockAskDreams, mockDailyDreamContent, mockDeepInterpretation, mockDream, mockDreamFeedback, mockDreamImage, mockEntitlement, mockInsights, mockJournal, mockMe, mockProfile, mockSensitiveSafetyReviews, mockUserDataExport } from "@/mocks/mockData";
+import { mockAdminOperations, mockAnonymizationRequest, mockAskDreams, mockDailyDreamContent, mockDeepInterpretation, mockDream, mockDreamFeedback, mockDreamImage, mockDreamObservation, mockEntitlement, mockInsights, mockJournal, mockMe, mockProfile, mockSensitiveSafetyReviews, mockUserDataExport } from "@/mocks/mockData";
 
 export const mockApiClient: ApiClient = {
   getDailyDreamContent: async () => mockDailyDreamContent,
@@ -50,6 +50,7 @@ export const mockApiClient: ApiClient = {
     getDreamImage: async () => mockDreamImage,
     waitForDreamImage: async () => mockDreamImage,
   getInsights: async () => mockInsights,
+  getDreamObservation: async () => mockDreamObservation,
   getEntitlements: async () => mockEntitlement,
   exportUserData: async () => mockUserDataExport,
   requestAnonymization: async () => mockAnonymizationRequest,

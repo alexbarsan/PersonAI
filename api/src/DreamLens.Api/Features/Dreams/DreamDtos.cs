@@ -71,7 +71,9 @@ public sealed record DreamFactResponse(
     string Value,
     decimal? Score,
     decimal? ExtractionConfidence,
-    string SourceSchemaVersion);
+    string SourceSchemaVersion,
+    string SourceField,
+    string NormalizationVersion);
 
 public sealed record SimilarDreamsResponse(Guid DreamId, SimilarDreamResponse[] Matches);
 

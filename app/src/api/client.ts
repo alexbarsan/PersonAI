@@ -5,6 +5,7 @@ import {
   DreamJournalFilters,
   DreamImageResponse,
   DreamFeedbackResponse,
+  DreamObservationResponse,
   DeepInterpretationResponse,
   DreamResponse,
   EntitlementResponse,
@@ -56,6 +57,7 @@ export type ApiClient = {
   getDreamImage: (id: string) => Promise<DreamImageResponse>;
   waitForDreamImage: (id: string, after: string) => Promise<DreamImageResponse>;
   getInsights: () => Promise<InsightsResponse>;
+  getDreamObservation: (type: string, value: string) => Promise<DreamObservationResponse>;
   getEntitlements: () => Promise<EntitlementResponse>;
   exportUserData: () => Promise<UserDataExportResponse>;
   requestAnonymization: () => Promise<AnonymizationRequestResponse>;
@@ -165,6 +167,7 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
     getDreamImage: (id) => request<DreamImageResponse>(`/v1/dreams/${id}/image`),
     waitForDreamImage: (id, after) => request<DreamImageResponse>(`/v1/dreams/${id}/image/wait?after=${encodeURIComponent(after)}&timeoutSeconds=20`),
     getInsights: () => request<InsightsResponse>("/v1/insights"),
+    getDreamObservation: (type, value) => request<DreamObservationResponse>(`/v1/insights/observations?type=${encodeURIComponent(type)}&value=${encodeURIComponent(value)}`),
     getEntitlements: () => request<EntitlementResponse>("/v1/entitlements"),
     exportUserData: () => request<UserDataExportResponse>("/v1/privacy/export"),
     requestAnonymization: () =>

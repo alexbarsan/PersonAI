@@ -16,7 +16,7 @@
 
 1. **Trust contracts**: immutable dream routes, durable Ask quota reservations, account-timezone entitlement status, journal pagination, prompt provenance, reliability states.
 2. **Main journey**: shared draft/composer behavior, compact read-only journal, reordered dream detail, shared entitlement presentation, private-processing language. Completed 2026-09-15: primary interpretation is a durable SQS job in production. Submission returns an owner-scoped pending dream, the worker persists completion/failure, and clients poll the canonical dream route with retry and cancellation controls.
-3. **Exploration and validation**: Map normalization/provenance and observations, Ask recovery/source UX, onboarding/auth route handling, responsive/accessibility and native validation inventory.
+3. **Exploration and validation**: Map normalization/provenance and observations, Ask recovery/source UX, onboarding/auth route handling, responsive/accessibility and native validation inventory. Map provenance completed 2026-09-15: each new fact retains its normalized form version, source output field, source schema, and extraction confidence; an owner can open the contributing journal entries from the Map. Existing facts intentionally retain an `unknown` source field until historical re-extraction is explicitly scheduled.
 
 ## Evidence and constraints
 

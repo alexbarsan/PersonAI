@@ -20,5 +20,9 @@ public sealed class DreamFactRecord
 
     public required string SourceSchemaVersion { get; set; }
 
+    public string SourceField { get; set; } = "unknown";
+
+    public string NormalizationVersion { get; set; } = "v1";
+
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 }

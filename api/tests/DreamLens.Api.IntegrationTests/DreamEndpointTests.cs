@@ -917,7 +917,6 @@ public sealed class DreamEndpointTests
 
         var response = await userA.GetAsync("/v1/insights");
         var insights = await response.Content.ReadFromJsonAsync<InsightsResponse>();
-
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.NotNull(insights);
         Assert.Equal(2, insights.TotalDreams);
@@ -949,6 +948,8 @@ public sealed class DreamEndpointTests
 
         var response = await userA.GetAsync("/v1/insights");
         var insights = await response.Content.ReadFromJsonAsync<InsightsResponse>();
+        var observationResponse = await userA.GetAsync("/v1/insights/observations?type=scenario&value=being%20late");
+        var observation = await observationResponse.Content.ReadFromJsonAsync<DreamObservationResponse>();
         var noEmbeddingResponse = await userA.GetAsync($"/v1/dreams/{dreams[0].Id}/similar");
         var similarDreams = await noEmbeddingResponse.Content.ReadFromJsonAsync<SimilarDreamsResponse>();
 
@@ -959,6 +960,11 @@ public sealed class DreamEndpointTests
         var scenarios = Assert.Single(insights.FactGroups, group => group.Type == "scenario");
         Assert.Contains(scenarios.Facts, fact => fact.Value == "being late" && fact.Count == 4 && fact.PercentageOfDreams == 66.7m);
         Assert.Contains(insights.TimingPatterns, pattern => pattern.Value == "being late" && pattern.WeekdayToWeekendRatio == 1.5m);
+        Assert.Equal(HttpStatusCode.OK, observationResponse.StatusCode);
+        Assert.NotNull(observation);
+        Assert.Equal(4, observation.TotalDreams);
+        Assert.Contains("scenarios", observation.SourceFields);
+        Assert.All(observation.Evidence, evidence => Assert.Contains(evidence.DreamId, dreams.Select(dream => dream.Id)));
         Assert.Equal(HttpStatusCode.OK, noEmbeddingResponse.StatusCode);
         Assert.NotNull(similarDreams);
         Assert.Empty(similarDreams.Matches);
@@ -1335,6 +1341,7 @@ public sealed class DreamEndpointTests
                     services.AddScoped<UpdateDreamJournalHandler>();
                     services.AddScoped<DeleteDreamHandler>();
                     services.AddScoped<GetInsightsHandler>();
+                    services.AddScoped<GetDreamObservationHandler>();
                     services.AddScoped<GetAdminMetricsHandler>();
                     services.AddScoped<GetAdminOperationsHandler>();
                     services.AddScoped<RequeueAdminJobHandler>();
@@ -1787,7 +1794,9 @@ public sealed class DreamEndpointTests
         string Value,
         decimal? Score,
         decimal? ExtractionConfidence,
-        string SourceSchemaVersion);
+        string SourceSchemaVersion,
+        string SourceField,
+        string NormalizationVersion);
 
     private sealed record DreamJournalItemResponse(
         Guid Id,
@@ -1814,7 +1823,24 @@ public sealed class DreamEndpointTests
 
     private sealed record FactInsightGroupResponse(string Type, string Title, FactInsightResponse[] Facts);
 
-    private sealed record FactInsightResponse(string Value, int Count, decimal PercentageOfDreams, decimal? AverageScore);
+    private sealed record FactInsightResponse(
+        string Value,
+        int Count,
+        decimal PercentageOfDreams,
+        decimal? AverageScore,
+        decimal? AverageExtractionConfidence,
+        string[] SourceFields,
+        DateOnly? LastObservedAt);
+
+    private sealed record DreamObservationResponse(
+        string Type,
+        string Value,
+        int TotalDreams,
+        decimal? AverageExtractionConfidence,
+        string[] SourceFields,
+        DreamObservationEvidenceResponse[] Evidence);
+
+    private sealed record DreamObservationEvidenceResponse(Guid DreamId, string Title, DateOnly ObservedAt, decimal? Score, decimal? ExtractionConfidence, string SourceField, string SourceSchemaVersion, string NormalizationVersion);
 
     private sealed record TimingPatternInsightResponse(
         string Type,
@@ -1837,7 +1863,10 @@ public sealed class DreamEndpointTests
             FactType = "scenario",
             NormalizedValue = "being late",
             DisplayValue = "being late",
-            SourceSchemaVersion = "1.1"
+            ExtractionConfidence = 0.84m,
+            SourceSchemaVersion = "1.1",
+            SourceField = "scenarios",
+            NormalizationVersion = "v1"
         };
     }
 

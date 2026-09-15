@@ -50,7 +50,7 @@ internal static class DreamFactExtractor
                 : objectPropertyName is not null && item.ValueKind == JsonValueKind.Object
                     ? ReadString(item, objectPropertyName)
                     : null;
-            Add(factType, displayValue, null, dream, schemaVersion, confidence, facts);
+            Add(factType, displayValue, null, propertyName + (objectPropertyName is null ? string.Empty : $".{objectPropertyName}"), dream, schemaVersion, confidence, facts);
         }
     }
 
@@ -68,7 +68,7 @@ internal static class DreamFactExtractor
 
         foreach (var emotion in emotions.EnumerateArray().Take(MaxFactsPerType))
         {
-            Add("emotion", ReadString(emotion, "name"), ReadDecimal(emotion, "intensity"), dream, schemaVersion, confidence, facts);
+            Add("emotion", ReadString(emotion, "name"), ReadDecimal(emotion, "intensity"), "emotions.name", dream, schemaVersion, confidence, facts);
         }
     }
 
@@ -97,7 +97,7 @@ internal static class DreamFactExtractor
         var score = ReadDecimal(root, propertyName);
         if (score is not null)
         {
-            Add(factType, displayValue, score, dream, schemaVersion, confidence, facts);
+            Add(factType, displayValue, score, propertyName, dream, schemaVersion, confidence, facts);
         }
     }
 
@@ -105,6 +105,7 @@ internal static class DreamFactExtractor
         string factType,
         string? displayValue,
         decimal? score,
+        string sourceField,
         DreamRecord dream,
         string schemaVersion,
         decimal? confidence,
@@ -115,7 +116,7 @@ internal static class DreamFactExtractor
             return;
         }
 
-        var normalizedValue = Normalize(displayValue);
+        var normalizedValue = DreamFactNormalization.Normalize(displayValue);
         if (normalizedValue.Length == 0)
         {
             return;
@@ -131,19 +132,15 @@ internal static class DreamFactExtractor
             DisplayValue = displayValue.Trim(),
             Score = score,
             ExtractionConfidence = confidence,
-            SourceSchemaVersion = schemaVersion
+            SourceSchemaVersion = schemaVersion,
+            SourceField = sourceField,
+            NormalizationVersion = DreamFactNormalization.Version
         };
 
         if (!facts.TryGetValue(key, out var existing) || (record.Score ?? 0) > (existing.Score ?? 0))
         {
             facts[key] = record;
         }
-    }
-
-    private static string Normalize(string value)
-    {
-        return string.Join(' ', value.Trim().Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries))
-            .ToLowerInvariant();
     }
 
     private static string? ReadString(JsonElement element, string propertyName)

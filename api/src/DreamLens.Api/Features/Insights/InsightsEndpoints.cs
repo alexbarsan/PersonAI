@@ -10,6 +10,18 @@ public static class InsightsEndpoints
             .RequireAuthorization()
             .WithTags("Insights");
 
+        group.MapGet("/observations", async (
+            [FromQuery] string type,
+            [FromQuery] string value,
+            [FromServices] GetDreamObservationHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var observation = await handler.HandleAsync(type, value, cancellationToken);
+            return observation is null ? Results.NotFound() : Results.Ok(observation);
+        })
+            .WithName("GetDreamObservation")
+            .WithSummary("Returns the owned journal entries and extraction provenance behind one map observation.");
+
         group.MapGet("", async (
             [FromServices] GetInsightsHandler handler,
             CancellationToken cancellationToken) =>

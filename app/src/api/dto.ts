@@ -243,6 +243,29 @@ export type FactInsightResponse = {
   count: number;
   percentageOfDreams: number;
   averageScore: number | null;
+  averageExtractionConfidence: number | null;
+  sourceFields: string[];
+  lastObservedAt: string | null;
+};
+
+export type DreamObservationResponse = {
+  type: string;
+  value: string;
+  totalDreams: number;
+  averageExtractionConfidence: number | null;
+  sourceFields: string[];
+  evidence: DreamObservationEvidenceResponse[];
+};
+
+export type DreamObservationEvidenceResponse = {
+  dreamId: string;
+  title: string;
+  observedAt: string;
+  score: number | null;
+  extractionConfidence: number | null;
+  sourceField: string;
+  sourceSchemaVersion: string;
+  normalizationVersion: string;
 };
 
 export type TimingPatternInsightResponse = {

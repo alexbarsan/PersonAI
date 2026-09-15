@@ -1,6 +1,6 @@
 import { rest } from "msw";
 
-import { mockAnonymizationRequest, mockAskDreams, mockDailyDreamContent, mockDeepInterpretation, mockDream, mockDreamFeedback, mockDreamImage, mockEntitlement, mockInsights, mockJournal, mockMe, mockProfile, mockUserDataExport } from "@/mocks/mockData";
+import { mockAnonymizationRequest, mockAskDreams, mockDailyDreamContent, mockDeepInterpretation, mockDream, mockDreamFeedback, mockDreamImage, mockDreamObservation, mockEntitlement, mockInsights, mockJournal, mockMe, mockProfile, mockUserDataExport } from "@/mocks/mockData";
 
 export const handlers = [
   rest.get("http://localhost/v1/dream-content", (_, response, context) => response(context.json(mockDailyDreamContent))),
@@ -23,6 +23,7 @@ export const handlers = [
     return response(context.json({ ...body, updatedAt: "2026-09-05T08:00:00Z" }));
   }),
   rest.get("http://localhost/v1/insights", (_, response, context) => response(context.json(mockInsights))),
+  rest.get("http://localhost/v1/insights/observations", (_, response, context) => response(context.json(mockDreamObservation))),
   rest.get("http://localhost/v1/entitlements", (_, response, context) => response(context.json(mockEntitlement))),
   rest.get("http://localhost/v1/privacy/export", (_, response, context) => response(context.json(mockUserDataExport))),
   rest.post("http://localhost/v1/privacy/anonymization-requests", (_, response, context) => response(context.status(202), context.json(mockAnonymizationRequest)))

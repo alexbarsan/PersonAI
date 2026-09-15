@@ -34,7 +34,7 @@ public sealed class GetInsightsHandler(DreamLensDbContext dbContext, ICurrentUse
             .Where(fact => fact.UserSubject == currentUser.Subject && dreamIds.Contains(fact.DreamId))
             .ToArrayAsync(cancellationToken);
 
-        var factGroups = BuildFactGroups(facts, dreams.Length);
+        var factGroups = BuildFactGroups(facts, dreams.Length, dreams.ToDictionary(dream => dream.Id));
         var recurringThemes = factGroups
             .SingleOrDefault(group => group.Type == "theme")?.Facts
             .Select(fact => new ThemeInsightResponse(fact.Value, fact.Count))
@@ -52,7 +52,10 @@ public sealed class GetInsightsHandler(DreamLensDbContext dbContext, ICurrentUse
             BuildMonthlyDreamCounts(dates));
     }
 
-    private static FactInsightGroupResponse[] BuildFactGroups(IEnumerable<DreamFactRecord> facts, int totalDreams)
+    private static FactInsightGroupResponse[] BuildFactGroups(
+        IEnumerable<DreamFactRecord> facts,
+        int totalDreams,
+        IReadOnlyDictionary<Guid, DreamRecord> dreamsById)
     {
         return facts
             .Where(fact => FactGroupTitles.ContainsKey(fact.FactType))
@@ -67,11 +70,20 @@ public sealed class GetInsightsHandler(DreamLensDbContext dbContext, ICurrentUse
                         var rows = values.ToArray();
                         var count = rows.Select(value => value.DreamId).Distinct().Count();
                         var scoredRows = rows.Where(value => value.Score is not null).ToArray();
+                        var confidenceRows = rows.Where(value => value.ExtractionConfidence is not null).ToArray();
+                        var observedDates = rows
+                            .Select(value => dreamsById.TryGetValue(value.DreamId, out var dream) ? ReadDreamDate(dream) : null)
+                            .Where(date => date is not null)
+                            .Select(date => date!.Value)
+                            .ToArray();
                         return new FactInsightResponse(
                             rows.OrderByDescending(value => value.DisplayValue.Length).First().DisplayValue,
                             count,
                             totalDreams == 0 ? 0 : Math.Round(count * 100m / totalDreams, 1),
-                            scoredRows.Length == 0 ? null : Math.Round(scoredRows.Average(value => value.Score!.Value), 2));
+                            scoredRows.Length == 0 ? null : Math.Round(scoredRows.Average(value => value.Score!.Value), 2),
+                            confidenceRows.Length == 0 ? null : Math.Round(confidenceRows.Average(value => value.ExtractionConfidence!.Value), 2),
+                            rows.Select(value => value.SourceField).Distinct(StringComparer.OrdinalIgnoreCase).Order(StringComparer.OrdinalIgnoreCase).ToArray(),
+                            observedDates.Length == 0 ? null : observedDates.Max());
                     })
                     .OrderByDescending(fact => fact.Count)
                     .ThenBy(fact => fact.Value, StringComparer.OrdinalIgnoreCase)

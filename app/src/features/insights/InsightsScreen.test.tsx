@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react-native";
+import { fireEvent, render, screen } from "@testing-library/react-native";
 import { PropsWithChildren } from "react";
 
 import { ApiClientProvider } from "@/api/apiContext";
@@ -33,6 +33,16 @@ describe("InsightsScreen", () => {
 
     expect(await screen.findByText("No insights yet")).toBeTruthy();
     expect(screen.getByText("Interpret dreams to reveal recurring patterns.")).toBeTruthy();
+  });
+
+  it("reveals the owner-scoped evidence behind a map observation", async () => {
+    renderWithProviders(<InsightsScreen />);
+
+    fireEvent.press(await screen.findByLabelText("Show journal evidence for water"));
+
+    expect(await screen.findByText("Observed in your journal")).toBeTruthy();
+    expect(await screen.findByText("Sources: symbols.symbol")).toBeTruthy();
+    expect(screen.getByText("The Quiet Shoreline")).toBeTruthy();
   });
 });
 

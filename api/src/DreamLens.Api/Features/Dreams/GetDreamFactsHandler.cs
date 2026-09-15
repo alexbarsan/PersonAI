@@ -27,7 +27,9 @@ public sealed class GetDreamFactsHandler(DreamLensDbContext dbContext, ICurrentU
                 fact.DisplayValue,
                 fact.Score,
                 fact.ExtractionConfidence,
-                fact.SourceSchemaVersion))
+                fact.SourceSchemaVersion,
+                fact.SourceField,
+                fact.NormalizationVersion))
             .ToArrayAsync(cancellationToken);
 
         return new DreamFactsResponse(dreamId, facts);

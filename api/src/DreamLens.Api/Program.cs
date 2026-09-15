@@ -104,6 +104,7 @@ if (dreamEndpointsEnabled)
     builder.Services.AddSingleton<IDreamImagePromptComposer, DreamImagePromptComposer>();
     builder.Services.AddScoped<ListDreamsHandler>();
     builder.Services.AddScoped<GetInsightsHandler>();
+    builder.Services.AddScoped<GetDreamObservationHandler>();
     builder.Services.AddScoped<SemanticMemoryService>();
     builder.Services.AddScoped<RequestAnonymizationHandler>();
     builder.Services.AddScoped<GetAnonymizationRequestHandler>();
