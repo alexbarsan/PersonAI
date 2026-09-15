@@ -26,7 +26,7 @@ Assert-Path (Join-Path $root 'api\src\DreamLens.Api\Infrastructure\Monetization\
 Assert-Path (Join-Path $root 'api\src\DreamLens.Api\Features\Entitlements\EntitlementEndpoints.cs')
 Assert-Contains (Join-Path $root 'api\src\DreamLens.Api\Infrastructure\Quotas\EfDreamQuotaService.cs') 'IEntitlementService'
 Assert-Contains (Join-Path $root 'api\src\DreamLens.Api\Program.cs') 'MapEntitlementEndpoints'
-Assert-Contains (Join-Path $root 'app\src\features\paywall\PaywallScreen.tsx') 'Purchases not connected yet'
+Assert-Contains (Join-Path $root 'app\src\features\paywall\PaywallScreen.tsx') 'Subscriptions will be available here when purchases are connected'
 Assert-Contains (Join-Path $root 'app\src\api\client.ts') 'getEntitlements'
 Assert-Contains (Join-Path $root 'docs\developer-manual.md') 'S21 can start without subscribing'
 
