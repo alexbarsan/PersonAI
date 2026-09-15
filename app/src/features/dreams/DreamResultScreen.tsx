@@ -75,7 +75,8 @@ export function DreamResultScreen() {
   const isInterpreting = dream.data?.status === "pending" || dream.data?.status === "processing";
   const { width } = useWindowDimensions();
   const detailSections = result?.sections.filter(isDetailSection) ?? [];
-  const narrativeSections = result?.sections.filter((section) => isSectionVisible(section) && !isDetailSection(section) && !isInterpretationSection(section)) ?? [];
+  const narrativeSections = (result?.sections.filter((section) => isSectionVisible(section) && !isDetailSection(section)) ?? [])
+    .sort((left, right) => Number(isInterpretationSection(right)) - Number(isInterpretationSection(left)));
   const compactReadingLayout = width < 760;
 
   return (
@@ -121,10 +122,6 @@ export function DreamResultScreen() {
               </View>
             )}
             <View style={styles.interpretationColumn}>
-              <View style={styles.interpretation}>
-                <Text style={[styles.interpretationTitle, { color: theme.colors.text }]}>Interpretation</Text>
-                <Text testID="dream-summary" style={[styles.summary, { color: theme.colors.text }]}>{result.summary}</Text>
-              </View>
           {elevatedSafety
             ? null
             : narrativeSections.map((section, index) => (
@@ -342,15 +339,6 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0
   },
-  interpretation: {
-    gap: 10,
-    paddingBottom: 24
-  },
-  interpretationTitle: {
-    fontSize: 22,
-    fontWeight: "700",
-    lineHeight: 30
-  },
   originalDream: {
     borderRadius: 8,
     borderWidth: 1,
@@ -398,12 +386,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     minHeight: 42,
     paddingHorizontal: 16
-  },
-  summary: {
-    fontSize: 20,
-    fontWeight: "700",
-    lineHeight: 30,
-    maxWidth: 720
   },
   questions: {
     borderTopWidth: 1,

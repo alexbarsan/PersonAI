@@ -107,6 +107,11 @@ export const mockDream: DreamResponse = {
       },
       {
         kind: "text",
+        title: "Interpretation",
+        content: "The river may reflect an emotional transition that you are approaching with curiosity rather than urgency."
+      },
+      {
+        kind: "text",
         title: "Guidance",
         content: "Try writing one concrete detail you remember before interpreting the whole dream."
       },

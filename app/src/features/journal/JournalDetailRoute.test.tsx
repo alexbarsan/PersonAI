@@ -17,7 +17,7 @@ describe("Journal detail route", () => {
   it("renders a stored interpretation", async () => {
     renderWithProviders(<JournalDetailRoute />);
 
-    expect(await screen.findByText(mockDream.result!.summary)).toBeTruthy();
+    expect(await screen.findByText("The river may reflect an emotional transition that you are approaching with curiosity rather than urgency.")).toBeTruthy();
     expect(screen.getByText("Guidance")).toBeTruthy();
   });
 });

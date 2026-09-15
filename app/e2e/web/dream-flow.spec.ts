@@ -23,15 +23,15 @@ test("happy path: onboarding, submit dream, view result", async ({ page }) => {
   await page.getByTestId("submit-dream").click();
 
   await expect(page.getByText("The Quiet Shoreline", { exact: true })).toBeVisible();
-  await expect(page.getByTestId("dream-summary")).toHaveText("The dream points to uncertainty and a wish for steadier ground.");
+  await expect(page.getByText("The river may reflect an emotional transition that you are approaching with curiosity rather than urgency.")).toBeVisible();
   await expect(page.getByText("Guidance")).toBeVisible();
   await expect(page.getByRole("tab", { name: "symbols: water", exact: true })).toBeVisible();
   await expect(page.getByText("Original dream", { exact: true })).toBeVisible();
   await expect(page.getByText("I was walking through a quiet station while holding a blue notebook.", { exact: true }).last()).toBeVisible();
-  await page.getByTestId("dream-summary").scrollIntoViewIfNeeded();
+  await page.getByText("Interpretation", { exact: true }).scrollIntoViewIfNeeded();
   await page.screenshot({ path: "test-results/interpretation-redesign-desktop.png", fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByTestId("dream-summary").scrollIntoViewIfNeeded();
+  await page.getByText("Interpretation", { exact: true }).scrollIntoViewIfNeeded();
   await page.screenshot({ path: "test-results/interpretation-redesign-mobile.png", fullPage: true });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
   await page.setViewportSize({ width: 1280, height: 900 });
