@@ -987,12 +987,13 @@ public sealed class DreamEndpointTests
         var scenarios = Assert.Single(insights.FactGroups, group => group.Type == "scenario");
         Assert.Contains(scenarios.Facts, fact => fact.Value == "being late" && fact.Count == 4 && fact.PercentageOfDreams == 66.7m);
         Assert.Contains(insights.TimingPatterns, pattern => pattern.Value == "being late" && pattern.WeekdayToWeekendRatio == 1.5m);
-        var relationship = Assert.Single(insights.Relationships, item => item.FirstValue == "anxiety" && item.SecondValue == "loss of control");
-        Assert.Equal("anxiety", relationship.FirstValue);
-        Assert.Equal("loss of control", relationship.SecondValue);
-        Assert.Equal(6, relationship.SharedDreams);
+        var relationship = Assert.Single(insights.Relationships, item => item.FirstValue == "stairs" && item.SecondValue == "being late");
+        Assert.Equal("stairs", relationship.FirstValue);
+        Assert.Equal("being late", relationship.SecondValue);
+        Assert.Equal(3, relationship.SharedDreams);
         Assert.Equal(100m, relationship.SharedOfSmallerPatternPercent);
-        Assert.All(relationship.Evidence, evidence => Assert.Contains(evidence.DreamId, dreams.Select(dream => dream.Id)));
+        Assert.Equal(1.5m, relationship.RelativeLift);
+        Assert.All(relationship.Evidence, evidence => Assert.Contains(evidence.DreamId, dreams.Take(3).Select(dream => dream.Id)));
         Assert.Equal(HttpStatusCode.OK, observationResponse.StatusCode);
         Assert.NotNull(observation);
         Assert.Equal(4, observation.TotalDreams);
@@ -1896,6 +1897,7 @@ public sealed class DreamEndpointTests
         int FirstDreams,
         int SecondDreams,
         decimal SharedOfSmallerPatternPercent,
+        decimal RelativeLift,
         DreamRelationshipEvidenceResponse[] Evidence);
 
     private sealed record DreamRelationshipEvidenceResponse(Guid DreamId, string Title, DateOnly ObservedAt, decimal? FirstExtractionConfidence, decimal? SecondExtractionConfidence);

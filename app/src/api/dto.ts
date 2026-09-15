@@ -300,6 +300,7 @@ export type RelationshipInsightResponse = {
   firstDreams: number;
   secondDreams: number;
   sharedOfSmallerPatternPercent: number;
+  relativeLift: number;
   evidence: Array<{
     dreamId: string;
     title: string;

@@ -62,6 +62,7 @@ public sealed record RelationshipInsightResponse(
     int FirstDreams,
     int SecondDreams,
     decimal SharedOfSmallerPatternPercent,
+    decimal RelativeLift,
     DreamRelationshipEvidenceResponse[] Evidence);
 
 public sealed record DreamRelationshipEvidenceResponse(

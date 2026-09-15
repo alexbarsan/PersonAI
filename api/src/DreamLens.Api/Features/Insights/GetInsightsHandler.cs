@@ -11,6 +11,7 @@ public sealed class GetInsightsHandler(DreamLensDbContext dbContext, ICurrentUse
     private const int MinimumRelationshipPopulation = 6;
     private const int MinimumRelationshipOccurrences = 3;
     private const decimal MinimumRelationshipConfidence = 0.60m;
+    private const decimal MinimumRelationshipLift = 1.25m;
     private static readonly string[] FactTypeOrder = ["symbol", "emotion", "theme", "person", "location", "object", "scenario"];
 
     private static readonly IReadOnlyDictionary<string, string> FactGroupTitles = new Dictionary<string, string>
@@ -207,10 +208,12 @@ public sealed class GetInsightsHandler(DreamLensDbContext dbContext, ICurrentUse
                 group.FirstDreams,
                 group.SecondDreams,
                 group.SharedDreams,
-                SharedOfSmallerPatternPercent = Math.Round(group.SharedDreams * 100m / Math.Min(group.FirstDreams, group.SecondDreams), 1)
+                SharedOfSmallerPatternPercent = Math.Round(group.SharedDreams * 100m / Math.Min(group.FirstDreams, group.SecondDreams), 1),
+                RelativeLift = Math.Round(group.SharedDreams * totalDreams / (decimal)(group.FirstDreams * group.SecondDreams), 2)
             })
-            .Where(group => group.SharedOfSmallerPatternPercent >= 50m)
-            .OrderByDescending(group => group.SharedDreams)
+            .Where(group => group.SharedOfSmallerPatternPercent >= 50m && group.RelativeLift >= MinimumRelationshipLift)
+            .OrderByDescending(group => group.RelativeLift)
+            .ThenByDescending(group => group.SharedDreams)
             .ThenByDescending(group => group.SharedOfSmallerPatternPercent)
             .ThenBy(group => group.Key.First.Type, StringComparer.Ordinal)
             .ThenBy(group => group.Key.First.NormalizedValue, StringComparer.Ordinal)
@@ -224,6 +227,7 @@ public sealed class GetInsightsHandler(DreamLensDbContext dbContext, ICurrentUse
                 group.FirstDreams,
                 group.SecondDreams,
                 group.SharedOfSmallerPatternPercent,
+                group.RelativeLift,
                 group.Evidence
                     .OrderByDescending(item => ReadObservedDate(dreamsById[item.DreamId]))
                     .Take(5)

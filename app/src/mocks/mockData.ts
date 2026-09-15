@@ -224,6 +224,7 @@ export const mockInsights: InsightsResponse = {
       firstDreams: 4,
       secondDreams: 3,
       sharedOfSmallerPatternPercent: 100,
+      relativeLift: 2.5,
       evidence: [{
         dreamId: mockDream.id,
         title: mockDream.title,

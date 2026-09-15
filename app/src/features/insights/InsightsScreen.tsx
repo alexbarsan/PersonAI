@@ -438,7 +438,7 @@ function RelationshipPanel({ relationships }: { relationships: RelationshipInsig
         <View key={`${relationship.firstType}-${relationship.firstValue}-${relationship.secondType}-${relationship.secondValue}`} style={[styles.relationship, { borderColor: theme.colors.border }]}>
           <Text style={[styles.factName, { color: theme.colors.text }]}>{relationship.firstValue} + {relationship.secondValue}</Text>
           <Text style={[styles.factMeta, { color: theme.colors.mutedText }]}>
-            Together in {relationship.sharedDreams} {relationship.sharedDreams === 1 ? "dream" : "dreams"}; {relationship.sharedOfSmallerPatternPercent}% of the less frequent pattern's observations.
+            Together in {relationship.sharedDreams} {relationship.sharedDreams === 1 ? "dream" : "dreams"}; {relationship.sharedOfSmallerPatternPercent}% of the less frequent pattern's observations, {relationship.relativeLift}x above its baseline rate.
           </Text>
           {relationship.evidence.map((dream) => (
             <Pressable key={dream.dreamId} accessibilityRole="link" accessibilityLabel={`Open ${dream.title}`} onPress={() => router.push(`/dreams/${dream.dreamId}`)} style={styles.relationshipEvidence}>
