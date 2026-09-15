@@ -12,5 +12,7 @@ public sealed class DailyDreamContent
 
     public required string FactsJson { get; set; }
 
+    public required string CognitiveFactsJson { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 }

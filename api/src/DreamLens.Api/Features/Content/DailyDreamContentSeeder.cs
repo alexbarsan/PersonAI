@@ -50,6 +50,35 @@ public sealed class DailyDreamContentSeeder(DreamLensDbContext dbContext)
         "Reviewing old entries can help distinguish a one-off image from a recurring pattern."
     ];
 
+    // Editorial, non-diagnostic facts paraphrased from the references in docs/content-sources.md.
+    private static readonly string[] CognitiveFacts =
+    [
+        "Sleep is an active brain state: research links it with the strengthening and reorganization of recently formed memories.",
+        "The hippocampus helps form and retrieve memories; it works with many other brain regions rather than storing a whole experience by itself.",
+        "Memory is reconstructive. Remembering an event can involve rebuilding it from fragments, context, and prior knowledge.",
+        "REM is one sleep stage in which dreams are often especially vivid, but dream experiences can occur in other stages too.",
+        "Attention is selective: a dream detail that stands out may be salient to you without carrying one universal meaning.",
+        "Emotion processing is distributed across brain networks, including systems involved in detecting relevance and regulating response.",
+        "Cognitive reappraisal means reconsidering how a situation is interpreted. It is a skill, not a verdict about what a dream means.",
+        "A remembered dream is a report from waking memory, so its details can shift as you recall and retell it.",
+        "Sleep cycles through non-REM and REM stages; the sequence repeats across the night rather than staying in one state.",
+        "Associative thinking links related ideas, memories, and sensations. Dreams can combine these elements in unfamiliar ways.",
+        "The brain can create a strong sense of story and place even when a dream changes scene, time, or perspective quickly.",
+        "Emotional tone can be easier to remember than a dream's sequence of events, which is one reason a brief note can be useful.",
+        "A cognitive analysis can describe possible patterns in attention, memory, and emotion. It cannot diagnose a condition from a dream.",
+        "Sleep research studies groups and probabilities, so one person's dream cannot confirm a general finding on its own.",
+        "Recent experiences can influence later dream reports, but a dream is not a literal recording of the day.",
+        "Context changes interpretation: the same image can bring different associations for different people and at different times.",
+        "Reflection can separate observation from inference: noting what happened in a dream is different from deciding what it signifies.",
+        "The brain's memory systems keep changing after an event, and sleep is one period associated with that ongoing processing.",
+        "A recurring image can be a useful journal pattern to observe over time without assuming it predicts anything.",
+        "Dream recall varies widely between people and nights; low recall is not evidence that dreaming did not occur.",
+        "Psychological terms such as attention, memory, and emotion describe processes. They are not labels for a person's character.",
+        "A cognitive perspective asks how a dream was experienced and remembered, not whether its symbols have a fixed dictionary meaning.",
+        "Sleep and dreaming science continues to evolve, so Dream DNA presents these facts as context for reflection, not clinical advice.",
+        "A short record soon after waking can preserve sensory details before ordinary morning activity competes for attention."
+    ];
+
     public async Task EnsureCoverageAsync(DateOnly requestedDate, CancellationToken cancellationToken)
     {
         var firstDate = requestedDate.AddDays(-30);
@@ -73,8 +102,19 @@ public sealed class DailyDreamContentSeeder(DreamLensDbContext dbContext)
                 Quote = Quotes[(date.Month - 1) % Quotes.Length],
                 Attribution = "Dream DNA editorial",
                 FactsJson = JsonSerializer.Serialize(SelectFacts(date)),
+                CognitiveFactsJson = JsonSerializer.Serialize(SelectCognitiveFacts(date)),
                 CreatedAt = DateTimeOffset.UtcNow
             });
+        }
+
+        var contentWithoutCognitiveFacts = await dbContext.DailyDreamContent
+            .Where(content => content.ContentDate >= firstDate
+                && content.ContentDate <= lastDate
+                && string.IsNullOrWhiteSpace(content.CognitiveFactsJson))
+            .ToListAsync(cancellationToken);
+        foreach (var content in contentWithoutCognitiveFacts)
+        {
+            content.CognitiveFactsJson = JsonSerializer.Serialize(SelectCognitiveFacts(content.ContentDate));
         }
 
         if (dbContext.ChangeTracker.HasChanges())
@@ -88,6 +128,14 @@ public sealed class DailyDreamContentSeeder(DreamLensDbContext dbContext)
         var start = Math.Abs(date.DayNumber) % Facts.Length;
         return Enumerable.Range(0, 3)
             .Select(offset => Facts[(start + offset * 7) % Facts.Length])
+            .ToArray();
+    }
+
+    private static string[] SelectCognitiveFacts(DateOnly date)
+    {
+        var start = Math.Abs(date.DayNumber * 3) % CognitiveFacts.Length;
+        return Enumerable.Range(0, 3)
+            .Select(offset => CognitiveFacts[(start + offset * 5) % CognitiveFacts.Length])
             .ToArray();
     }
 }

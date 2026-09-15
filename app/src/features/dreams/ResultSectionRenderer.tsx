@@ -15,7 +15,7 @@ export function ResultSectionRenderer({ section }: { section: DreamSectionRespon
   return (
     <View style={[styles.section, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
       <Text style={[styles.title, { color: theme.colors.text }]}>{section.title}</Text>
-      {renderContent(section.kind, section.content)}
+      {renderContent(section)}
     </View>
   );
 }
@@ -39,20 +39,45 @@ function hasContent(value: unknown): boolean {
   return false;
 }
 
-function renderContent(kind: string, content: unknown) {
-  switch (kind) {
+function renderContent(section: DreamSectionResponse) {
+  if (section.title.trim().toLowerCase() === "objects") {
+    return <ObjectStrip content={section.content} />;
+  }
+
+  switch (section.kind) {
     case "symbols":
-      return <DetailStrip kind={kind} content={content} />;
+      return <DetailStrip kind={section.kind} content={section.content} />;
     case "emotions":
-      return <DetailStrip kind={kind} content={content} />;
+      return <DetailStrip kind={section.kind} content={section.content} />;
     case "entities":
-      return <DetailStrip kind={kind} content={content} />;
+      return <DetailStrip kind={section.kind} content={section.content} />;
     case "list":
-      return <TextList content={content} />;
+      return <TextList content={section.content} />;
     case "text":
     default:
-      return <Paragraph content={content} />;
+      return <Paragraph content={section.content} />;
   }
+}
+
+function ObjectStrip({ content }: { content: unknown }) {
+  const theme = useTheme();
+  const items = Array.isArray(content) ? content : [content];
+  const labels = items
+    .map((item) => {
+      const record = asRecord(item);
+      return toText(record.title ?? record.name ?? record.object ?? item);
+    })
+    .filter(Boolean);
+
+  if (!labels.length) return null;
+
+  return <View style={styles.selectors} accessibilityLabel="Objects">
+    {labels.map((label, index) => (
+      <View key={`${label}-${index}`} accessibilityLabel={`Object: ${label}`} style={[styles.selector, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+        <Text style={[styles.itemTitle, { color: theme.colors.text }]}>{label}</Text>
+      </View>
+    ))}
+  </View>;
 }
 
 function DetailStrip({ kind, content }: { kind: string; content: unknown }) {

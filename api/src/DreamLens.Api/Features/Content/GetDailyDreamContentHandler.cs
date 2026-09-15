@@ -19,6 +19,7 @@ public sealed class GetDailyDreamContentHandler(
             content.ContentDate,
             content.Quote,
             content.Attribution,
-            JsonSerializer.Deserialize<string[]>(content.FactsJson) ?? []);
+            JsonSerializer.Deserialize<string[]>(content.FactsJson) ?? [],
+            JsonSerializer.Deserialize<string[]>(content.CognitiveFactsJson) ?? []);
     }
 }

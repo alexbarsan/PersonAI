@@ -36,7 +36,7 @@ public sealed class DreamEndpointTests
     private static readonly Guid AskSourceDreamId = Guid.Parse("11111111-1111-1111-1111-111111111111");
 
     [Fact]
-    public async Task DailyDreamContentIsPublicDateAwareAndReturnsThreeStoredFacts()
+    public async Task DailyDreamContentIsPublicDateAwareAndReturnsThreeStoredFactsPerCategory()
     {
         using var app = CreateDreamApp(new StaticDreamChatClient(CanonicalAiOutput));
         using var client = app.CreateClient();
@@ -53,10 +53,12 @@ public sealed class DreamEndpointTests
         Assert.False(string.IsNullOrWhiteSpace(content.Quote));
         Assert.Equal("Dream DNA editorial", content.Attribution);
         Assert.Equal(3, content.Facts.Length);
+        Assert.Equal(3, content.CognitiveFacts.Length);
         Assert.Equal(content.Date, repeatedContent.Date);
         Assert.Equal(content.Quote, repeatedContent.Quote);
         Assert.Equal(content.Attribution, repeatedContent.Attribution);
         Assert.Equal(content.Facts, repeatedContent.Facts);
+        Assert.Equal(content.CognitiveFacts, repeatedContent.CognitiveFacts);
     }
 
     [Fact]

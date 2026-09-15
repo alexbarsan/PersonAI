@@ -48,7 +48,7 @@ export function DeepInterpretationPanel({ dreamId, enabled }: { dreamId: string;
       {deep.isLoading ? <Text style={[styles.body, { color: theme.colors.mutedText }]}>Checking for saved analysis</Text> : null}
       {deep.isError && !expectedMissing ? <Text style={[styles.error, { color: theme.colors.warning }]}>Saved Cognitive Analysis could not be loaded.</Text> : null}
        {create.isError ? <Text style={[styles.error, { color: theme.colors.warning }]}>{mapCreateError(create.error)}</Text> : null}
-       {create.isPending ? <DreamingFacts label="While your Cognitive Analysis takes shape" /> : null}
+       {create.isPending ? <DreamingFacts category="cognitive" label="While your Cognitive Analysis takes shape" /> : null}
        {!result && (!deep.isLoading || expectedMissing) ? (
         <Pressable
           accessibilityRole="button"

@@ -22,6 +22,11 @@ export const mockDailyDreamContent = {
     "Most people dream several times a night, even when they remember none of them in the morning.",
     "Dreams often combine familiar people, places, and concerns in new arrangements.",
     "A dream journal can reveal patterns that are difficult to notice from one dream alone."
+  ],
+  cognitiveFacts: [
+    "Memory is reconstructive, so a remembered dream can shift as it is recalled.",
+    "REM is one stage in which dreams are often especially vivid.",
+    "A cognitive analysis can describe possible patterns, but cannot diagnose from a dream."
   ]
 };
 

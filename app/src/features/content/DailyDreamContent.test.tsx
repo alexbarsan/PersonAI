@@ -8,12 +8,15 @@ import { mockDailyDreamContent } from "@/mocks/mockData";
 import { ThemeProvider } from "@/theme/ThemeProvider";
 
 describe("DailyDreamContent", () => {
-  it("shows the database-backed daily quote and three waiting facts", async () => {
-    render(<><DailyDreamQuote /><DreamingFacts /></>, { wrapper: Wrapper });
+  it("shows the database-backed daily quote and category-specific waiting facts", async () => {
+    render(<><DailyDreamQuote /><DreamingFacts /><DreamingFacts category="cognitive" label="Cognitive context" /></>, { wrapper: Wrapper });
 
     expect(await screen.findByTestId("daily-dream-quote")).toBeTruthy();
     expect(screen.getByText(mockDailyDreamContent.quote)).toBeTruthy();
     for (const fact of mockDailyDreamContent.facts) {
+      expect(screen.getByText(fact)).toBeTruthy();
+    }
+    for (const fact of mockDailyDreamContent.cognitiveFacts) {
       expect(screen.getByText(fact)).toBeTruthy();
     }
   });

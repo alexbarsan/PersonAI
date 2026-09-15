@@ -38,14 +38,15 @@ export function DailyDreamQuote() {
   );
 }
 
-export function DreamingFacts({ label = "While we reflect" }: { label?: string }) {
+export function DreamingFacts({ label = "While we reflect", category = "dream" }: { label?: string; category?: "dream" | "cognitive" }) {
   const theme = useTheme();
   const content = useDailyDreamContent();
+  const facts = category === "cognitive" ? content.data?.cognitiveFacts : content.data?.facts;
 
   return (
     <View style={[styles.facts, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]} testID="dreaming-facts">
       <Text style={[styles.factsLabel, { color: theme.colors.primary }]}>{label}</Text>
-      {content.data ? content.data.facts.slice(0, 3).map((fact, index) => (
+      {facts ? facts.slice(0, 3).map((fact, index) => (
         <View key={fact} style={styles.factRow}>
           <Text style={[styles.factNumber, { color: theme.colors.primary }]}>{index + 1}</Text>
           <Text style={[styles.factText, { color: theme.colors.text }]}>{fact}</Text>

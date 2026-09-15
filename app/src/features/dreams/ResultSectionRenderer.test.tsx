@@ -36,7 +36,7 @@ describe("ResultSectionRenderer", () => {
           <ResultSectionRenderer section={{ kind: "list", title: "Scenarios", content: ["falling"] }} />
           <ResultSectionRenderer section={{ kind: "list", title: "Alternative interpretation", content: ["A memory"] }} />
           <ResultSectionRenderer section={{ kind: "entities", title: "Locations", content: [] }} />
-          <ResultSectionRenderer section={{ kind: "list", title: "Objects", content: [] }} />
+          <ResultSectionRenderer section={{ kind: "list", title: "Objects", content: ["old key", "red umbrella"] }} />
           <ResultSectionRenderer
             section={{ kind: "entities", title: "People", content: [{ title: "Alex", body: ["friend"] }] }}
           />
@@ -58,7 +58,9 @@ describe("ResultSectionRenderer", () => {
     expect(screen.queryByText("Alternative interpretation")).toBeNull();
     expect(screen.queryByText("A memory")).toBeNull();
     expect(screen.queryByText("Locations")).toBeNull();
-    expect(screen.queryByText("Objects")).toBeNull();
+    expect(screen.getByText("Objects")).toBeTruthy();
+    expect(screen.getByLabelText("Object: old key")).toBeTruthy();
+    expect(screen.getByLabelText("Object: red umbrella")).toBeTruthy();
     expect(screen.getByText("Alex")).toBeTruthy();
     expect(screen.getByText("stairs")).toBeTruthy();
     expect(screen.getByText("Change\nProgress")).toBeTruthy();

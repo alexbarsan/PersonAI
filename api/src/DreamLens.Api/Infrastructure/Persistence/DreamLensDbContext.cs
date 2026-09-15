@@ -71,6 +71,7 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
             entity.Property(content => content.Quote).HasMaxLength(500).IsRequired();
             entity.Property(content => content.Attribution).HasMaxLength(128);
             entity.Property(content => content.FactsJson).IsRequired();
+            entity.Property(content => content.CognitiveFactsJson).IsRequired();
             entity.Property(content => content.CreatedAt).IsRequired();
         });
 

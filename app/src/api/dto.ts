@@ -10,6 +10,7 @@ export type DailyDreamContentResponse = {
   quote: string;
   attribution: string | null;
   facts: string[];
+  cognitiveFacts: string[];
 };
 
 export type ProfileResponse = {
