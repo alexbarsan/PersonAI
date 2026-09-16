@@ -10,6 +10,7 @@ import {
   FactInsightResponse,
   DreamObservationResponse,
   RelationshipInsightResponse,
+  RelationshipReadinessResponse,
   ThemeInsightResponse,
   TimingPatternInsightResponse,
 } from "@/api/dto";
@@ -144,9 +145,10 @@ export function InsightsScreen() {
             {insights.data.timingPatterns.length > 0 ? (
               <TimingPanel patterns={insights.data.timingPatterns} />
             ) : null}
-            {insights.data.relationships.length > 0 ? (
-              <RelationshipPanel relationships={insights.data.relationships} />
-            ) : null}
+            <RelationshipPanel
+              relationships={insights.data.relationships}
+              readiness={insights.data.relationshipReadiness}
+            />
             <Text style={[styles.note, { color: theme.colors.mutedText }]}>
               Patterns are reflective observations, not predictions or
               diagnoses.
@@ -427,13 +429,30 @@ function TimingPanel({
   );
 }
 
-function RelationshipPanel({ relationships }: { relationships: RelationshipInsightResponse[] }) {
+function RelationshipPanel({
+  relationships,
+  readiness,
+}: {
+  relationships: RelationshipInsightResponse[];
+  readiness: RelationshipReadinessResponse;
+}) {
   const theme = useTheme();
   const router = useRouter();
+  const needsMoreDreams = readiness.completedDreams < readiness.minimumCompletedDreams;
   return (
     <View style={[styles.panel, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
       <Text style={[styles.panelTitle, { color: theme.colors.text }]}>Patterns that appear together</Text>
       <Text style={[styles.body, { color: theme.colors.mutedText }]}>These are co-occurrences in your journal, not explanations or causes.</Text>
+      {needsMoreDreams ? (
+        <Text style={[styles.body, { color: theme.colors.mutedText }]}>
+          Connection patterns can be checked after {readiness.minimumCompletedDreams} completed dreams. You have {readiness.completedDreams}.
+        </Text>
+      ) : null}
+      {!needsMoreDreams && relationships.length === 0 ? (
+        <Text style={[styles.body, { color: theme.colors.mutedText }]}>
+          No connection patterns meet the current evidence threshold yet.
+        </Text>
+      ) : null}
       {relationships.map((relationship) => (
         <View key={`${relationship.firstType}-${relationship.firstValue}-${relationship.secondType}-${relationship.secondValue}`} style={[styles.relationship, { borderColor: theme.colors.border }]}>
           <Text style={[styles.factName, { color: theme.colors.text }]}>{relationship.firstValue} + {relationship.secondValue}</Text>

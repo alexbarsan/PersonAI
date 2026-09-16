@@ -47,6 +47,8 @@ public sealed class GetInsightsHandler(DreamLensDbContext dbContext, ICurrentUse
             ?? ReadLegacyThemes(dreams);
         var dates = dreamDates.Values.Where(date => date is not null).Select(date => date!.Value).ToArray();
 
+        var relationships = BuildRelationships(facts, dreams.Length, dreams.ToDictionary(dream => dream.Id));
+
         return new InsightsResponse(
             dreams.Length,
             CalculateCurrentStreakDays(dates),
@@ -54,7 +56,12 @@ public sealed class GetInsightsHandler(DreamLensDbContext dbContext, ICurrentUse
             dates.Length == 0 ? null : new InsightDateRangeResponse(dates.Min(), dates.Max()),
             factGroups,
             BuildTimingPatterns(facts, dreamDates),
-            BuildRelationships(facts, dreams.Length, dreams.ToDictionary(dream => dream.Id)),
+            relationships.Relationships,
+            new RelationshipReadinessResponse(
+                MinimumRelationshipPopulation,
+                dreams.Length,
+                relationships.QualifiedFactPatterns,
+                relationships.Relationships.Length),
             BuildMonthlyDreamCounts(dates));
     }
 
@@ -148,14 +155,14 @@ public sealed class GetInsightsHandler(DreamLensDbContext dbContext, ICurrentUse
             .ToArray();
     }
 
-    private static RelationshipInsightResponse[] BuildRelationships(
+    private static RelationshipBuildResult BuildRelationships(
         IEnumerable<DreamFactRecord> facts,
         int totalDreams,
         IReadOnlyDictionary<Guid, DreamRecord> dreamsById)
     {
         if (totalDreams < MinimumRelationshipPopulation)
         {
-            return [];
+            return new RelationshipBuildResult([], 0);
         }
 
         var qualified = facts
@@ -173,7 +180,7 @@ public sealed class GetInsightsHandler(DreamLensDbContext dbContext, ICurrentUse
             .ToArray();
         if (qualified.Length == 0)
         {
-            return [];
+            return new RelationshipBuildResult([], 0);
         }
 
         var patternCounts = qualified
@@ -240,7 +247,7 @@ public sealed class GetInsightsHandler(DreamLensDbContext dbContext, ICurrentUse
                     .ToArray()))
             .ToArray();
 
-        return pairs;
+        return new RelationshipBuildResult(pairs, patternCounts.Count);
     }
 
     private static string FindDisplayValue(IEnumerable<DreamFactRecord> facts, RelationshipFactKey key) => facts
@@ -251,6 +258,10 @@ public sealed class GetInsightsHandler(DreamLensDbContext dbContext, ICurrentUse
         .First();
 
     private sealed record RelationshipFactKey(string Type, string NormalizedValue);
+
+    private sealed record RelationshipBuildResult(
+        RelationshipInsightResponse[] Relationships,
+        int QualifiedFactPatterns);
 
     private sealed record RelationshipPairKey(RelationshipFactKey First, RelationshipFactKey Second);
 

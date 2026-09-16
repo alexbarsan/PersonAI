@@ -28,6 +28,12 @@ describe("InsightsScreen", () => {
         factGroups: [],
         timingPatterns: [],
         relationships: [],
+        relationshipReadiness: {
+          minimumCompletedDreams: 6,
+          completedDreams: 0,
+          qualifiedFactPatterns: 0,
+          supportedRelationships: 0
+        },
         monthlyDreamCounts: []
       })
     });
@@ -52,6 +58,41 @@ describe("InsightsScreen", () => {
     expect(await screen.findByText("Patterns that appear together")).toBeTruthy();
     expect(screen.getByText("water + curiosity")).toBeTruthy();
     expect(screen.getByLabelText("Open The Quiet Shoreline")).toBeTruthy();
+  });
+
+  it("explains when the journal needs more evidence for connection patterns", async () => {
+    renderWithProviders(<InsightsScreen />, {
+      getInsights: async (): Promise<InsightsResponse> => ({
+        ...mockInsights,
+        totalDreams: 2,
+        relationships: [],
+        relationshipReadiness: {
+          minimumCompletedDreams: 6,
+          completedDreams: 2,
+          qualifiedFactPatterns: 0,
+          supportedRelationships: 0
+        }
+      })
+    });
+
+    expect(await screen.findByText("Connection patterns can be checked after 6 completed dreams. You have 2.")).toBeTruthy();
+  });
+
+  it("explains when no relationship passes the evidence threshold", async () => {
+    renderWithProviders(<InsightsScreen />, {
+      getInsights: async (): Promise<InsightsResponse> => ({
+        ...mockInsights,
+        relationships: [],
+        relationshipReadiness: {
+          minimumCompletedDreams: 6,
+          completedDreams: 7,
+          qualifiedFactPatterns: 3,
+          supportedRelationships: 0
+        }
+      })
+    });
+
+    expect(await screen.findByText("No connection patterns meet the current evidence threshold yet.")).toBeTruthy();
   });
 });
 

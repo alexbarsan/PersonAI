@@ -231,6 +231,7 @@ export type InsightsResponse = {
   factGroups: FactInsightGroupResponse[];
   timingPatterns: TimingPatternInsightResponse[];
   relationships: RelationshipInsightResponse[];
+  relationshipReadiness: RelationshipReadinessResponse;
   monthlyDreamCounts: MonthlyDreamCountResponse[];
 };
 
@@ -308,6 +309,13 @@ export type RelationshipInsightResponse = {
     firstExtractionConfidence: number | null;
     secondExtractionConfidence: number | null;
   }>;
+};
+
+export type RelationshipReadinessResponse = {
+  minimumCompletedDreams: number;
+  completedDreams: number;
+  qualifiedFactPatterns: number;
+  supportedRelationships: number;
 };
 
 export type MonthlyDreamCountResponse = {

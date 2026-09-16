@@ -945,6 +945,10 @@ public sealed class DreamEndpointTests
         Assert.NotNull(insights);
         Assert.Equal(2, insights.TotalDreams);
         Assert.Equal(2, insights.CurrentStreakDays);
+        Assert.Equal(6, insights.RelationshipReadiness.MinimumCompletedDreams);
+        Assert.Equal(2, insights.RelationshipReadiness.CompletedDreams);
+        Assert.Equal(0, insights.RelationshipReadiness.QualifiedFactPatterns);
+        Assert.Equal(0, insights.RelationshipReadiness.SupportedRelationships);
         Assert.Contains(insights.RecurringThemes, theme => theme.Name == "loss of control" && theme.Count == 2);
         Assert.Contains(insights.RecurringThemes, theme => theme.Name == "transition" && theme.Count == 2);
     }
@@ -993,6 +997,8 @@ public sealed class DreamEndpointTests
         Assert.Equal(3, relationship.SharedDreams);
         Assert.Equal(100m, relationship.SharedOfSmallerPatternPercent);
         Assert.Equal(1.5m, relationship.RelativeLift);
+        Assert.True(insights.RelationshipReadiness.QualifiedFactPatterns >= 2);
+        Assert.Equal(1, insights.RelationshipReadiness.SupportedRelationships);
         Assert.All(relationship.Evidence, evidence => Assert.Contains(evidence.DreamId, dreams.Take(3).Select(dream => dream.Id)));
         Assert.Equal(HttpStatusCode.OK, observationResponse.StatusCode);
         Assert.NotNull(observation);
@@ -1849,6 +1855,7 @@ public sealed class DreamEndpointTests
         FactInsightGroupResponse[] FactGroups,
         TimingPatternInsightResponse[] TimingPatterns,
         RelationshipInsightResponse[] Relationships,
+        RelationshipReadinessResponse RelationshipReadiness,
         MonthlyDreamCountResponse[] MonthlyDreamCounts);
 
     private sealed record SimilarDreamsResponse(Guid DreamId, SimilarDreamResponse[] Matches);
@@ -1899,6 +1906,12 @@ public sealed class DreamEndpointTests
         decimal SharedOfSmallerPatternPercent,
         decimal RelativeLift,
         DreamRelationshipEvidenceResponse[] Evidence);
+
+    private sealed record RelationshipReadinessResponse(
+        int MinimumCompletedDreams,
+        int CompletedDreams,
+        int QualifiedFactPatterns,
+        int SupportedRelationships);
 
     private sealed record DreamRelationshipEvidenceResponse(Guid DreamId, string Title, DateOnly ObservedAt, decimal? FirstExtractionConfidence, decimal? SecondExtractionConfidence);
 

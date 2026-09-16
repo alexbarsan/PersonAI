@@ -192,7 +192,7 @@ export const mockJournal: DreamJournalResponse = {
 };
 
 export const mockInsights: InsightsResponse = {
-  totalDreams: 1,
+  totalDreams: 7,
   currentStreakDays: 1,
   recurringThemes: [
     {
@@ -234,6 +234,12 @@ export const mockInsights: InsightsResponse = {
       }]
     }
   ],
+  relationshipReadiness: {
+    minimumCompletedDreams: 6,
+    completedDreams: 7,
+    qualifiedFactPatterns: 2,
+    supportedRelationships: 1
+  },
   monthlyDreamCounts: [{ month: "2026-07-01", count: 1 }]
 };
 
