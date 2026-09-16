@@ -61,6 +61,12 @@ resource "aws_iam_role_policy" "production_dns_manager" {
         Effect   = "Allow"
         Action   = "route53:ListHostedZonesByName"
         Resource = "*"
+      },
+      {
+        Sid      = "ReadRoute53ChangeStatus"
+        Effect   = "Allow"
+        Action   = "route53:GetChange"
+        Resource = "arn:aws:route53:::change/*"
       }
     ]
   })
