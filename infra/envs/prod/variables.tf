@@ -70,6 +70,11 @@ variable "hosted_zone_id" {
   default     = null
 }
 
+variable "dns_management_role_arn" {
+  type        = string
+  description = "Cross-account role in the shared domain account used for ACM validation and Route 53 alias records."
+}
+
 variable "api_domain_name" {
   type        = string
   description = "Optional custom API domain name."

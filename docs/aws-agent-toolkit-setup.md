@@ -44,6 +44,17 @@ aws login --region us-east-1 --profile dreamlens-dev
 aws sts get-caller-identity --profile dreamlens-dev
 ```
 
+## Production Account
+
+Production runs in a separate AWS Organizations account. The local
+`dreamlens-prod` profile assumes `OrganizationAccountAccessRole` in that account
+from the non-root `dreamlens-dev` profile. Root credentials cannot assume this
+role.
+
+For Dream DNA, the shared domain account retains Route 53 ownership. Production
+creates its own ACM certificate and assumes `dreamlens-prod-dns-manager` only to
+write certificate-validation records and public aliases in that hosted zone.
+
 If you use IAM user access keys, rotate any key that was pasted into chat, logs, tickets, or email. Then configure the profile locally with an interactive prompt:
 
 ```powershell

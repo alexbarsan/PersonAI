@@ -103,6 +103,12 @@ variable "certificate_arn" {
   default     = null
 }
 
+variable "enable_https_listener" {
+  type        = bool
+  description = "Whether to create the HTTPS listener and redirect HTTP traffic. Set explicitly when the certificate ARN is created in the same Terraform apply."
+  default     = false
+}
+
 variable "tags" {
   type        = map(string)
   description = "Tags applied to API resources."

@@ -6,3 +6,7 @@ subject_alternative_names = [
   "*.dev.dreamdna.world",
   "*.qa.dreamdna.world"
 ]
+
+# Optional. When set, creates a narrowly scoped cross-account role for the
+# isolated production account to manage DNS validation and public aliases.
+production_account_id = "PRODUCTION_ACCOUNT_ID"

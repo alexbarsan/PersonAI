@@ -17,3 +17,8 @@ output "certificate_domain_validation_records" {
   value       = module.domain.certificate_domain_validation_records
   description = "DNS records created for ACM certificate validation."
 }
+
+output "production_dns_manager_role_arn" {
+  value       = try(aws_iam_role.production_dns_manager[0].arn, null)
+  description = "Cross-account role that production infrastructure assumes for Dream DNA DNS changes."
+}

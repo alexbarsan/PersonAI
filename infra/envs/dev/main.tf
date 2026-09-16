@@ -49,22 +49,23 @@ module "cognito" {
 module "api" {
   source = "../../modules/ecs-api"
 
-  name_prefix          = local.name_prefix
-  vpc_id               = module.network.vpc_id
-  public_subnet_ids    = module.network.public_subnet_ids
-  private_subnet_ids   = module.network.private_subnet_ids
-  container_image      = var.container_image
-  task_cpu             = 512
-  task_memory          = 1024
-  desired_count        = 1
-  worker_desired_count = 1
-  worker_max_count     = 4
-  secret_kms_key_arn   = module.security.kms_key_arn
-  regional_waf_acl_arn = module.security.regional_waf_acl_arn
-  certificate_arn      = var.api_acm_certificate_arn
-  async_queue_arns     = [module.async_jobs.queue_arn, module.async_jobs.dead_letter_queue_arn]
-  async_queue_name     = module.async_jobs.queue_name
-  asset_bucket_arn     = module.private_assets.bucket_arn
+  name_prefix           = local.name_prefix
+  vpc_id                = module.network.vpc_id
+  public_subnet_ids     = module.network.public_subnet_ids
+  private_subnet_ids    = module.network.private_subnet_ids
+  container_image       = var.container_image
+  task_cpu              = 512
+  task_memory           = 1024
+  desired_count         = 1
+  worker_desired_count  = 1
+  worker_max_count      = 4
+  secret_kms_key_arn    = module.security.kms_key_arn
+  regional_waf_acl_arn  = module.security.regional_waf_acl_arn
+  certificate_arn       = var.api_acm_certificate_arn
+  enable_https_listener = var.api_acm_certificate_arn != null
+  async_queue_arns      = [module.async_jobs.queue_arn, module.async_jobs.dead_letter_queue_arn]
+  async_queue_name      = module.async_jobs.queue_name
+  asset_bucket_arn      = module.private_assets.bucket_arn
 
   environment_variables = merge({
     ASPNETCORE_ENVIRONMENT                                        = "Production"

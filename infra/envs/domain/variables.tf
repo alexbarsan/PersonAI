@@ -13,3 +13,9 @@ variable "subject_alternative_names" {
   description = "Additional names covered by the public ACM certificate."
   default     = []
 }
+
+variable "production_account_id" {
+  type        = string
+  description = "AWS account ID allowed to manage Dream DNA DNS records for production certificate validation and aliases."
+  default     = null
+}

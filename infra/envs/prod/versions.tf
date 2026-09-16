@@ -16,3 +16,16 @@ provider "aws" {
     tags = local.tags
   }
 }
+
+provider "aws" {
+  alias  = "dns"
+  region = var.aws_region
+
+  assume_role {
+    role_arn = var.dns_management_role_arn
+  }
+
+  default_tags {
+    tags = local.tags
+  }
+}

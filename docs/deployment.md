@@ -139,6 +139,17 @@ Add exact native mobile callback URLs after the EAS/dev-client URL scheme is ver
 
 S18 wires the deployment paths. Dev AWS infrastructure and custom domains are applied. Actual QA/prod rollout still requires environment-specific tfvars, remote state bootstrap, GitHub environment variables, protected approvals, and final app/domain decisions.
 
+## Isolated Production Account
+
+Use a dedicated AWS Organizations account for production workloads. Its Terraform
+state bucket, database, ECS services, secrets, and CI/CD role must remain in that
+account. The shared domain account can retain the Route 53 hosted zone. In that
+case, create a narrowly scoped cross-account DNS role in the domain account;
+production assumes it only for its ACM validation CNAME records and public DNS
+aliases. The production ACM certificate must be created in the production account
+because CloudFront and the API load balancer cannot use a certificate owned by a
+different AWS account.
+
 Terraform owns the infrastructure and bootstrap task definition. GitHub Actions owns normal application image rollouts by registering a new ECS task-definition revision from the currently deployed definition. Terraform intentionally ignores the ECS service `task_definition` pointer so infrastructure applies do not roll the service back to the bootstrap image.
 
 ## Embedding Backfill

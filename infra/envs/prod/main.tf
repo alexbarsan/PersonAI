@@ -8,6 +8,44 @@ locals {
     Environment = local.environment
     ManagedBy   = "Terraform"
   }
+
+  certificate_domains = distinct(concat(var.web_domain_aliases, compact([var.api_domain_name])))
+}
+
+resource "aws_acm_certificate" "public" {
+  domain_name               = local.certificate_domains[0]
+  subject_alternative_names = slice(local.certificate_domains, 1, length(local.certificate_domains))
+  validation_method         = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  tags = local.tags
+}
+
+resource "aws_route53_record" "certificate_validation" {
+  provider = aws.dns
+
+  for_each = {
+    for option in aws_acm_certificate.public.domain_validation_options : option.domain_name => {
+      name   = option.resource_record_name
+      record = option.resource_record_value
+      type   = option.resource_record_type
+    }
+  }
+
+  allow_overwrite = true
+  name            = each.value.name
+  records         = [each.value.record]
+  ttl             = 60
+  type            = each.value.type
+  zone_id         = var.hosted_zone_id
+}
+
+resource "aws_acm_certificate_validation" "public" {
+  certificate_arn         = aws_acm_certificate.public.arn
+  validation_record_fqdns = [for record in aws_route53_record.certificate_validation : record.fqdn]
 }
 
 module "network" {
@@ -49,22 +87,23 @@ module "cognito" {
 module "api" {
   source = "../../modules/ecs-api"
 
-  name_prefix          = local.name_prefix
-  vpc_id               = module.network.vpc_id
-  public_subnet_ids    = module.network.public_subnet_ids
-  private_subnet_ids   = module.network.private_subnet_ids
-  container_image      = var.container_image
-  task_cpu             = 1024
-  task_memory          = 2048
-  desired_count        = 2
-  worker_desired_count = 1
-  worker_max_count     = 4
-  secret_kms_key_arn   = module.security.kms_key_arn
-  regional_waf_acl_arn = module.security.regional_waf_acl_arn
-  certificate_arn      = var.api_acm_certificate_arn
-  async_queue_arns     = [module.async_jobs.queue_arn, module.async_jobs.dead_letter_queue_arn]
-  async_queue_name     = module.async_jobs.queue_name
-  asset_bucket_arn     = module.private_assets.bucket_arn
+  name_prefix           = local.name_prefix
+  vpc_id                = module.network.vpc_id
+  public_subnet_ids     = module.network.public_subnet_ids
+  private_subnet_ids    = module.network.private_subnet_ids
+  container_image       = var.container_image
+  task_cpu              = 1024
+  task_memory           = 2048
+  desired_count         = 2
+  worker_desired_count  = 1
+  worker_max_count      = 4
+  secret_kms_key_arn    = module.security.kms_key_arn
+  regional_waf_acl_arn  = module.security.regional_waf_acl_arn
+  certificate_arn       = aws_acm_certificate_validation.public.certificate_arn
+  enable_https_listener = true
+  async_queue_arns      = [module.async_jobs.queue_arn, module.async_jobs.dead_letter_queue_arn]
+  async_queue_name      = module.async_jobs.queue_name
+  asset_bucket_arn      = module.private_assets.bucket_arn
 
   environment_variables = {
     ASPNETCORE_ENVIRONMENT                            = "Production"
@@ -160,7 +199,7 @@ module "web" {
   name_prefix            = local.name_prefix
   cloudfront_web_acl_arn = var.cloudfront_web_acl_arn
   domain_aliases         = var.web_domain_aliases
-  certificate_arn        = var.web_acm_certificate_arn
+  certificate_arn        = aws_acm_certificate_validation.public.certificate_arn
   tags                   = local.tags
 }
 
@@ -173,6 +212,8 @@ module "observability" {
 }
 
 resource "aws_route53_record" "web_ipv4" {
+  provider = aws.dns
+
   for_each = toset(var.hosted_zone_id == null ? [] : var.web_domain_aliases)
 
   name    = each.value
@@ -187,6 +228,8 @@ resource "aws_route53_record" "web_ipv4" {
 }
 
 resource "aws_route53_record" "web_ipv6" {
+  provider = aws.dns
+
   for_each = toset(var.hosted_zone_id == null ? [] : var.web_domain_aliases)
 
   name    = each.value
@@ -201,6 +244,8 @@ resource "aws_route53_record" "web_ipv6" {
 }
 
 resource "aws_route53_record" "api_ipv4" {
+  provider = aws.dns
+
   count = var.hosted_zone_id == null || var.api_domain_name == null ? 0 : 1
 
   name    = var.api_domain_name

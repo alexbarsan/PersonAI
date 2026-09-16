@@ -71,7 +71,7 @@ resource "aws_security_group" "alb" {
   }
 
   dynamic "ingress" {
-    for_each = var.certificate_arn == null ? [] : [1]
+    for_each = var.enable_https_listener ? [1] : []
 
     content {
       from_port   = 443
@@ -156,7 +156,7 @@ resource "aws_lb_listener" "http" {
   protocol          = "HTTP"
 
   dynamic "default_action" {
-    for_each = var.certificate_arn == null ? [1] : []
+    for_each = var.enable_https_listener ? [] : [1]
 
     content {
       type             = "forward"
@@ -165,7 +165,7 @@ resource "aws_lb_listener" "http" {
   }
 
   dynamic "default_action" {
-    for_each = var.certificate_arn == null ? [] : [1]
+    for_each = var.enable_https_listener ? [1] : []
 
     content {
       type = "redirect"
@@ -180,7 +180,7 @@ resource "aws_lb_listener" "http" {
 }
 
 resource "aws_lb_listener" "https" {
-  count = var.certificate_arn == null ? 0 : 1
+  count = var.enable_https_listener ? 1 : 0
 
   load_balancer_arn = aws_lb.api.arn
   port              = 443
