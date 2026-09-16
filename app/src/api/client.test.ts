@@ -31,6 +31,7 @@ describe("api client", () => {
     });
 
     const saved = await client.updateProfile({
+      preferredName: "Dreamer",
       age: 33,
       sex: null,
       genderIdentity: null,

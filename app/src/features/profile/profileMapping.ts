@@ -3,6 +3,7 @@ import { defaultProfileFormValues, ProfileFormValues } from "@/features/profile/
 
 export function toProfileUpdateRequest(values: ProfileFormValues): ProfileUpdateRequest {
   return {
+    preferredName: emptyToNull(values.preferredName),
     age: Number(values.age),
     sex: emptyToNull(values.sex),
     genderIdentity: emptyToNull(values.genderIdentity),
@@ -33,6 +34,7 @@ export function toProfileFormValues(profile?: ProfileResponse | null): ProfileFo
   }
 
   return {
+    preferredName: profile.preferredName ?? "",
     age: profile.age?.toString() ?? defaultProfileFormValues.age,
     sex: profile.sex ?? "",
     genderIdentity: profile.genderIdentity ?? "",

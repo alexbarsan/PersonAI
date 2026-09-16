@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using DreamLens.Api.Features.Profile;
+using DreamLens.Api.Features.Entitlements;
 using DreamLens.Api.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -48,6 +49,7 @@ public sealed class ProfileEndpointTests
         Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
         Assert.NotNull(saved);
         Assert.NotNull(fetched);
+        Assert.Equal("Alex", fetched.PreferredName);
         Assert.Equal(33, fetched.Age);
         Assert.Equal("male", fetched.Sex);
         Assert.Equal("male", fetched.GenderIdentity);
@@ -109,6 +111,31 @@ public sealed class ProfileEndpointTests
         Assert.DoesNotContain("new job", stored.EncryptedTraitsJson);
     }
 
+    [Fact]
+    public async Task OwnerCanGrantAndRevokeFriendsAndFamilyPremiumAfterProfileSetup()
+    {
+        using var app = CreateProfileApp();
+        using var owner = app.CreateAuthenticatedClient("owner-subject", "ai.ro.dodoloata@gmail.com");
+        using var friend = app.CreateAuthenticatedClient("friend-subject", "friend@example.com");
+        using var stranger = app.CreateAuthenticatedClient("stranger-subject", "stranger@example.com");
+        await friend.PutAsJsonAsync("/v1/profile", CreateValidProfileUpdate());
+
+        var forbidden = await stranger.PostAsJsonAsync("/v1/admin/premium-grants", new { email = "friend@example.com" });
+        var grantResponse = await owner.PostAsJsonAsync("/v1/admin/premium-grants", new { email = "friend@example.com" });
+        var grant = await grantResponse.Content.ReadFromJsonAsync<PremiumGrantResponse>();
+        var premium = await friend.GetFromJsonAsync<EntitlementResponse>("/v1/entitlements");
+        var revokeResponse = await owner.DeleteAsync($"/v1/admin/premium-grants/{grant!.Id}");
+        var free = await friend.GetFromJsonAsync<EntitlementResponse>("/v1/entitlements");
+
+        Assert.Equal(HttpStatusCode.Forbidden, forbidden.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, grantResponse.StatusCode);
+        Assert.NotNull(grant);
+        Assert.Equal("friend@example.com", grant.Email);
+        Assert.Equal("premium", premium!.Tier);
+        Assert.Equal(HttpStatusCode.NoContent, revokeResponse.StatusCode);
+        Assert.Equal("free", free!.Tier);
+    }
+
     private static ProfileTestApp CreateProfileApp()
     {
         var databaseName = $"profile-tests-{Guid.NewGuid():N}";
@@ -122,7 +149,8 @@ public sealed class ProfileEndpointTests
                     {
                         ["ConnectionStrings:DreamLensDb"] = "Host=localhost;Database=dreamlens_profile_tests;Username=postgres;Password=postgres",
                         ["Encryption:LocalKeyBase64"] = Convert.ToBase64String(
-                            System.Text.Encoding.UTF8.GetBytes("12345678901234567890123456789012"))
+                            System.Text.Encoding.UTF8.GetBytes("12345678901234567890123456789012")),
+                        ["FriendsAndFamily:AdministratorEmails:0"] = "ai.ro.dodoloata@gmail.com"
                     });
                 });
                 builder.ConfigureTestServices(services =>
@@ -132,6 +160,7 @@ public sealed class ProfileEndpointTests
                     services.AddDbContext<DreamLensDbContext>(options => options.UseInMemoryDatabase(databaseName));
                     services.AddScoped<GetProfileHandler>();
                     services.AddScoped<UpdateProfileHandler>();
+                    services.AddScoped<PremiumGrantHandler>();
                 });
             });
 
@@ -141,6 +170,7 @@ public sealed class ProfileEndpointTests
     private static ProfileUpdateRequest CreateValidProfileUpdate()
     {
         return new ProfileUpdateRequest(
+            "Alex",
             33,
             "male",
             "male",
@@ -163,10 +193,14 @@ public sealed class ProfileEndpointTests
     {
         public IServiceProvider Services => factory.Services;
 
-        public HttpClient CreateAuthenticatedClient(string subject)
+        public HttpClient CreateAuthenticatedClient(string subject, string? email = null)
         {
             var client = factory.CreateClient();
             client.DefaultRequestHeaders.Add("X-Test-Subject", subject);
+            if (email is not null)
+            {
+                client.DefaultRequestHeaders.Add("X-Test-Email", email);
+            }
             return client;
         }
 
@@ -177,6 +211,7 @@ public sealed class ProfileEndpointTests
     }
 
     private sealed record ProfileUpdateRequest(
+        string? PreferredName,
         int? Age,
         string? Sex,
         string? GenderIdentity,
@@ -199,6 +234,7 @@ public sealed class ProfileEndpointTests
     private sealed record ConsentRequest(bool AiProcessing, bool SensitiveTraits, bool HistoryUse);
 
     private sealed record ProfileResponse(
+        string? PreferredName,
         int? Age,
         string? Sex,
         string? GenderIdentity,
@@ -219,4 +255,8 @@ public sealed class ProfileEndpointTests
         string[] RecentLifeEvents);
 
     private sealed record ConsentResponse(bool AiProcessing, bool SensitiveTraits, bool HistoryUse);
+
+    private sealed record PremiumGrantResponse(Guid Id, string Email, string UserSubject, DateTimeOffset GrantedAt, string GrantedByEmail);
+
+    private sealed record EntitlementResponse(string Tier, int DailyDreamLimit, bool DeepAnalysisEnabled);
 }

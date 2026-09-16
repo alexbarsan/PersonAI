@@ -108,7 +108,10 @@ export const mockApiClient: ApiClient = {
     interpretation: mockDream.result,
     deepInterpretation: mockDeepInterpretation.result,
     images: [{ id: mockDreamImage.id, status: mockDreamImage.status, style: mockDreamImage.style, downloadUrl: mockDreamImage.downloadUrl, createdAt: mockDreamImage.createdAt }]
-  })
+  }),
+  listPremiumGrants: async () => [],
+  grantPremium: async (email) => ({ id: "premium-grant-mock-1", email, userSubject: "mock-friend", grantedAt: new Date().toISOString(), grantedByEmail: "ai.ro.dodoloata@gmail.com" }),
+  revokePremium: async () => undefined
 };
 
 function readMockSubmitMode() {

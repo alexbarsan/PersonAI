@@ -1,6 +1,7 @@
 namespace DreamLens.Api.Features.Profile;
 
 public sealed record ProfileResponse(
+    string? PreferredName,
     int? Age,
     string? Sex,
     string? GenderIdentity,
@@ -10,6 +11,7 @@ public sealed record ProfileResponse(
     ConsentDto Consent);
 
 public sealed record UpdateProfileRequest(
+    string? PreferredName,
     int? Age,
     string? Sex,
     string? GenderIdentity,

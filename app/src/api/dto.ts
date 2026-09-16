@@ -14,6 +14,7 @@ export type DailyDreamContentResponse = {
 };
 
 export type ProfileResponse = {
+  preferredName: string | null;
   age: number | null;
   sex: string | null;
   genderIdentity: string | null;
@@ -24,6 +25,14 @@ export type ProfileResponse = {
 };
 
 export type ProfileUpdateRequest = ProfileResponse;
+
+export type PremiumGrantResponse = {
+  id: string;
+  email: string;
+  userSubject: string;
+  grantedAt: string;
+  grantedByEmail: string;
+};
 
 export type ProfileTraits = {
   fears: string[];

@@ -7,7 +7,7 @@ public static class MonetizationServiceCollectionExtensions
         services.Configure<MonetizationOptions>(configuration.GetSection("Monetization"));
         services.Configure<QuotaExemptionOptions>(configuration.GetSection("QuotaExemption"));
         services.AddSingleton<QuotaExemptionService>();
-        services.AddSingleton<IEntitlementService, ConfiguredEntitlementService>();
+        services.AddScoped<IEntitlementService, ConfiguredEntitlementService>();
         return services;
     }
 }

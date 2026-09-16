@@ -70,6 +70,7 @@ module "api" {
     ASPNETCORE_ENVIRONMENT                            = "Production"
     ConnectionStrings__Host                           = module.database.endpoint
     ConnectionStrings__Database                       = module.database.database_name
+    Database__ApplyMigrations                         = "true"
     Embedding__Enabled                                = "true"
     Embedding__Provider                               = "bedrock-titan"
     Embedding__Model                                  = "amazon.titan-embed-text-v2:0"
@@ -92,6 +93,7 @@ module "api" {
     Authentication__Cognito__Audience                 = module.cognito.user_pool_client_id
     Authentication__Cognito__ClientId                 = module.cognito.user_pool_client_id
     Cors__AllowedOrigins__0                           = "https://dreamdna.world"
+    FriendsAndFamily__AdministratorEmails__0          = "ai.ro.dodoloata@gmail.com"
     Jobs__QueueUrl                                    = module.async_jobs.queue_url
     Jobs__Worker__Enabled                             = "true"
     Jobs__EmbeddingBackfill__Enabled                  = "false"

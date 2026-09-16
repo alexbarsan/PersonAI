@@ -35,6 +35,8 @@ public sealed class UpdateProfileHandler(
         }
 
         profile.Age = request.Age;
+        profile.PreferredName = Normalize(request.PreferredName);
+        profile.EmailNormalized = NormalizeEmail(currentUser.Email);
         profile.Sex = Normalize(request.Sex);
         profile.GenderIdentity = Normalize(request.GenderIdentity);
         profile.Language = NormalizeRequired(request.Language);
@@ -89,6 +91,7 @@ public sealed class UpdateProfileHandler(
 
         AddLengthErrors(errors, "sex", request.Sex, 64);
         AddLengthErrors(errors, "genderIdentity", request.GenderIdentity, 128);
+        AddLengthErrors(errors, "preferredName", request.PreferredName, 80);
 
         return errors;
     }
@@ -140,5 +143,11 @@ public sealed class UpdateProfileHandler(
     private static string? Normalize(string? value)
     {
         return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    }
+
+    private static string? NormalizeEmail(string? value)
+    {
+        var normalized = Normalize(value)?.ToLowerInvariant();
+        return normalized is not null && normalized.Length <= 320 ? normalized : null;
     }
 }

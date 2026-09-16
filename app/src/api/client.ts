@@ -25,6 +25,7 @@ import {
   AdminOperationsResponse,
   AdminDreamDetailResponse,
   AdminDreamSearchResponse,
+  PremiumGrantResponse,
   DailyDreamContentResponse,
   VoiceCaptureResponse,
   VoiceCaptureUpload
@@ -73,6 +74,9 @@ export type ApiClient = {
   acknowledgeAdminIssue: (source: string, id: string, reason: string) => Promise<AdminOperationsActionResponse>;
   searchAdminDreams: (query?: string) => Promise<AdminDreamSearchResponse>;
   accessAdminDream: (id: string) => Promise<AdminDreamDetailResponse>;
+  listPremiumGrants: () => Promise<PremiumGrantResponse[]>;
+  grantPremium: (email: string) => Promise<PremiumGrantResponse>;
+  revokePremium: (id: string) => Promise<void>;
 };
 
 export { ApiError };
@@ -205,6 +209,9 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
     }),
     searchAdminDreams: (query = "") => request<AdminDreamSearchResponse>(`/v1/admin/dreams?query=${encodeURIComponent(query)}&page=1&pageSize=50`),
     accessAdminDream: (id) => request<AdminDreamDetailResponse>(`/v1/admin/dreams/${id}/access`, { method: "POST" })
+    ,listPremiumGrants: () => request<PremiumGrantResponse[]>("/v1/admin/premium-grants")
+    ,grantPremium: (email) => request<PremiumGrantResponse>("/v1/admin/premium-grants", { method: "POST", body: JSON.stringify({ email }) })
+    ,revokePremium: async (id) => { await request<null>(`/v1/admin/premium-grants/${id}`, { method: "DELETE" }); }
   };
 }
 

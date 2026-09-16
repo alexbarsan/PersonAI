@@ -6,6 +6,10 @@ public sealed class UserProfile
 
     public required string UserSubject { get; set; }
 
+    public string? PreferredName { get; set; }
+
+    public string? EmailNormalized { get; set; }
+
     public int? Age { get; set; }
 
     public string? Sex { get; set; }

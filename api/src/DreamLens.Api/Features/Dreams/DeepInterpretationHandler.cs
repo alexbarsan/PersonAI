@@ -159,7 +159,7 @@ public sealed class DeepInterpretationHandler(
                     new ContextUserSource(
                         profile.UserSubject,
                         null,
-                        null,
+                        profile.PreferredName,
                         profile.Age,
                         profile.Sex,
                         profile.GenderIdentity,

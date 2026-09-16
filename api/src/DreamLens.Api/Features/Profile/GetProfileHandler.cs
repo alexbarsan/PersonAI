@@ -19,7 +19,7 @@ public sealed class GetProfileHandler(
 
         if (profile is null)
         {
-            return new ProfileResponse(null, null, null, "en", "UTC", ProfileTraitsDto.Empty, ConsentDto.Empty);
+            return new ProfileResponse(null, null, null, null, "en", "UTC", ProfileTraitsDto.Empty, ConsentDto.Empty);
         }
 
         return Map(profile, encryptor);
@@ -31,6 +31,7 @@ public sealed class GetProfileHandler(
         var traits = JsonSerializer.Deserialize<ProfileTraitsDto>(traitsJson) ?? ProfileTraitsDto.Empty;
 
         return new ProfileResponse(
+            profile.PreferredName,
             profile.Age,
             profile.Sex,
             profile.GenderIdentity,

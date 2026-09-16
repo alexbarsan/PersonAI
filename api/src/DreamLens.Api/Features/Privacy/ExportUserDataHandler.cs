@@ -54,7 +54,7 @@ public sealed class ExportUserDataHandler(
 
         return new UserDataExportResponse(
             DateTimeOffset.UtcNow,
-            profile is null ? new ProfileResponse(null, null, null, "en", "UTC", ProfileTraitsDto.Empty, ConsentDto.Empty) : GetProfileHandler.Map(profile, encryptor),
+            profile is null ? new ProfileResponse(null, null, null, null, "en", "UTC", ProfileTraitsDto.Empty, ConsentDto.Empty) : GetProfileHandler.Map(profile, encryptor),
             dreams.Select(dream => new UserDataExportDream(
                 dream.Id,
                 dream.CreatedAt,

@@ -77,7 +77,7 @@ public sealed class DreamInterpretationJobHandler(
                         new ContextUserSource(
                             profile.UserSubject,
                             null,
-                            null,
+                            profile.PreferredName,
                             profile.Age,
                             profile.Sex,
                             profile.GenderIdentity,

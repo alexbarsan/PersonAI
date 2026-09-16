@@ -51,6 +51,7 @@ builder.Services.AddPersonaKitDeepSeekChatClient(builder.Configuration);
 AddDreamLensPersonaKitCore(builder.Services, builder.Configuration, builder.Environment);
 builder.Services.AddScoped<GetMeHandler>();
 builder.Services.AddScoped<GetEntitlementHandler>();
+builder.Services.Configure<PremiumGrantOptions>(builder.Configuration.GetSection("FriendsAndFamily"));
 builder.Services.Configure<AskDreamsOptions>(builder.Configuration.GetSection("AskDreams"));
 
 var persistenceEnabled = !string.IsNullOrWhiteSpace(PersistenceServiceCollectionExtensions.ResolveConnectionString(builder.Configuration));
@@ -73,6 +74,7 @@ if (profileEndpointsEnabled)
 {
     builder.Services.AddScoped<GetProfileHandler>();
     builder.Services.AddScoped<UpdateProfileHandler>();
+    builder.Services.AddScoped<PremiumGrantHandler>();
 }
 
 var dreamEndpointsEnabled = DreamEndpointsEnabled(builder.Configuration);
@@ -142,6 +144,7 @@ app.UseAuthorization();
 app.MapHealthEndpoints();
 app.MapMeEndpoints();
 app.MapEntitlementEndpoints();
+app.MapPremiumGrantEndpoints();
 app.MapProfileEndpoints();
 app.MapDreamEndpoints();
 app.MapInsightsEndpoints();

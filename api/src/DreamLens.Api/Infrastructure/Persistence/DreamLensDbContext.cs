@@ -13,6 +13,8 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
 
     public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
 
+    public DbSet<PremiumGrantRecord> PremiumGrants => Set<PremiumGrantRecord>();
+
     public DbSet<DreamRecord> Dreams => Set<DreamRecord>();
 
     public DbSet<DreamInterpretationFeedback> DreamInterpretationFeedback => Set<DreamInterpretationFeedback>();
@@ -85,6 +87,12 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
             entity.Property(profile => profile.UserSubject)
                 .HasMaxLength(256)
                 .IsRequired();
+            entity.Property(profile => profile.PreferredName)
+                .HasMaxLength(80);
+            entity.Property(profile => profile.EmailNormalized)
+                .HasMaxLength(320);
+            entity.HasIndex(profile => profile.EmailNormalized)
+                .IsUnique();
             entity.Property(profile => profile.Sex)
                 .HasMaxLength(64);
             entity.Property(profile => profile.GenderIdentity)
@@ -101,6 +109,20 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
                 .IsRequired();
             entity.Property(profile => profile.UpdatedAt)
                 .IsRequired();
+        });
+
+        modelBuilder.Entity<PremiumGrantRecord>(entity =>
+        {
+            entity.ToTable("PremiumGrants");
+            entity.HasKey(grant => grant.Id);
+            entity.HasIndex(grant => grant.UserSubject).IsUnique();
+            entity.HasIndex(grant => new { grant.EmailNormalized, grant.RevokedAt });
+            entity.Property(grant => grant.UserSubject).HasMaxLength(256).IsRequired();
+            entity.Property(grant => grant.EmailNormalized).HasMaxLength(320).IsRequired();
+            entity.Property(grant => grant.GrantedBySubject).HasMaxLength(256).IsRequired();
+            entity.Property(grant => grant.GrantedByEmail).HasMaxLength(320).IsRequired();
+            entity.Property(grant => grant.GrantedAt).IsRequired();
+            entity.Property(grant => grant.RevokedBySubject).HasMaxLength(256);
         });
 
         modelBuilder.Entity<DreamRecord>(entity =>

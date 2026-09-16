@@ -68,6 +68,7 @@ export const mockMe: MeResponse = {
 };
 
 export const mockProfile: ProfileResponse = {
+  preferredName: "Mock Dreamer",
   age: 33,
   sex: null,
   genderIdentity: null,

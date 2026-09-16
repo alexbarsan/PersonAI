@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const profileFormSchema = z.object({
+  preferredName: z.string().max(80, "Username must be 80 characters or fewer.").optional(),
   age: z
     .string()
     .min(1, "Age is required.")
@@ -28,6 +29,7 @@ export const profileFormSchema = z.object({
 export type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 export const defaultProfileFormValues: ProfileFormValues = {
+  preferredName: "",
   age: "33",
   sex: "",
   genderIdentity: "",
