@@ -6,6 +6,8 @@ namespace DreamLens.Api.Features.Content;
 
 public sealed class DailyDreamContentSeeder(DreamLensDbContext dbContext)
 {
+    private const long SeedLockId = 0x445245414D444E41;
+
     private static readonly string[] Quotes =
     [
         "In winter, even a quiet dream can be a small lantern.",
@@ -80,6 +82,22 @@ public sealed class DailyDreamContentSeeder(DreamLensDbContext dbContext)
     ];
 
     public async Task EnsureCoverageAsync(DateOnly requestedDate, CancellationToken cancellationToken)
+    {
+        if (!dbContext.Database.IsNpgsql())
+        {
+            await EnsureCoverageCoreAsync(requestedDate, cancellationToken);
+            return;
+        }
+
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        await dbContext.Database.ExecuteSqlInterpolatedAsync(
+            $"SELECT pg_advisory_xact_lock({SeedLockId})",
+            cancellationToken);
+        await EnsureCoverageCoreAsync(requestedDate, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+    }
+
+    private async Task EnsureCoverageCoreAsync(DateOnly requestedDate, CancellationToken cancellationToken)
     {
         var firstDate = requestedDate.AddDays(-30);
         var lastDate = requestedDate.AddDays(395);
