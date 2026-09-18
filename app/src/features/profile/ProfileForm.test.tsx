@@ -5,6 +5,8 @@ import { PropsWithChildren } from "react";
 import { ApiClientProvider } from "@/api/apiContext";
 import { mockApiClient } from "@/mocks/mockApi";
 import { ProfileForm } from "@/features/profile/ProfileForm";
+import { profileSaveErrorMessage } from "@/features/profile/ProfileForm";
+import { ApiError } from "@/api/errors";
 import { useOnboardingDraftStore } from "@/state/onboardingDraftStore";
 import { ThemeProvider } from "@/theme/ThemeProvider";
 
@@ -76,6 +78,15 @@ describe("ProfileForm", () => {
 
     await waitFor(() => expect(requestAnonymization).toHaveBeenCalledTimes(1));
     expect(screen.getByText("Anonymization request is pending administrator approval.")).toBeTruthy();
+  });
+
+  it("explains profile save failures without discarding the draft", () => {
+    expect(profileSaveErrorMessage(new ApiError("bad request", 400, { timezone: ["Timezone is required."] })))
+      .toBe("Timezone is required.");
+    expect(profileSaveErrorMessage(new ApiError("expired", 401, null)))
+      .toMatch(/sign-in has expired/i);
+    expect(profileSaveErrorMessage(new ApiError("failed", 500, null)))
+      .toMatch(/changes are still on this screen/i);
   });
 });
 

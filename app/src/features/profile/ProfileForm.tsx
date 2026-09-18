@@ -6,6 +6,7 @@ import { Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from "reac
 import { Text } from "@/components/Text";
 
 import { useApiClient } from "@/api/apiContext";
+import { ApiError } from "@/api/errors";
 import { ProfileResponse } from "@/api/dto";
 import { AppShell, BrandMark } from "@/components/AppShell";
 import { ChoiceOption, ChoiceSet, FivePointScale, TagEditor } from "@/components/FieldControls";
@@ -118,7 +119,7 @@ export function ProfileForm({ mode }: ProfileFormProps) {
         <Consent control={form.control} label="History use" name="consentHistoryUse" />
 
         {saveProfile.isError ? (
-          <Text style={[styles.error, { color: theme.colors.warning }]}>Profile could not be saved.</Text>
+          <Text accessibilityRole="alert" style={[styles.error, { color: theme.colors.warning }]}>{profileSaveErrorMessage(saveProfile.error)}</Text>
         ) : null}
 
         <Pressable
@@ -137,6 +138,45 @@ export function ProfileForm({ mode }: ProfileFormProps) {
       </ScrollView>
     </AppShell>
   );
+}
+
+export function profileSaveErrorMessage(error: unknown) {
+  if (!(error instanceof ApiError)) {
+    return "Profile could not be saved. Check your connection and try again.";
+  }
+
+  if (error.status === 400) {
+    return readValidationMessage(error.body) ?? "Review the highlighted profile details and try again.";
+  }
+
+  if (error.status === 401) {
+    return "Your sign-in has expired. Sign in again, then save your profile.";
+  }
+
+  if (error.status === 403) {
+    return "Your account is not allowed to update this profile.";
+  }
+
+  if (error.status === 429) {
+    return "Too many save attempts. Please wait a moment and try again.";
+  }
+
+  return "Profile could not be saved right now. Your changes are still on this screen, so you can try again.";
+}
+
+function readValidationMessage(body: unknown) {
+  if (!body || typeof body !== "object") {
+    return null;
+  }
+
+  const errors = body as Record<string, unknown>;
+  for (const messages of Object.values(errors)) {
+    if (Array.isArray(messages) && typeof messages[0] === "string") {
+      return messages[0];
+    }
+  }
+
+  return null;
 }
 
 function AdminTools({ showFriendsAndFamily }: { showFriendsAndFamily: boolean }) {
