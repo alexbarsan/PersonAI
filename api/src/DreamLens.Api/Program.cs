@@ -123,6 +123,8 @@ if (dreamEndpointsEnabled)
 
 var app = builder.Build();
 
+ValidateRuntimeSecurityConfiguration(app, profileEndpointsEnabled, dreamEndpointsEnabled);
+
 if (app.Configuration.GetValue<bool>("Database:ApplyMigrations"))
 {
     await ApplyDatabaseMigrationsAsync(app);
@@ -169,6 +171,22 @@ static bool ProfileEndpointsEnabled(IConfiguration configuration)
 {
     return !string.IsNullOrWhiteSpace(PersistenceServiceCollectionExtensions.ResolveConnectionString(configuration))
         && !string.IsNullOrWhiteSpace(configuration["Encryption:LocalKeyBase64"]);
+}
+
+static void ValidateRuntimeSecurityConfiguration(
+    WebApplication app,
+    bool profileEndpointsEnabled,
+    bool dreamEndpointsEnabled)
+{
+    if (profileEndpointsEnabled)
+    {
+        _ = app.Services.GetRequiredService<IStringEncryptor>();
+    }
+
+    if (dreamEndpointsEnabled)
+    {
+        _ = app.Services.GetRequiredService<IPseudonymService>();
+    }
 }
 
 static bool DreamEndpointsEnabled(IConfiguration configuration)
