@@ -35,12 +35,31 @@ describe("InsightsScreen", () => {
           qualifiedFactPatterns: 0,
           supportedRelationships: 0
         },
-        monthlyDreamCounts: []
+        monthlyDreamCounts: [],
+        journalSynthesis: {
+          status: "not_ready",
+          minimumCompletedDreams: 6,
+          completedDreams: 0,
+          sourceDreamCount: null,
+          generatedAt: null,
+          summary: null,
+          observations: [],
+          reflectionQuestions: []
+        }
       })
     });
 
     expect(await screen.findByText("No insights yet")).toBeTruthy();
     expect(screen.getByText("Interpret dreams to reveal recurring patterns.")).toBeTruthy();
+  });
+
+  it("renders the evidence-linked whole-journal reflection", async () => {
+    renderWithProviders(<InsightsScreen />);
+
+    expect(await screen.findByText("Journal reflection")).toBeTruthy();
+    expect(screen.getByText("Curiosity near changing water")).toBeTruthy();
+    expect(screen.getByLabelText("Open evidence dream The Quiet Shoreline")).toBeTruthy();
+    expect(screen.getByText("For reflection, not diagnosis.")).toBeTruthy();
   });
 
   it("reveals the owner-scoped evidence behind a map observation", async () => {

@@ -13,6 +13,7 @@ public static class JobServiceCollectionExtensions
         services.Configure<AsyncJobOptions>(configuration.GetSection("Jobs"));
         services.Configure<AsyncJobWorkerOptions>(configuration.GetSection("Jobs:Worker"));
         services.Configure<EmbeddingBackfillOptions>(configuration.GetSection("Jobs:EmbeddingBackfill"));
+        services.Configure<DreamJournalSynthesisOptions>(configuration.GetSection("JournalSynthesis"));
         var region = configuration["AWS:Region"]
             ?? configuration["Authentication:Cognito:Region"]
             ?? Environment.GetEnvironmentVariable("AWS_REGION")
@@ -32,10 +33,13 @@ public static class JobServiceCollectionExtensions
             services.AddScoped<IAsyncJobHandler, DreamImageJobHandler>();
             services.AddScoped<IAsyncJobHandler, VoiceTranscriptionJobHandler>();
             services.AddScoped<EmbeddingBackfillService>();
+            services.AddScoped<DreamJournalSynthesisService>();
+            services.AddScoped<IAsyncJobHandler, DreamJournalSynthesisJobHandler>();
         }
 
         services.AddHostedService<AsyncJobWorker>();
         services.AddHostedService<EmbeddingBackfillWorker>();
+        services.AddHostedService<DreamJournalSynthesisScheduler>();
 
         return services;
     }

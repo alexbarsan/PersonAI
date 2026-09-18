@@ -51,6 +51,8 @@ public sealed class ExportUserDataHandler(
             .Where(review => review.UserSubject == subject)
             .OrderBy(review => review.DetectedAt)
             .ToArrayAsync(cancellationToken);
+        var journalSynthesis = await dbContext.DreamJournalSyntheses.AsNoTracking()
+            .SingleOrDefaultAsync(item => item.UserSubject == subject, cancellationToken);
 
         return new UserDataExportResponse(
             DateTimeOffset.UtcNow,
@@ -140,6 +142,16 @@ public sealed class ExportUserDataHandler(
                 review.Status,
                 review.DetectedAt,
                 review.ExpiresAt))
-                .ToArray());
+                .ToArray(),
+            journalSynthesis is null
+                ? null
+                : new UserDataExportJournalSynthesis(
+                    encryptor.Decrypt(journalSynthesis.EncryptedResultJson),
+                    journalSynthesis.SourceDreamCount,
+                    journalSynthesis.SourceLatestDreamAt,
+                    journalSynthesis.Provider,
+                    journalSynthesis.Model,
+                    journalSynthesis.PromptVersion,
+                    journalSynthesis.GeneratedAt));
     }
 }

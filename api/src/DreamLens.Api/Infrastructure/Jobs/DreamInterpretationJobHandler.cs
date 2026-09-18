@@ -27,7 +27,8 @@ public sealed class DreamInterpretationJobHandler(
     IOptions<DeepInterpretationOptions> deepInterpretationOptions,
     IOptions<SensitiveSafetyOptions> sensitiveSafetyOptions,
     SensitiveSafetyEventFactory sensitiveSafetyEventFactory,
-    AsyncJobService asyncJobService)
+    AsyncJobService asyncJobService,
+    DreamJournalSynthesisService journalSynthesisService)
     : IAsyncJobHandler
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -189,6 +190,11 @@ public sealed class DreamInterpretationJobHandler(
                 imageSafety.Id,
                 new DreamImageSafetyJobHandler.DreamImageSafetyJobPayload(imageSafety.Id),
                 cancellationToken);
+        }
+
+        if (profile.ConsentHistoryUse)
+        {
+            await journalSynthesisService.EnqueueAfterCompletedDreamAsync(dream.UserSubject, cancellationToken);
         }
     }
 

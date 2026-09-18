@@ -241,7 +241,21 @@ export const mockInsights: InsightsResponse = {
     qualifiedFactPatterns: 2,
     supportedRelationships: 1
   },
-  monthlyDreamCounts: [{ month: "2026-07-01", count: 1 }]
+  monthlyDreamCounts: [{ month: "2026-07-01", count: 1 }],
+  journalSynthesis: {
+    status: "ready",
+    minimumCompletedDreams: 6,
+    completedDreams: 7,
+    sourceDreamCount: 7,
+    generatedAt: "2026-07-02T02:00:00Z",
+    summary: "Water and curiosity recur together as your journal explores uncertainty through movement and changing landscapes.",
+    observations: [{
+      title: "Curiosity near changing water",
+      reflection: "Water appears alongside curiosity in several entries. This may reflect a recurring way your dreams approach uncertain transitions without treating them only as threats.",
+      evidence: [{ dreamId: mockDream.id, title: mockDream.title, observedAt: "2026-07-01" }]
+    }],
+    reflectionQuestions: ["What changes in waking life feel inviting rather than threatening right now?"]
+  }
 };
 
 export const mockDreamObservation = {

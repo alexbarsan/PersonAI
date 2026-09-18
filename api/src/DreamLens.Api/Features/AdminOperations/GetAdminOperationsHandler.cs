@@ -81,6 +81,9 @@ public sealed class GetAdminOperationsHandler(
                 Workload("dream-image", images.Select(item => new WorkState(item.Status, item.UpdatedAt)), now),
                 Workload("voice", voices.Select(item => new WorkState(item.Status, item.UpdatedAt)), now),
                 Workload("dream-interpretation", dreams.Select(item => new WorkState(item.Status, item.CreatedAt)), now),
+                Workload("journal-synthesis", jobs
+                    .Where(job => job.JobType == AsyncJobTypes.DreamJournalSynthesis)
+                    .Select(job => new WorkState(job.Status, job.UpdatedAt)), now),
                 Workload("privacy-request", privacyRequests.Select(item => new WorkState(item.Status, item.RequestedAt)), now),
                 Workload("safety-review", safetyReviews.Select(item => new WorkState(item.Status == "open" ? "pending" : item.Status, item.DetectedAt)), now)
             ],

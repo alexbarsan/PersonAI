@@ -21,7 +21,17 @@ public sealed record UserDataExportResponse(
     UserDataExportDream[] Dreams,
     UserDataExportVoiceCapture[] VoiceCaptures,
     UserDataExportCost[] AiOperations,
-    UserDataExportSensitiveSafetyEvent[] SensitiveSafetyEvents);
+    UserDataExportSensitiveSafetyEvent[] SensitiveSafetyEvents,
+    UserDataExportJournalSynthesis? JournalSynthesis);
+
+public sealed record UserDataExportJournalSynthesis(
+    string ResultJson,
+    int SourceDreamCount,
+    DateTimeOffset SourceLatestDreamAt,
+    string Provider,
+    string Model,
+    string PromptVersion,
+    DateTimeOffset GeneratedAt);
 
 public sealed record UserDataExportDream(
     Guid Id,

@@ -9,7 +9,8 @@ public sealed record InsightsResponse(
     TimingPatternInsightResponse[] TimingPatterns,
     RelationshipInsightResponse[] Relationships,
     RelationshipReadinessResponse RelationshipReadiness,
-    MonthlyDreamCountResponse[] MonthlyDreamCounts);
+    MonthlyDreamCountResponse[] MonthlyDreamCounts,
+    JournalSynthesisResponse JournalSynthesis);
 
 public sealed record ThemeInsightResponse(string Name, int Count);
 
@@ -80,3 +81,23 @@ public sealed record DreamRelationshipEvidenceResponse(
     decimal? SecondExtractionConfidence);
 
 public sealed record MonthlyDreamCountResponse(DateOnly Month, int Count);
+
+public sealed record JournalSynthesisResponse(
+    string Status,
+    int MinimumCompletedDreams,
+    int CompletedDreams,
+    int? SourceDreamCount,
+    DateTimeOffset? GeneratedAt,
+    string? Summary,
+    JournalSynthesisObservationResponse[] Observations,
+    string[] ReflectionQuestions);
+
+public sealed record JournalSynthesisObservationResponse(
+    string Title,
+    string Reflection,
+    JournalSynthesisEvidenceResponse[] Evidence);
+
+public sealed record JournalSynthesisEvidenceResponse(
+    Guid DreamId,
+    string Title,
+    DateOnly ObservedAt);

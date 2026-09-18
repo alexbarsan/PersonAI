@@ -127,6 +127,9 @@ module "api" {
     DeepInterpretation__MaxOutputTokens               = "4096"
     DeepInterpretation__InputCostPerMillionTokensUsd  = "1.32"
     DeepInterpretation__OutputCostPerMillionTokensUsd = "3.96"
+    JournalSynthesis__Enabled                         = "true"
+    JournalSynthesis__Model                           = "deepseek-v4-pro"
+    JournalSynthesis__MinimumCompletedDreams          = "6"
     Authentication__Cognito__Region                   = var.aws_region
     Authentication__Cognito__UserPoolId               = module.cognito.user_pool_id
     Authentication__Cognito__Audience                 = module.cognito.user_pool_client_id

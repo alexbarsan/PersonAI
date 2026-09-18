@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json;
 using System.Net.Http.Json;
 using DreamLens.Api.Features.Dreams;
 using DreamLens.Api.Features.Entitlements;
@@ -1389,6 +1390,8 @@ public sealed class DreamEndpointTests
                     services.AddSingleton<IPrivateAssetStore, InMemoryPrivateAssetStore>();
                     services.AddSingleton<IOperationsQueueMonitor, TestOperationsQueueMonitor>();
                     services.AddScoped<AsyncJobService>();
+                    services.AddScoped<DreamJournalSynthesisService>();
+                    services.AddScoped<IAsyncJobHandler, DreamJournalSynthesisJobHandler>();
                     services.AddScoped<IAsyncJobHandler, VoiceTranscriptionJobHandler>();
                     services.AddScoped<IAsyncJobHandler, DreamImageSafetyJobHandler>();
                     services.AddScoped<IAnonymizedUserAccessService, AnonymizedUserAccessService>();
@@ -1893,7 +1896,8 @@ public sealed class DreamEndpointTests
         TimingPatternInsightResponse[] TimingPatterns,
         RelationshipInsightResponse[] Relationships,
         RelationshipReadinessResponse RelationshipReadiness,
-        MonthlyDreamCountResponse[] MonthlyDreamCounts);
+        MonthlyDreamCountResponse[] MonthlyDreamCounts,
+        JsonElement JournalSynthesis);
 
     private sealed record SimilarDreamsResponse(Guid DreamId, SimilarDreamResponse[] Matches);
 

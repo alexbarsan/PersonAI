@@ -10,6 +10,7 @@ import {
   FactInsightGroupResponse,
   FactInsightResponse,
   DreamObservationResponse,
+  JournalSynthesisResponse,
   RelationshipInsightResponse,
   RelationshipReadinessResponse,
   ThemeInsightResponse,
@@ -83,6 +84,7 @@ export function InsightsScreen() {
                 color="ink"
               />
             </View>
+            <JournalReflection synthesis={insights.data.journalSynthesis} />
             {insights.data.factGroups.length > 0 ? (
               <>
                 <View accessibilityRole="tablist" style={styles.tabs}>
@@ -160,6 +162,71 @@ export function InsightsScreen() {
         ) : null}
       </ScrollView>
     </AppShell>
+  );
+}
+
+function JournalReflection({ synthesis }: { synthesis: JournalSynthesisResponse }) {
+  const theme = useTheme();
+  const router = useRouter();
+
+  if (synthesis.status === "not_ready") {
+    return (
+      <View style={[styles.reflection, { borderColor: theme.colors.border }]}>
+        <Text style={[styles.panelTitle, { color: theme.colors.text }]}>Journal reflection</Text>
+        <Text style={[styles.body, { color: theme.colors.mutedText }]}>
+          Your journal reflection begins after {synthesis.minimumCompletedDreams} completed dreams. You have {synthesis.completedDreams}.
+        </Text>
+      </View>
+    );
+  }
+
+  if (!synthesis.summary) {
+    return (
+      <View style={[styles.reflection, { borderColor: theme.colors.border }]}>
+        <Text style={[styles.panelTitle, { color: theme.colors.text }]}>Journal reflection</Text>
+        <Text style={[styles.body, { color: theme.colors.mutedText }]}>Preparing a reflection from the patterns in your journal.</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={[styles.reflection, { borderColor: theme.colors.border }]}>
+      <View style={styles.reflectionHeading}>
+        <Text style={[styles.panelTitle, { color: theme.colors.text }]}>Journal reflection</Text>
+        {synthesis.status === "updating" ? (
+          <Text style={[styles.refreshing, { color: theme.colors.primary }]}>Updating</Text>
+        ) : null}
+      </View>
+      <Text style={[styles.reflectionSummary, { color: theme.colors.text }]}>{synthesis.summary}</Text>
+      {synthesis.observations.map((observation) => (
+        <View key={observation.title} style={[styles.reflectionObservation, { borderColor: theme.colors.border }]}>
+          <Text style={[styles.factName, { color: theme.colors.text }]}>{observation.title}</Text>
+          <Text style={[styles.body, { color: theme.colors.mutedText }]}>{observation.reflection}</Text>
+          <View style={styles.evidenceLinks}>
+            {observation.evidence.map((dream) => (
+              <Pressable
+                key={dream.dreamId}
+                accessibilityLabel={`Open evidence dream ${dream.title}`}
+                accessibilityRole="link"
+                onPress={() => router.push(`/dreams/${dream.dreamId}`)}
+                style={styles.evidenceLink}
+              >
+                <Text style={[styles.provenance, { color: theme.colors.primary }]}>{dream.title}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      ))}
+      {synthesis.reflectionQuestions.length > 0 ? (
+        <View style={styles.reflectionQuestions}>
+          <Text style={[styles.factName, { color: theme.colors.text }]}>Questions to keep nearby</Text>
+          {synthesis.reflectionQuestions.map((question) => (
+            <Text key={question} style={[styles.body, { color: theme.colors.mutedText }]}>{question}</Text>
+          ))}
+        </View>
+      ) : null}
+      <Text style={[styles.note, { color: theme.colors.mutedText }]}>For reflection, not diagnosis.</Text>
+    </View>
   );
 }
 
@@ -566,6 +633,14 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   panelTitle: { fontSize: 17, fontWeight: "800", lineHeight: 23 },
+  reflection: { borderBottomWidth: 1, borderTopWidth: 1, gap: 18, paddingVertical: 22 },
+  reflectionHeading: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
+  reflectionSummary: { fontSize: 17, fontWeight: "600", lineHeight: 26, maxWidth: 760 },
+  reflectionObservation: { borderTopWidth: 1, gap: 8, paddingTop: 16 },
+  reflectionQuestions: { gap: 8 },
+  refreshing: { fontSize: 12, fontWeight: "800", lineHeight: 18 },
+  evidenceLinks: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  evidenceLink: { justifyContent: "center", minHeight: 32 },
   fact: { gap: 6 },
   pieLayout: { alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: 24 },
   pieLayoutCompact: { gap: 16 },

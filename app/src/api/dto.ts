@@ -242,6 +242,26 @@ export type InsightsResponse = {
   relationships: RelationshipInsightResponse[];
   relationshipReadiness: RelationshipReadinessResponse;
   monthlyDreamCounts: MonthlyDreamCountResponse[];
+  journalSynthesis: JournalSynthesisResponse;
+};
+
+export type JournalSynthesisResponse = {
+  status: "not_ready" | "pending" | "updating" | "ready";
+  minimumCompletedDreams: number;
+  completedDreams: number;
+  sourceDreamCount: number | null;
+  generatedAt: string | null;
+  summary: string | null;
+  observations: Array<{
+    title: string;
+    reflection: string;
+    evidence: Array<{
+      dreamId: string;
+      title: string;
+      observedAt: string;
+    }>;
+  }>;
+  reflectionQuestions: string[];
 };
 
 export type ThemeInsightResponse = {
@@ -356,6 +376,11 @@ export type UserDataExportResponse = {
   profile: ProfileResponse;
   dreams: Array<{ id: string; text: string }>;
   aiOperations: Array<{ id: string; operationType: string; estimatedCostUsd: number }>;
+  journalSynthesis?: {
+    resultJson: string;
+    sourceDreamCount: number;
+    generatedAt: string;
+  } | null;
 };
 
 export type SensitiveSafetyReviewResponse = {

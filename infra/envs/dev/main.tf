@@ -89,6 +89,9 @@ module "api" {
     DeepInterpretation__MaxOutputTokens                           = "4096"
     DeepInterpretation__InputCostPerMillionTokensUsd              = "1.32"
     DeepInterpretation__OutputCostPerMillionTokensUsd             = "3.96"
+    JournalSynthesis__Enabled                                     = "true"
+    JournalSynthesis__Model                                       = "deepseek-v4-pro"
+    JournalSynthesis__MinimumCompletedDreams                      = "6"
     QuotaExemption__Subjects__0                                   = "442854a8-0041-7070-94ac-2ed6ca4bd83d"
     FriendsAndFamily__AdministratorEmails__0                      = "ai.ro.dodoloata@gmail.com"
     Jobs__QueueUrl                                                = module.async_jobs.queue_url

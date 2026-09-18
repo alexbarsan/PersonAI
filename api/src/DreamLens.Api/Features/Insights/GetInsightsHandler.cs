@@ -2,11 +2,18 @@ using System.Text.Json;
 using DreamLens.Api.Features.Dreams;
 using DreamLens.Api.Infrastructure.Identity;
 using DreamLens.Api.Infrastructure.Persistence;
+using DreamLens.Api.Infrastructure.Jobs;
+using DreamLens.Api.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace DreamLens.Api.Features.Insights;
 
-public sealed class GetInsightsHandler(DreamLensDbContext dbContext, ICurrentUser currentUser)
+public sealed class GetInsightsHandler(
+    DreamLensDbContext dbContext,
+    ICurrentUser currentUser,
+    IStringEncryptor encryptor,
+    IOptions<DreamJournalSynthesisOptions> synthesisOptions)
 {
     private const int MinimumRelationshipPopulation = 6;
     private const int MinimumRelationshipOccurrences = 3;
@@ -62,7 +69,59 @@ public sealed class GetInsightsHandler(DreamLensDbContext dbContext, ICurrentUse
                 dreams.Length,
                 relationships.QualifiedFactPatterns,
                 relationships.Relationships.Length),
-            BuildMonthlyDreamCounts(dates));
+            BuildMonthlyDreamCounts(dates),
+            await BuildJournalSynthesisAsync(dreams, cancellationToken));
+    }
+
+    private async Task<JournalSynthesisResponse> BuildJournalSynthesisAsync(
+        DreamRecord[] dreams,
+        CancellationToken cancellationToken)
+    {
+        var minimum = Math.Clamp(synthesisOptions.Value.MinimumCompletedDreams, 2, 100);
+        var record = await dbContext.DreamJournalSyntheses.AsNoTracking()
+            .SingleOrDefaultAsync(item => item.UserSubject == currentUser.Subject, cancellationToken);
+        if (record is null)
+        {
+            return new JournalSynthesisResponse(
+                dreams.Length < minimum ? "not_ready" : "pending",
+                minimum,
+                dreams.Length,
+                null,
+                null,
+                null,
+                [],
+                []);
+        }
+
+        var document = JsonSerializer.Deserialize<DreamJournalSynthesisDocument>(
+            encryptor.Decrypt(record.EncryptedResultJson),
+            new JsonSerializerOptions(JsonSerializerDefaults.Web))
+            ?? throw new InvalidOperationException("Stored journal synthesis is invalid.");
+        var dreamsById = dreams.ToDictionary(dream => dream.Id);
+        var latestDreamAt = dreams.Length == 0 ? (DateTimeOffset?)null : dreams.Max(dream => dream.CreatedAt);
+        var status = latestDreamAt > record.SourceLatestDreamAt ? "updating" : "ready";
+        return new JournalSynthesisResponse(
+            status,
+            minimum,
+            dreams.Length,
+            record.SourceDreamCount,
+            record.GeneratedAt,
+            document.Summary,
+            document.Observations.Select(observation => new JournalSynthesisObservationResponse(
+                observation.Title,
+                observation.Reflection,
+                observation.EvidenceDreamIds
+                    .Where(dreamsById.ContainsKey)
+                    .Select(dreamId => new JournalSynthesisEvidenceResponse(
+                        dreamId,
+                        DreamTitleGenerator.Create(
+                            dreamsById[dreamId].Title,
+                            DreamMapper.ReadSummary(dreamsById[dreamId]),
+                            dreamsById[dreamId].Text),
+                        ReadObservedDate(dreamsById[dreamId])))
+                    .ToArray()))
+                .ToArray(),
+            document.ReflectionQuestions);
     }
 
     private static FactInsightGroupResponse[] BuildFactGroups(

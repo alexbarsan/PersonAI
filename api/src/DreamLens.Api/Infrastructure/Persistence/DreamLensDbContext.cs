@@ -23,6 +23,8 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
 
     public DbSet<DreamFactRecord> DreamFacts => Set<DreamFactRecord>();
 
+    public DbSet<DreamJournalSynthesisRecord> DreamJournalSyntheses => Set<DreamJournalSynthesisRecord>();
+
     public DbSet<DreamImageRecord> DreamImages => Set<DreamImageRecord>();
 
     public DbSet<DreamImageSafetyRecord> DreamImageSafety => Set<DreamImageSafetyRecord>();
@@ -210,6 +212,22 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
             entity.Property(fact => fact.SourceField).HasMaxLength(64).HasDefaultValue("unknown").IsRequired();
             entity.Property(fact => fact.NormalizationVersion).HasMaxLength(16).HasDefaultValue("v1").IsRequired();
             entity.Property(fact => fact.CreatedAt).IsRequired();
+        });
+
+        modelBuilder.Entity<DreamJournalSynthesisRecord>(entity =>
+        {
+            entity.ToTable("DreamJournalSyntheses");
+            entity.HasKey(synthesis => synthesis.Id);
+            entity.HasIndex(synthesis => synthesis.UserSubject).IsUnique();
+            entity.HasIndex(synthesis => new { synthesis.SourceLatestDreamAt, synthesis.GeneratedAt });
+            entity.Property(synthesis => synthesis.UserSubject).HasMaxLength(256).IsRequired();
+            entity.Property(synthesis => synthesis.EncryptedResultJson).IsRequired();
+            entity.Property(synthesis => synthesis.Provider).HasMaxLength(64).IsRequired();
+            entity.Property(synthesis => synthesis.Model).HasMaxLength(128).IsRequired();
+            entity.Property(synthesis => synthesis.PromptVersion).HasMaxLength(64).IsRequired();
+            entity.Property(synthesis => synthesis.SourceLatestDreamAt).IsRequired();
+            entity.Property(synthesis => synthesis.GeneratedAt).IsRequired();
+            entity.Property(synthesis => synthesis.UpdatedAt).IsRequired();
         });
 
         modelBuilder.Entity<DreamImageRecord>(entity =>

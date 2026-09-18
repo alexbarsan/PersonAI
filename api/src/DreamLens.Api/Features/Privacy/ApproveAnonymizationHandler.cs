@@ -49,6 +49,7 @@ public sealed class ApproveAnonymizationHandler(
         var interpretationFeedback = await dbContext.DreamInterpretationFeedback.Where(feedback => feedback.UserSubject == subject).ToArrayAsync(cancellationToken);
         var deepInterpretations = await dbContext.DreamDeepInterpretations.Where(interpretation => interpretation.UserSubject == subject).ToArrayAsync(cancellationToken);
         var facts = await dbContext.DreamFacts.Where(fact => fact.UserSubject == subject).ToArrayAsync(cancellationToken);
+        var journalSyntheses = await dbContext.DreamJournalSyntheses.Where(item => item.UserSubject == subject).ToArrayAsync(cancellationToken);
         var embeddings = await dbContext.DreamEmbeddings.Where(embedding => embedding.UserSubject == subject).ToArrayAsync(cancellationToken);
         var images = await dbContext.DreamImages.Where(image => image.UserSubject == subject).ToArrayAsync(cancellationToken);
         var imageSafety = await dbContext.DreamImageSafety.Where(classification => classification.UserSubject == subject).ToArrayAsync(cancellationToken);
@@ -65,6 +66,7 @@ public sealed class ApproveAnonymizationHandler(
         dbContext.DreamInterpretationFeedback.RemoveRange(interpretationFeedback);
         dbContext.DreamDeepInterpretations.RemoveRange(deepInterpretations);
         dbContext.DreamFacts.RemoveRange(facts);
+        dbContext.DreamJournalSyntheses.RemoveRange(journalSyntheses);
         dbContext.DreamEmbeddings.RemoveRange(embeddings);
         dbContext.DreamImages.RemoveRange(images);
         dbContext.DreamImageSafety.RemoveRange(imageSafety);
