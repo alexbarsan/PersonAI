@@ -162,7 +162,7 @@ public sealed class DeepInterpretationHandler(
                         profile.PreferredName,
                         profile.Age,
                         profile.Sex,
-                        profile.GenderIdentity,
+                        null,
                         profile.Language,
                         profile.Timezone,
                         new ContextTraits(

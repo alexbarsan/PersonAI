@@ -9,7 +9,7 @@ import { useApiClient } from "@/api/apiContext";
 import { ApiError } from "@/api/errors";
 import { ProfileResponse } from "@/api/dto";
 import { AppShell, BrandMark } from "@/components/AppShell";
-import { ChoiceOption, ChoiceSet, FivePointScale, TagEditor } from "@/components/FieldControls";
+import { ChoiceOption, ChoiceSet, FivePointScale, SelectMenu, TagEditor } from "@/components/FieldControls";
 import { toProfileFormValues, toProfileUpdateRequest } from "@/features/profile/profileMapping";
 import {
   defaultProfileFormValues,
@@ -43,6 +43,28 @@ const sleepPatternOptions: ChoiceOption[] = [
   { label: "Light", value: "light" },
   { label: "Restless", value: "restless" },
   { label: "Shift work", value: "shift-work" }
+];
+
+const languageOptions: ChoiceOption[] = [
+  { label: "English", value: "en" }, { label: "Romanian", value: "ro" }, { label: "Spanish", value: "es" },
+  { label: "French", value: "fr" }, { label: "German", value: "de" }, { label: "Italian", value: "it" },
+  { label: "Portuguese", value: "pt" }, { label: "Arabic", value: "ar" }, { label: "Hindi", value: "hi" },
+  { label: "Japanese", value: "ja" }, { label: "Korean", value: "ko" }, { label: "Chinese", value: "zh" }, { label: "Other", value: "__other__" }
+];
+
+const timezoneOptions: ChoiceOption[] = [
+  { label: "UTC", value: "UTC" }, { label: "Bucharest", value: "Europe/Bucharest" }, { label: "London", value: "Europe/London" },
+  { label: "Paris", value: "Europe/Paris" }, { label: "New York", value: "America/New_York" }, { label: "Chicago", value: "America/Chicago" },
+  { label: "Los Angeles", value: "America/Los_Angeles" }, { label: "Sao Paulo", value: "America/Sao_Paulo" }, { label: "Dubai", value: "Asia/Dubai" },
+  { label: "Kolkata", value: "Asia/Kolkata" }, { label: "Singapore", value: "Asia/Singapore" }, { label: "Tokyo", value: "Asia/Tokyo" },
+  { label: "Sydney", value: "Australia/Sydney" }, { label: "Other", value: "__other__" }
+];
+
+const culturalBackgroundOptions: ChoiceOption[] = [
+  { label: "Not specified", value: "" }, { label: "European", value: "European" }, { label: "East Asian", value: "East Asian" },
+  { label: "South Asian", value: "South Asian" }, { label: "Southeast Asian", value: "Southeast Asian" }, { label: "Middle Eastern or North African", value: "Middle Eastern or North African" },
+  { label: "Sub-Saharan African", value: "Sub-Saharan African" }, { label: "Latin American", value: "Latin American" }, { label: "North American", value: "North American" },
+  { label: "Indigenous or First Nations", value: "Indigenous or First Nations" }, { label: "Mixed or multicultural", value: "Mixed or multicultural" }, { label: "Other", value: "__other__" }
 ];
 
 const noGroups: string[] = [];
@@ -97,10 +119,9 @@ export function ProfileForm({ mode }: ProfileFormProps) {
         <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Basics</Text>
         <Field control={form.control} label="Username" name="preferredName" placeholder="How Dream DNA should address you" />
         <Field control={form.control} label="Age" name="age" keyboardType="number-pad" placeholder="33" />
-        <Field control={form.control} label="Language" name="language" placeholder="en" />
-        <Field control={form.control} label="Timezone" name="timezone" placeholder="Europe/Bucharest" />
+        <SelectField control={form.control} label="Language" name="language" options={languageOptions} placeholder="Choose a language" />
+        <SelectField control={form.control} label="Timezone" name="timezone" options={timezoneOptions} placeholder="Choose a timezone" />
         <ChoiceField control={form.control} label="Sex" name="sex" options={sexOptions} />
-        <Field control={form.control} label="Gender identity" name="genderIdentity" />
 
         <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Traits</Text>
         <TagField control={form.control} label="Fears" name="fears" placeholder="Add a fear" />
@@ -108,7 +129,7 @@ export function ProfileForm({ mode }: ProfileFormProps) {
         <TagField control={form.control} label="Interests" name="interests" placeholder="Add an interest" />
         <Field control={form.control} label="Occupation" name="occupation" />
         <ChoiceField control={form.control} label="Relationship status" name="relationshipStatus" options={relationshipOptions} />
-        <Field control={form.control} label="Cultural background" name="culturalBackground" />
+        <SelectField control={form.control} label="Cultural background" name="culturalBackground" options={culturalBackgroundOptions} placeholder="Choose an option" />
         <ChoiceField control={form.control} label="Sleep pattern" name="sleepPattern" options={sleepPatternOptions} />
         <ScaleField control={form.control} label="Stress level" name="stressLevel" />
         <TagField control={form.control} label="Recent life events" name="recentLifeEvents" placeholder="Add a recent event" />
@@ -116,7 +137,7 @@ export function ProfileForm({ mode }: ProfileFormProps) {
         <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Consent</Text>
         <Consent control={form.control} label="AI processing" name="consentAiProcessing" required />
         <Consent control={form.control} label="Sensitive traits" name="consentSensitiveTraits" />
-        <Consent control={form.control} label="History use" name="consentHistoryUse" />
+        <Consent control={form.control} label="History use" name="consentHistoryUse" required />
 
         {saveProfile.isError ? (
           <Text accessibilityRole="alert" style={[styles.error, { color: theme.colors.warning }]}>{profileSaveErrorMessage(saveProfile.error)}</Text>
@@ -133,7 +154,7 @@ export function ProfileForm({ mode }: ProfileFormProps) {
           </Text>
         </Pressable>
       </View>
-      {mode === "profile" ? <PrivacyActions /> : null}
+      {mode === "profile" ? <DataExportAction /> : null}
       {mode === "profile" && groups.some((group) => group === "dreamlens-metrics-admin" || group === "dreamlens-admin") ? <AdminTools showFriendsAndFamily={email === "ai.ro.dodoloata@gmail.com"} /> : null}
       </ScrollView>
     </AppShell>
@@ -195,7 +216,7 @@ function AdminTools({ showFriendsAndFamily }: { showFriendsAndFamily: boolean })
   </View>;
 }
 
-function PrivacyActions() {
+function DataExportAction() {
   const api = useApiClient();
   const theme = useTheme();
   const entitlement = useQuery({ queryKey: ["entitlements"], queryFn: () => api.getEntitlements() });
@@ -203,7 +224,6 @@ function PrivacyActions() {
     mutationFn: () => api.exportUserData(),
     onSuccess: (data) => downloadExport(data)
   });
-  const anonymization = useMutation({ mutationFn: () => api.requestAnonymization() });
 
   return (
     <View style={[styles.panel, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
@@ -218,13 +238,26 @@ function PrivacyActions() {
       ) : (
         <Text style={[styles.helpText, { color: theme.colors.mutedText }]}>Data export is available with Premium.</Text>
       )}
-      <Pressable accessibilityRole="button" onPress={() => anonymization.mutate()} style={[styles.secondaryButton, { borderColor: theme.colors.warning }]} testID="request-anonymization">
-        <Text style={[styles.secondaryButtonText, { color: theme.colors.warning }]}>{anonymization.isPending ? "Requesting approval" : "Request anonymization"}</Text>
-      </Pressable>
-      {anonymization.data ? <Text style={[styles.helpText, { color: theme.colors.mutedText }]}>Anonymization request is pending administrator approval.</Text> : null}
-      {anonymization.isError ? <Text style={[styles.error, { color: theme.colors.warning }]}>Anonymization request could not be created.</Text> : null}
     </View>
   );
+}
+
+function SelectField({
+  control,
+  label,
+  name,
+  options,
+  placeholder
+}: {
+  control: ReturnType<typeof useForm<ProfileFormValues>>["control"];
+  label: string;
+  name: "language" | "timezone" | "culturalBackground";
+  options: ChoiceOption[];
+  placeholder: string;
+}) {
+  return <Controller control={control} name={name} render={({ field, fieldState }) => (
+    <SelectMenu error={fieldState.error?.message} label={label} onChange={field.onChange} options={options} placeholder={placeholder} testID={`profile-${name}`} value={String(field.value ?? "")} />
+  )} />;
 }
 
 function downloadExport(data: unknown) {

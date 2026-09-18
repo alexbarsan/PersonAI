@@ -34,7 +34,6 @@ describe("api client", () => {
       preferredName: "Dreamer",
       age: 33,
       sex: null,
-      genderIdentity: null,
       language: "en",
       timezone: "America/New_York",
       traits: {

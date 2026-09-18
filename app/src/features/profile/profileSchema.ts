@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const profileFormSchema = z.object({
-  preferredName: z.string().max(80, "Username must be 80 characters or fewer.").optional(),
+  preferredName: z.string().trim().min(1, "Username is required.").max(80, "Username must be 80 characters or fewer."),
   age: z
     .string()
     .min(1, "Age is required.")
@@ -9,7 +9,6 @@ export const profileFormSchema = z.object({
     .refine((value) => Number(value) >= 13, "Age must be at least 13.")
     .refine((value) => Number(value) <= 120, "Age must be 120 or less."),
   sex: z.string().optional(),
-  genderIdentity: z.string().optional(),
   language: z.string().min(2, "Language is required."),
   timezone: z.string().min(2, "Timezone is required."),
   fears: z.string().optional(),
@@ -23,7 +22,7 @@ export const profileFormSchema = z.object({
   recentLifeEvents: z.string().optional(),
   consentAiProcessing: z.boolean().refine((value) => value, "AI processing consent is required."),
   consentSensitiveTraits: z.boolean(),
-  consentHistoryUse: z.boolean()
+  consentHistoryUse: z.boolean().refine((value) => value, "History use consent is required.")
 });
 
 export type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -32,7 +31,6 @@ export const defaultProfileFormValues: ProfileFormValues = {
   preferredName: "",
   age: "33",
   sex: "",
-  genderIdentity: "",
   language: "en",
   timezone: "America/New_York",
   fears: "",

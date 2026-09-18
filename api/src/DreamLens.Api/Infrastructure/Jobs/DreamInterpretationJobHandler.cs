@@ -81,7 +81,7 @@ public sealed class DreamInterpretationJobHandler(
                             profile.PreferredName,
                             profile.Age,
                             profile.Sex,
-                            profile.GenderIdentity,
+                            null,
                             profile.Language,
                             profile.Timezone,
                             new ContextTraits(

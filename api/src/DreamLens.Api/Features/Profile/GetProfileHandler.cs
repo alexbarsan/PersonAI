@@ -19,7 +19,7 @@ public sealed class GetProfileHandler(
 
         if (profile is null)
         {
-            return new ProfileResponse(null, null, null, null, "en", "UTC", ProfileTraitsDto.Empty, ConsentDto.Empty);
+            return new ProfileResponse(null, null, null, "en", "UTC", ProfileTraitsDto.Empty, ConsentDto.Empty);
         }
 
         return Map(profile, encryptor);
@@ -34,7 +34,6 @@ public sealed class GetProfileHandler(
             profile.PreferredName,
             profile.Age,
             profile.Sex,
-            profile.GenderIdentity,
             profile.Language,
             profile.Timezone,
             traits,

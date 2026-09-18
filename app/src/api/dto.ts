@@ -17,7 +17,6 @@ export type ProfileResponse = {
   preferredName: string | null;
   age: number | null;
   sex: string | null;
-  genderIdentity: string | null;
   language: string;
   timezone: string;
   traits: ProfileTraits;

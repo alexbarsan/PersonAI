@@ -71,7 +71,6 @@ export const mockProfile: ProfileResponse = {
   preferredName: "Mock Dreamer",
   age: 33,
   sex: null,
-  genderIdentity: null,
   language: "en",
   timezone: "America/New_York",
   traits: {

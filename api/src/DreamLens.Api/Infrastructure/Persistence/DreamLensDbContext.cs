@@ -91,14 +91,17 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
                 .IsRequired();
             entity.Property(profile => profile.PreferredName)
                 .HasMaxLength(80);
+            entity.Property(profile => profile.PreferredNameNormalized)
+                .HasMaxLength(80);
+            entity.HasIndex(profile => profile.PreferredNameNormalized)
+                .IsUnique()
+                .HasFilter("\"PreferredNameNormalized\" IS NOT NULL");
             entity.Property(profile => profile.EmailNormalized)
                 .HasMaxLength(320);
             entity.HasIndex(profile => profile.EmailNormalized)
                 .IsUnique();
             entity.Property(profile => profile.Sex)
                 .HasMaxLength(64);
-            entity.Property(profile => profile.GenderIdentity)
-                .HasMaxLength(128);
             entity.Property(profile => profile.Language)
                 .HasMaxLength(16)
                 .IsRequired();

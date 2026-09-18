@@ -24,6 +24,19 @@ public sealed class UpdateProfileHandler(
         var profile = await dbContext.UserProfiles
             .SingleOrDefaultAsync(candidate => candidate.UserSubject == currentUser.Subject, cancellationToken);
 
+        var normalizedUsername = NormalizeUsername(request.PreferredName!);
+        var usernameTaken = await dbContext.UserProfiles
+            .AsNoTracking()
+            .AnyAsync(candidate => candidate.UserSubject != currentUser.Subject
+                && candidate.PreferredNameNormalized == normalizedUsername, cancellationToken);
+        if (usernameTaken)
+        {
+            return UpdateProfileResult.Invalid(new Dictionary<string, string[]>(StringComparer.Ordinal)
+            {
+                ["username"] = ["This username is already taken."]
+            });
+        }
+
         if (profile is null)
         {
             profile = new UserProfile
@@ -36,9 +49,9 @@ public sealed class UpdateProfileHandler(
 
         profile.Age = request.Age;
         profile.PreferredName = Normalize(request.PreferredName);
+        profile.PreferredNameNormalized = normalizedUsername;
         profile.EmailNormalized = NormalizeEmail(currentUser.Email);
         profile.Sex = Normalize(request.Sex);
-        profile.GenderIdentity = Normalize(request.GenderIdentity);
         profile.Language = NormalizeRequired(request.Language);
         profile.Timezone = NormalizeRequired(request.Timezone);
         profile.EncryptedTraitsJson = encryptor.Encrypt(JsonSerializer.Serialize(NormalizeTraits(request.Traits!)));
@@ -47,7 +60,17 @@ public sealed class UpdateProfileHandler(
         profile.ConsentHistoryUse = request.Consent.HistoryUse;
         profile.UpdatedAt = DateTimeOffset.UtcNow;
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException exception) when (IsUsernameUniqueViolation(exception))
+        {
+            return UpdateProfileResult.Invalid(new Dictionary<string, string[]>(StringComparer.Ordinal)
+            {
+                ["username"] = ["This username is already taken."]
+            });
+        }
 
         return UpdateProfileResult.Valid(GetProfileHandler.Map(profile, encryptor));
     }
@@ -59,6 +82,11 @@ public sealed class UpdateProfileHandler(
         if (request.Age is < 13 or > 120)
         {
             errors["age"] = ["Age must be between 13 and 120."];
+        }
+
+        if (string.IsNullOrWhiteSpace(request.PreferredName))
+        {
+            errors["username"] = ["Username is required."];
         }
 
         if (string.IsNullOrWhiteSpace(request.Language))
@@ -88,9 +116,12 @@ public sealed class UpdateProfileHandler(
         {
             errors["consent"] = ["Consent is required."];
         }
+        else if (!request.Consent.HistoryUse)
+        {
+            errors["historyUse"] = ["History use consent is required."];
+        }
 
         AddLengthErrors(errors, "sex", request.Sex, 64);
-        AddLengthErrors(errors, "genderIdentity", request.GenderIdentity, 128);
         AddLengthErrors(errors, "preferredName", request.PreferredName, 80);
 
         return errors;
@@ -143,6 +174,16 @@ public sealed class UpdateProfileHandler(
     private static string? Normalize(string? value)
     {
         return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    }
+
+    private static string NormalizeUsername(string value)
+    {
+        return value.Trim().ToUpperInvariant();
+    }
+
+    private static bool IsUsernameUniqueViolation(DbUpdateException exception)
+    {
+        return exception.InnerException is Npgsql.PostgresException { SqlState: "23505", ConstraintName: "IX_UserProfiles_PreferredNameNormalized" };
     }
 
     private static string? NormalizeEmail(string? value)

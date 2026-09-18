@@ -64,6 +64,86 @@ export function ChoiceSet({
   );
 }
 
+export function SelectMenu({
+  error,
+  hint,
+  label,
+  onChange,
+  options,
+  placeholder,
+  testID,
+  value
+}: SharedFieldProps & {
+  onChange: (value: string) => void;
+  options: ChoiceOption[];
+  placeholder: string;
+  value: string;
+}) {
+  const theme = useTheme();
+  const [open, setOpen] = useState(false);
+  const [otherSelected, setOtherSelected] = useState(false);
+  const known = options.find((option) => option.value === value);
+  const isCustom = otherSelected || (Boolean(value) && !known);
+  const selectedLabel = known?.label ?? (isCustom ? "Other" : placeholder);
+
+  return (
+    <View style={styles.field} testID={testID}>
+      <Text style={[styles.label, { color: theme.colors.text }]}>{label}</Text>
+      {hint ? <Text style={[styles.hint, { color: theme.colors.mutedText }]}>{hint}</Text> : null}
+      <Pressable
+        accessibilityLabel={label}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: open }}
+        onPress={() => setOpen((current) => !current)}
+        style={[styles.selectTrigger, { borderColor: theme.colors.border }]}
+        testID={`${testID}-trigger`}
+      >
+        <Text style={[styles.selectText, { color: value ? theme.colors.text : theme.colors.mutedText }]}>{selectedLabel}</Text>
+        <Text style={[styles.selectChevron, { color: theme.colors.mutedText }]}>{open ? "-" : "+"}</Text>
+      </Pressable>
+      {open ? (
+        <View accessibilityRole="menu" style={[styles.selectMenu, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+          {options.map((option) => {
+            const selected = option.value === value || (option.value === "__other__" && isCustom);
+            return (
+              <Pressable
+                accessibilityRole="menuitem"
+                accessibilityState={{ selected }}
+                key={option.value}
+                onPress={() => {
+                  if (option.value === "__other__") {
+                    setOtherSelected(true);
+                  } else {
+                    onChange(option.value);
+                    setOtherSelected(false);
+                  }
+                  setOpen(false);
+                }}
+                style={[styles.selectOption, selected ? { backgroundColor: theme.colors.lavender } : null]}
+                testID={`${testID}-${option.value}`}
+              >
+                <Text style={[styles.selectOptionText, { color: theme.colors.text }]}>{option.label}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : null}
+      {options.some((option) => option.value === "__other__") && isCustom ? (
+        <TextInput
+          accessibilityLabel={`${label} other`}
+          onChangeText={onChange}
+          placeholder={`Write your ${label.toLowerCase()}`}
+          placeholderTextColor={theme.colors.mutedText}
+          style={[styles.tagInput, { borderColor: theme.colors.border, color: theme.colors.text }]}
+          testID={`${testID}-other`}
+          value={value}
+        />
+      ) : null}
+      {error ? <Text style={[styles.error, { color: theme.colors.warning }]}>{error}</Text> : null}
+    </View>
+  );
+}
+
 export function FivePointScale({
   error,
   hint,
@@ -201,6 +281,12 @@ const styles = StyleSheet.create({
   optionGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   option: { alignItems: "center", borderRadius: 6, borderWidth: 1, justifyContent: "center", minHeight: 40, paddingHorizontal: 12 },
   optionText: { fontSize: 14, fontWeight: "700" },
+  selectTrigger: { alignItems: "center", borderRadius: 6, borderWidth: 1, flexDirection: "row", justifyContent: "space-between", minHeight: 44, paddingHorizontal: 12 },
+  selectText: { flex: 1, fontSize: 16 },
+  selectChevron: { fontSize: 20, lineHeight: 22, marginLeft: 12 },
+  selectMenu: { borderRadius: 6, borderWidth: 1, overflow: "hidden" },
+  selectOption: { minHeight: 42, justifyContent: "center", paddingHorizontal: 12 },
+  selectOptionText: { fontSize: 15 },
   scaleRow: { flexDirection: "row", gap: 8 },
   scaleStep: { alignItems: "center", borderRadius: 6, borderWidth: 1, flex: 1, justifyContent: "center", minHeight: 44 },
   scaleLegend: { flexDirection: "row", justifyContent: "space-between" },

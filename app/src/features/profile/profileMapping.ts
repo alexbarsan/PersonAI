@@ -6,7 +6,6 @@ export function toProfileUpdateRequest(values: ProfileFormValues): ProfileUpdate
     preferredName: emptyToNull(values.preferredName),
     age: Number(values.age),
     sex: emptyToNull(values.sex),
-    genderIdentity: emptyToNull(values.genderIdentity),
     language: values.language.trim(),
     timezone: values.timezone.trim(),
     traits: {
@@ -37,7 +36,6 @@ export function toProfileFormValues(profile?: ProfileResponse | null): ProfileFo
     preferredName: profile.preferredName ?? "",
     age: profile.age?.toString() ?? defaultProfileFormValues.age,
     sex: profile.sex ?? "",
-    genderIdentity: profile.genderIdentity ?? "",
     language: profile.language,
     timezone: profile.timezone,
     fears: joinList(profile.traits.fears),

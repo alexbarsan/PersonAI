@@ -1450,8 +1450,8 @@ public sealed class DreamEndpointTests
     private static async Task PutProfileAsync(HttpClient client)
     {
         var response = await client.PutAsJsonAsync("/v1/profile", new ProfileUpdateRequest(
+            $"Dreamer-{Guid.NewGuid():N}",
             33,
-            "male",
             "male",
             "en",
             "America/New_York",
@@ -1845,9 +1845,9 @@ public sealed class DreamEndpointTests
     }
 
     private sealed record ProfileUpdateRequest(
+        string? PreferredName,
         int? Age,
         string? Sex,
-        string? GenderIdentity,
         string Language,
         string Timezone,
         ProfileTraitsRequest Traits,

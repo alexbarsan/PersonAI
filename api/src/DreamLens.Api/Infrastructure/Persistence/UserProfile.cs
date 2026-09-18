@@ -8,13 +8,13 @@ public sealed class UserProfile
 
     public string? PreferredName { get; set; }
 
+    public string? PreferredNameNormalized { get; set; }
+
     public string? EmailNormalized { get; set; }
 
     public int? Age { get; set; }
 
     public string? Sex { get; set; }
-
-    public string? GenderIdentity { get; set; }
 
     public string Language { get; set; } = "en";
 

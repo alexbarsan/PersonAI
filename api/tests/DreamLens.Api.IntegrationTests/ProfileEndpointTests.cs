@@ -52,7 +52,6 @@ public sealed class ProfileEndpointTests
         Assert.Equal("Alex", fetched.PreferredName);
         Assert.Equal(33, fetched.Age);
         Assert.Equal("male", fetched.Sex);
-        Assert.Equal("male", fetched.GenderIdentity);
         Assert.Equal("en", fetched.Language);
         Assert.Equal("America/New_York", fetched.Timezone);
         Assert.Contains("spiders", fetched.Traits.Fears);
@@ -74,6 +73,37 @@ public sealed class ProfileEndpointTests
         var response = await client.PutAsJsonAsync("/v1/profile", update);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PutProfileRequiresUsernameAndHistoryUseConsent()
+    {
+        using var app = CreateProfileApp();
+        using var client = app.CreateAuthenticatedClient("subject-a");
+
+        var update = CreateValidProfileUpdate() with { PreferredName = " ", Consent = new ConsentRequest(true, true, false) };
+
+        var response = await client.PutAsJsonAsync("/v1/profile", update);
+        var errors = await response.Content.ReadFromJsonAsync<Dictionary<string, string[]>>();
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("Username is required.", errors!["username"][0]);
+        Assert.Equal("History use consent is required.", errors["historyUse"][0]);
+    }
+
+    [Fact]
+    public async Task PutProfileRejectsCaseInsensitiveDuplicateUsername()
+    {
+        using var app = CreateProfileApp();
+        using var firstUser = app.CreateAuthenticatedClient("subject-a");
+        using var secondUser = app.CreateAuthenticatedClient("subject-b");
+        await firstUser.PutAsJsonAsync("/v1/profile", CreateValidProfileUpdate());
+
+        var response = await secondUser.PutAsJsonAsync("/v1/profile", CreateValidProfileUpdate() with { PreferredName = "  aLeX  " });
+        var errors = await response.Content.ReadFromJsonAsync<Dictionary<string, string[]>>();
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("This username is already taken.", errors!["username"][0]);
     }
 
     [Fact]
@@ -173,7 +203,6 @@ public sealed class ProfileEndpointTests
             "Alex",
             33,
             "male",
-            "male",
             "en",
             "America/New_York",
             new ProfileTraitsRequest(
@@ -214,7 +243,6 @@ public sealed class ProfileEndpointTests
         string? PreferredName,
         int? Age,
         string? Sex,
-        string? GenderIdentity,
         string Language,
         string Timezone,
         ProfileTraitsRequest Traits,
@@ -237,7 +265,6 @@ public sealed class ProfileEndpointTests
         string? PreferredName,
         int? Age,
         string? Sex,
-        string? GenderIdentity,
         string Language,
         string Timezone,
         ProfileTraitsResponse Traits,

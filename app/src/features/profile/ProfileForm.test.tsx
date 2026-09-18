@@ -22,15 +22,18 @@ describe("ProfileForm", () => {
     expect(screen.getByText(/not medical, mental health, or safety advice/i)).toBeTruthy();
   });
 
-  it("rejects invalid age and missing required consent", async () => {
+  it("rejects invalid age, missing username, and required consent", async () => {
     renderWithProviders(<ProfileForm mode="onboarding" />);
 
     fireEvent.changeText(screen.getByLabelText("Age"), "9");
     fireEvent(screen.getByLabelText("AI processing"), "valueChange", false);
+    fireEvent(screen.getByLabelText("History use"), "valueChange", false);
     fireEvent.press(screen.getByText("Save profile"));
 
     expect(await screen.findByText("Age must be at least 13.")).toBeTruthy();
+    expect(await screen.findByText("Username is required.")).toBeTruthy();
     expect(await screen.findByText("AI processing consent is required.")).toBeTruthy();
+    expect(await screen.findByText("History use consent is required.")).toBeTruthy();
   });
 
   it("can complete onboarding in mock mode and sends the expected DTO", async () => {
@@ -40,6 +43,7 @@ describe("ProfileForm", () => {
     });
 
     fireEvent.changeText(screen.getByLabelText("Age"), "41");
+    fireEvent.changeText(screen.getByLabelText("Username"), "Test dreamer");
     fireEvent.changeText(screen.getByLabelText("Fears"), "heights, exams");
     fireEvent.press(screen.getByTestId("profile-fears-add"));
     fireEvent.changeText(screen.getByLabelText("Interests"), "music, walking");
@@ -70,14 +74,10 @@ describe("ProfileForm", () => {
     );
   });
 
-  it("lets a profile user request administrator-approved anonymization", async () => {
-    const requestAnonymization = jest.fn(mockApiClient.requestAnonymization);
-    renderWithProviders(<ProfileForm mode="profile" />, { requestAnonymization });
+  it("keeps anonymization out of the profile screen", async () => {
+    renderWithProviders(<ProfileForm mode="profile" />);
 
-    fireEvent.press(screen.getByTestId("request-anonymization"));
-
-    await waitFor(() => expect(requestAnonymization).toHaveBeenCalledTimes(1));
-    expect(screen.getByText("Anonymization request is pending administrator approval.")).toBeTruthy();
+    await waitFor(() => expect(screen.queryByTestId("request-anonymization")).toBeNull());
   });
 
   it("explains profile save failures without discarding the draft", () => {
