@@ -63,6 +63,21 @@ describe("DreamCaptureScreen", () => {
 
     expect(await screen.findByText("Profile must be completed before submitting dreams.")).toBeTruthy();
   });
+
+  it("shows the explicit reason when a non-dream request is rejected", async () => {
+    renderWithProviders(<DreamCaptureScreen />, {
+      submitDream: async () => {
+        throw new ApiError("API request failed", 400, {
+          submission_rejected: ["This field is only for dreams. Describe what you experienced in the dream instead."]
+        });
+      }
+    });
+
+    fireEvent.changeText(screen.getByLabelText("Dream text"), "Write me an email asking for a raise.");
+    fireEvent.press(screen.getByText("Interpret dream"));
+
+    expect(await screen.findByText("This field is only for dreams. Describe what you experienced in the dream instead.")).toBeTruthy();
+  });
 });
 
 function renderWithProviders(

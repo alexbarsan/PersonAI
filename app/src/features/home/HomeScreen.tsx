@@ -28,6 +28,7 @@ import { Text } from "@/components/Text";
 import { appConfig } from "@/core/config";
 import { useDreamDraftStore } from "@/state/dreamDraftStore";
 import { useDreamSubmission } from "@/features/dreams/useDreamSubmission";
+import { dreamSubmissionErrorMessage } from "@/features/dreams/dreamSubmissionError";
 import { DreamingFacts } from "@/features/content/DailyDreamContent";
 import { VoiceCapturePanel } from "@/features/dreams/VoiceCapturePanel";
 import { LandingScreen } from "@/features/home/LandingScreen";
@@ -101,7 +102,7 @@ export function HomeScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <BrandMark
-          detail={`Good to see you, ${me.data?.displayName ?? user.displayName ?? "Dreamer"}.`}
+          detail={`Good to see you, ${greetingName(profile.data?.preferredName, me.data?.displayName, user.displayName)}.`}
         />
         <View style={s.greeting}>
           <Image
@@ -242,7 +243,7 @@ export function HomeScreen() {
                 <ArrowRight size={18} color="white" />
               </Pressable>
               {submitDream.isPending ? <DreamingFacts label="Preparing your private interpretation" /> : null}
-              {submitDream.isError ? <Text style={[s.body, { color: theme.colors.warning }]}>Dream submission could not be started. Your private draft is still saved here.</Text> : null}
+              {submitDream.isError ? <Text accessibilityRole="alert" style={[s.body, { color: theme.colors.warning }]}>{dreamSubmissionErrorMessage(submitDream.error)} Your private draft is still saved here.</Text> : null}
               <Link href="/dreams/capture" asChild>
                 <Pressable accessibilityRole="button" testID="go-dream-capture" style={s.detailAction}>
                   <Text style={[s.saveText, { color: theme.colors.primary }]}>Add details before interpreting</Text>
@@ -388,6 +389,10 @@ export function HomeScreen() {
       </ScrollView>
     </AppShell>
   );
+}
+
+export function greetingName(...candidates: Array<string | null | undefined>) {
+  return candidates.find((candidate) => candidate?.trim() && !candidate.includes("@"))?.trim() ?? "Dreamer";
 }
 
 const s = StyleSheet.create({

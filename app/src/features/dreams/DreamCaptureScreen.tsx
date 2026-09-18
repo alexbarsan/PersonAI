@@ -4,7 +4,6 @@ import { Controller, useForm } from "react-hook-form";
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
 import { Text } from "@/components/Text";
 
-import { ApiError } from "@/api/client";
 import { AppShell, BrandMark } from "@/components/AppShell";
 import { ChoiceOption, ChoiceSet, FivePointScale, TagEditor } from "@/components/FieldControls";
 import { toSubmitDreamRequest } from "@/features/dreams/dreamCaptureMapping";
@@ -14,6 +13,7 @@ import { defaultDreamCaptureValues, DreamCaptureValues, dreamCaptureSchema } fro
 import { useDreamDraftStore } from "@/state/dreamDraftStore";
 import { useAuthStore } from "@/auth/authStore";
 import { useDreamSubmission } from "@/features/dreams/useDreamSubmission";
+import { dreamSubmissionErrorMessage } from "@/features/dreams/dreamSubmissionError";
 import { useTheme } from "@/theme/ThemeProvider";
 
 type DreamCaptureScreenProps = { onSubmitted?: (dreamId: string) => void };
@@ -188,27 +188,7 @@ function DreamTagField({
 
 function ErrorMessage({ error }: { error: Error }) {
   const theme = useTheme();
-  return <Text style={[styles.error, { color: theme.colors.warning }]}>{mapErrorMessage(error)}</Text>;
-}
-
-function mapErrorMessage(error: Error) {
-  if (error instanceof ApiError) {
-    if (error.status === 401 || error.status === 403) return "Please sign in again before submitting a dream.";
-    if (error.status === 429) return "You have reached today's dream limit. Try again tomorrow.";
-    if (error.status === 503) return "The interpretation service is temporarily unavailable. Please try again.";
-    if (error.status === 400) return readValidationMessage(error.body) ?? "Review your dream and profile details, then try again.";
-  }
-  return "Dream submission failed. Please try again.";
-}
-
-function readValidationMessage(body: unknown) {
-  if (!body || typeof body !== "object" || Array.isArray(body)) return null;
-  const errors = body as Record<string, unknown>;
-  for (const key of ["profile", "consent", "text", "sleepQuality"]) {
-    const value = errors[key];
-    if (Array.isArray(value) && typeof value[0] === "string") return value[0];
-  }
-  return null;
+  return <Text accessibilityRole="alert" style={[styles.error, { color: theme.colors.warning }]}>{dreamSubmissionErrorMessage(error)}</Text>;
 }
 
 const styles = StyleSheet.create({

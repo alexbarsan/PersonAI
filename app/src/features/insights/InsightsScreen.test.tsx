@@ -16,6 +16,7 @@ describe("InsightsScreen", () => {
     expect(await screen.findByText("1 day")).toBeTruthy();
     expect(screen.getAllByText("Recurring symbols").length).toBeGreaterThan(0);
     expect(screen.getByText(mockInsights.factGroups[0].facts[0].value)).toBeTruthy();
+    expect(screen.getByLabelText("Recurring symbols distribution")).toBeTruthy();
   });
 
   it("renders an empty state", async () => {

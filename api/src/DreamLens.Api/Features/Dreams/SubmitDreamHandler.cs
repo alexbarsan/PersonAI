@@ -18,6 +18,7 @@ public sealed class SubmitDreamHandler(
     IOptions<DeepSeekOptions> deepSeekOptions,
     IOptions<DeepInterpretationOptions> deepInterpretationOptions,
     IOptions<PrimaryInterpretationOptions> primaryInterpretationOptions,
+    IDreamSubmissionGuard submissionGuard,
     DreamInterpretationJobHandler interpretationJobHandler,
     AsyncJobService asyncJobService)
 {
@@ -31,6 +32,15 @@ public sealed class SubmitDreamHandler(
         if (errors.Count > 0)
         {
             return SubmitDreamResult.Invalid(errors);
+        }
+
+        var inspection = submissionGuard.Inspect(request.Text!.Trim());
+        if (!inspection.IsAllowed)
+        {
+            return SubmitDreamResult.Invalid(new Dictionary<string, string[]>
+            {
+                ["submission_rejected"] = [inspection.Message!]
+            });
         }
 
         var profile = await dbContext.UserProfiles

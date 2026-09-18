@@ -113,6 +113,7 @@ for (const width of [375, 390, 768]) {
     await expect(
       page.getByRole("heading", { name: "Dream DNA", exact: true }),
     ).toBeVisible();
+    await expect(page.getByText("Start today. Make room for a little wonder.", { exact: true })).toBeVisible();
     await readyArtwork(page);
     await page.screenshot({
       path: `test-results/dream-dna-landing-${width}.png`,
@@ -120,6 +121,12 @@ for (const width of [375, 390, 768]) {
     });
     await noHorizontalOverflow(page);
     await page.getByTestId("store-ios").scrollIntoViewIfNeeded();
+    const downloadWidths = await Promise.all([
+      page.getByTestId("download-web").evaluate(element => element.getBoundingClientRect().width),
+      page.getByTestId("store-ios").evaluate(element => element.getBoundingClientRect().width),
+      page.getByTestId("store-android").evaluate(element => element.getBoundingClientRect().width),
+    ]);
+    expect(Math.max(...downloadWidths) - Math.min(...downloadWidths)).toBeLessThanOrEqual(1);
     await page.screenshot({ path: `test-results/dream-dna-downloads-${width}.png` });
     await page.getByTestId("mock-sign-in").click();
     await expect(

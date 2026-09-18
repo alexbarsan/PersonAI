@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import Svg, { Circle, G } from "react-native-svg";
 import { useRouter } from "expo-router";
 import { Text } from "@/components/Text";
 
@@ -16,6 +17,8 @@ import {
 } from "@/api/dto";
 import { AppShell, BrandMark } from "@/components/AppShell";
 import { useTheme } from "@/theme/ThemeProvider";
+
+const chartColors = ["#4f8b73", "#8e78b8", "#cf765b", "#d3a63b", "#5f84ad", "#a86f86", "#72928b", "#977352"];
 
 export function InsightsScreen() {
   const api = useApiClient();
@@ -219,54 +222,17 @@ function FactGroup({
       <Text style={[styles.panelTitle, { color: theme.colors.text }]}>
         {group.title}
       </Text>
-      {group.facts.map((fact) => (
-        <FactRow key={fact.value} fact={fact} onPress={() => onSelect(fact)} />
-      ))}
+      <PieChart
+        accessibilityLabel={`${group.title} distribution`}
+        data={group.facts.map((fact, index) => ({
+          label: fact.value,
+          value: fact.count,
+          color: chartColors[index % chartColors.length],
+          detail: `${fact.count} ${fact.count === 1 ? "dream" : "dreams"}; ${fact.percentageOfDreams}% of your journal`,
+          onPress: () => onSelect(fact),
+        }))}
+      />
     </View>
-  );
-}
-
-function FactRow({ fact, onPress }: { fact: FactInsightResponse; onPress: () => void }) {
-  const theme = useTheme();
-  const color = ["#7ca891", "#ae96ce", "#d98e75"][fact.value.length % 3];
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`Show journal evidence for ${fact.value}`}
-      onPress={onPress}
-      style={styles.fact}
-    >
-      <View style={styles.factHeader}>
-        <Text style={[styles.factName, { color: theme.colors.text }]}>
-          {fact.value}
-        </Text>
-        <Text style={[styles.factPercent, { color: theme.colors.text }]}>
-          {fact.percentageOfDreams}%
-        </Text>
-      </View>
-      <View
-        style={[styles.track, { backgroundColor: theme.colors.background }]}
-      >
-        <View
-          style={[
-            styles.bar,
-            {
-              backgroundColor: color,
-              width: `${Math.max(0, Math.min(100, fact.percentageOfDreams))}%`,
-            },
-          ]}
-        />
-      </View>
-      <Text style={[styles.factMeta, { color: theme.colors.mutedText }]}>
-        {fact.count} {fact.count === 1 ? "dream" : "dreams"}
-        {fact.averageScore === null
-          ? ""
-          : ` | average intensity ${Math.round(fact.averageScore * 100)}%`}
-        {fact.averageExtractionConfidence === null
-          ? ""
-          : ` | extraction confidence ${Math.round(fact.averageExtractionConfidence * 100)}%`}
-      </Text>
-    </Pressable>
   );
 }
 
@@ -334,16 +300,15 @@ function ThemePanel({ themes }: { themes: ThemeInsightResponse[] }) {
           No repeated themes found yet.
         </Text>
       ) : (
-        themes.map((item) => (
-          <View key={item.name} style={styles.themeRow}>
-            <Text style={[styles.factName, { color: theme.colors.text }]}>
-              {item.name}
-            </Text>
-            <Text style={[styles.factPercent, { color: theme.colors.text }]}>
-              {item.count}
-            </Text>
-          </View>
-        ))
+        <PieChart
+          accessibilityLabel="Recurring themes distribution"
+          data={themes.map((item, index) => ({
+            label: item.name,
+            value: item.count,
+            color: chartColors[index % chartColors.length],
+            detail: `${item.count} ${item.count === 1 ? "dream" : "dreams"}`,
+          }))}
+        />
       )}
     </View>
   );
@@ -416,14 +381,21 @@ function TimingPanel({
         Timing observations
       </Text>
       {patterns.map((pattern) => (
-        <Text
+        <View
           key={`${pattern.type}-${pattern.value}`}
-          style={[styles.body, { color: theme.colors.mutedText }]}
+          style={[styles.timingPattern, { borderColor: theme.colors.border }]}
         >
-          {pattern.value} appeared in {pattern.occurrences} dreams, with a
-          weekday observation rate {pattern.weekdayToWeekendRatio}x the weekend
-          rate.
-        </Text>
+          <Text style={[styles.factName, { color: theme.colors.text }]}>{pattern.value}</Text>
+          <PieChart
+            accessibilityLabel={`${pattern.value} weekday and weekend distribution`}
+            compact
+            data={[
+              { label: "Weekdays", value: pattern.weekdayDreams, color: chartColors[0], detail: `${pattern.weekdayDreams} dreams` },
+              { label: "Weekends", value: pattern.weekendDreams, color: chartColors[1], detail: `${pattern.weekendDreams} dreams` },
+            ]}
+          />
+          <Text style={[styles.body, { color: theme.colors.mutedText }]}>Observed {pattern.weekdayToWeekendRatio}x as often on weekdays after accounting for the number of weekday and weekend days.</Text>
+        </View>
       ))}
     </View>
   );
@@ -456,6 +428,14 @@ function RelationshipPanel({
       {relationships.map((relationship) => (
         <View key={`${relationship.firstType}-${relationship.firstValue}-${relationship.secondType}-${relationship.secondValue}`} style={[styles.relationship, { borderColor: theme.colors.border }]}>
           <Text style={[styles.factName, { color: theme.colors.text }]}>{relationship.firstValue} + {relationship.secondValue}</Text>
+          <PieChart
+            accessibilityLabel={`${relationship.firstValue} and ${relationship.secondValue} co-occurrence`}
+            compact
+            data={[
+              { label: "Together", value: relationship.sharedDreams, color: chartColors[0], detail: `${relationship.sharedDreams} dreams` },
+              { label: "Apart", value: Math.max(0, Math.min(relationship.firstDreams, relationship.secondDreams) - relationship.sharedDreams), color: "#d9e5df", detail: `${Math.max(0, Math.min(relationship.firstDreams, relationship.secondDreams) - relationship.sharedDreams)} dreams` },
+            ]}
+          />
           <Text style={[styles.factMeta, { color: theme.colors.mutedText }]}>
             Together in {relationship.sharedDreams} {relationship.sharedDreams === 1 ? "dream" : "dreams"}; {relationship.sharedOfSmallerPatternPercent}% of the less frequent pattern's observations, {relationship.relativeLift}x above its baseline rate.
           </Text>
@@ -466,6 +446,76 @@ function RelationshipPanel({
           ))}
         </View>
       ))}
+    </View>
+  );
+}
+
+type PieDatum = {
+  label: string;
+  value: number;
+  color: string;
+  detail?: string;
+  onPress?: () => void;
+};
+
+function PieChart({ data, accessibilityLabel, compact = false }: { data: PieDatum[]; accessibilityLabel: string; compact?: boolean }) {
+  const theme = useTheme();
+  const positiveData = data.filter((item) => item.value > 0);
+  const total = positiveData.reduce((sum, item) => sum + item.value, 0);
+  const size = compact ? 112 : 144;
+  const center = size / 2;
+  const radius = compact ? 38 : 50;
+  const strokeWidth = compact ? 19 : 24;
+  const circumference = 2 * Math.PI * radius;
+  let offset = 0;
+
+  if (total === 0) {
+    return <Text style={[styles.body, { color: theme.colors.mutedText }]}>Not enough data to chart yet.</Text>;
+  }
+
+  return (
+    <View style={[styles.pieLayout, compact && styles.pieLayoutCompact]}>
+      <Svg accessibilityLabel={accessibilityLabel} accessibilityRole="image" height={size} width={size}>
+        <Circle cx={center} cy={center} fill="none" r={radius} stroke={theme.colors.background} strokeWidth={strokeWidth} />
+        <G rotation="-90" origin={`${center}, ${center}`}>
+          {positiveData.map((item) => {
+            const length = (item.value / total) * circumference;
+            const dashOffset = -offset;
+            offset += length;
+            return (
+              <Circle
+                key={item.label}
+                cx={center}
+                cy={center}
+                fill="none"
+                r={radius}
+                stroke={item.color}
+                strokeDasharray={`${length} ${circumference - length}`}
+                strokeDashoffset={dashOffset}
+                strokeWidth={strokeWidth}
+              />
+            );
+          })}
+        </G>
+      </Svg>
+      <View style={styles.pieLegend}>
+        {data.map((item) => {
+          const content = (
+            <>
+              <View style={[styles.legendDot, { backgroundColor: item.color }]} />
+              <View style={styles.legendCopy}>
+                <Text style={[styles.legendLabel, { color: theme.colors.text }]}>{item.label}</Text>
+                <Text style={[styles.factMeta, { color: theme.colors.mutedText }]}>{item.detail ?? `${Math.round((item.value / total) * 100)}%`}</Text>
+              </View>
+            </>
+          );
+          return item.onPress ? (
+            <Pressable key={item.label} accessibilityLabel={`Show journal evidence for ${item.label}`} accessibilityRole="button" onPress={item.onPress} style={styles.legendRow}>{content}</Pressable>
+          ) : (
+            <View key={item.label} style={styles.legendRow}>{content}</View>
+          );
+        })}
+      </View>
     </View>
   );
 }
@@ -517,9 +567,17 @@ const styles = StyleSheet.create({
   },
   panelTitle: { fontSize: 17, fontWeight: "800", lineHeight: 23 },
   fact: { gap: 6 },
+  pieLayout: { alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: 24 },
+  pieLayoutCompact: { gap: 16 },
+  pieLegend: { flex: 1, gap: 9, minWidth: 160 },
+  legendRow: { alignItems: "center", flexDirection: "row", gap: 9, minHeight: 38 },
+  legendDot: { borderRadius: 5, height: 10, width: 10 },
+  legendCopy: { flex: 1, gap: 1 },
+  legendLabel: { fontSize: 14, fontWeight: "800", lineHeight: 19 },
   provenance: { fontSize: 12, lineHeight: 18 },
   evidence: { borderTopWidth: 1, gap: 3, paddingTop: 12 },
   relationship: { borderTopWidth: 1, gap: 6, paddingTop: 14 },
+  timingPattern: { borderTopWidth: 1, gap: 10, paddingTop: 14 },
   relationshipEvidence: { minHeight: 28, justifyContent: "center" },
   factHeader: {
     alignItems: "center",

@@ -117,12 +117,20 @@ public sealed class DailyDreamContentSeeder(DreamLensDbContext dbContext)
             dbContext.DailyDreamContent.Add(new DailyDreamContent
             {
                 ContentDate = date,
-                Quote = Quotes[(date.Month - 1) % Quotes.Length],
+                Quote = SelectQuote(date),
                 Attribution = "Dream DNA editorial",
                 FactsJson = JsonSerializer.Serialize(SelectFacts(date)),
                 CognitiveFactsJson = JsonSerializer.Serialize(SelectCognitiveFacts(date)),
                 CreatedAt = DateTimeOffset.UtcNow
             });
+        }
+
+        var existingContent = await dbContext.DailyDreamContent
+            .Where(content => content.ContentDate >= firstDate && content.ContentDate <= lastDate)
+            .ToListAsync(cancellationToken);
+        foreach (var content in existingContent)
+        {
+            content.Quote = SelectQuote(content.ContentDate);
         }
 
         var contentWithoutCognitiveFacts = await dbContext.DailyDreamContent
@@ -140,6 +148,8 @@ public sealed class DailyDreamContentSeeder(DreamLensDbContext dbContext)
             await dbContext.SaveChangesAsync(cancellationToken);
         }
     }
+
+    private static string SelectQuote(DateOnly date) => Quotes[Math.Abs(date.DayNumber) % Quotes.Length];
 
     private static string[] SelectFacts(DateOnly date)
     {

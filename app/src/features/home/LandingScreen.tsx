@@ -162,7 +162,7 @@ export function LandingScreen({ onStart, pending, error, mock }: Props) {
           <View style={s.heroActions}>
             {start(mock ? "mock-sign-in" : "cognito-sign-in")}
             <Text style={s.heroFootnote}>
-              Start on web. Make room for a little wonder.
+              Start today. Make room for a little wonder.
             </Text>
           </View>
           {error ? (
@@ -342,11 +342,12 @@ export function LandingScreen({ onStart, pending, error, mock }: Props) {
           Your dream journal is ready on the web. Our Android and iOS apps are
           coming next, so a thought is never far from somewhere to keep it.
         </Text>
-        <View style={s.downloads}>
+        <View style={[s.downloads, mobile && s.downloadsMobile]}>
           <Pressable
             accessibilityRole="button"
             onPress={onStart}
-            style={s.webDownload}
+            testID="download-web"
+            style={[s.webDownload, mobile && s.downloadMobile]}
           >
             <Monitor size={24} color="white" />
             <View>
@@ -370,7 +371,7 @@ export function LandingScreen({ onStart, pending, error, mock }: Props) {
                 onPress={() => {
                   if (available) void Linking.openURL(store.url!);
                 }}
-                style={s.storeDownload}
+                style={[s.storeDownload, mobile && s.downloadMobile]}
               >
                 <Smartphone size={25} color="#596e67" />
                 <View>
@@ -501,7 +502,16 @@ const s = StyleSheet.create({
   },
   heroStatementMobile: { fontSize: 24, lineHeight: 31, maxWidth: 320 },
   heroActions: { gap: 12, alignItems: "flex-start", marginTop: 24 },
-  heroFootnote: { fontSize: 12, color: "#345d4e" },
+  heroFootnote: {
+    backgroundColor: "rgba(255,255,255,0.86)",
+    borderRadius: 5,
+    color: "#203e36",
+    fontSize: 14,
+    fontWeight: "700",
+    lineHeight: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
   button: {
     backgroundColor: "#245c49",
     minHeight: 50,
@@ -639,6 +649,7 @@ const s = StyleSheet.create({
     gap: 14,
     paddingTop: 14,
   },
+  downloadsMobile: { alignItems: "stretch" },
   webDownload: {
     backgroundColor: "#245c49",
     flexDirection: "row",
@@ -647,6 +658,7 @@ const s = StyleSheet.create({
     padding: 18,
     borderRadius: 8,
     minHeight: 80,
+    width: 250,
   },
   downloadSmall: { color: "#d8e8df", fontSize: 12 },
   downloadTitle: { color: "white", fontSize: 17, fontWeight: "700" },
@@ -659,7 +671,9 @@ const s = StyleSheet.create({
     borderColor: "#d9e5df",
     borderRadius: 8,
     minHeight: 80,
+    width: 250,
   },
+  downloadMobile: { width: "100%" },
   storeTitle: { color: "#596e67", fontSize: 17, fontWeight: "700" },
   faqBand: { backgroundColor: "#faf5f2" },
   faqItem: { borderBottomWidth: 1, borderBottomColor: "#e7ddd7" },

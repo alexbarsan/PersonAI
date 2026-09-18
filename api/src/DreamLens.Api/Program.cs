@@ -92,6 +92,7 @@ if (dreamEndpointsEnabled)
         builder.Services.AddHostedService<SensitiveSafetyRetentionService>();
     }
     builder.Services.AddScoped<IDreamQuotaService, EfDreamQuotaService>();
+    builder.Services.AddSingleton<IDreamSubmissionGuard, DreamSubmissionGuard>();
     builder.Services.AddScoped<SubmitDreamHandler>();
     builder.Services.AddScoped<DreamInterpretationLifecycleHandler>();
     builder.Services.AddScoped<GetDreamHandler>();

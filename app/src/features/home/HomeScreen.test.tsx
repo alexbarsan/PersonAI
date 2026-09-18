@@ -2,13 +2,18 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react-nativ
 
 import { AppProviders } from "@/core/AppProviders";
 import { useAuthStore } from "@/auth/authStore";
-import { HomeScreen } from "@/features/home/HomeScreen";
+import { greetingName, HomeScreen } from "@/features/home/HomeScreen";
 import { useDreamDraftStore } from "@/state/dreamDraftStore";
 
 describe("HomeScreen", () => {
   beforeEach(() => {
     useAuthStore.getState().signOut();
     useDreamDraftStore.getState().clearDraft();
+  });
+
+  it("uses a profile username and never addresses the user by email", () => {
+    expect(greetingName("Alex", "ai.ro.dodoloata@gmail.com")).toBe("Alex");
+    expect(greetingName(null, "ai.ro.dodoloata@gmail.com")).toBe("Dreamer");
   });
 
   it("renders the initial route in signed-out state", () => {
