@@ -33,7 +33,31 @@ public sealed record DreamObservationResponse(
     int TotalDreams,
     decimal? AverageExtractionConfidence,
     string[] SourceFields,
-    DreamObservationEvidenceResponse[] Evidence);
+    DreamObservationEvidenceResponse[] Evidence,
+    DateOnly FirstObservedAt,
+    DateOnly LastObservedAt,
+    DreamPatternInterpretationResponse? PersonalizedInterpretation,
+    DreamPatternMeaningResponse[] CommonMeanings,
+    DreamPatternMonthlyCountResponse[] MonthlyOccurrences,
+    string TrendDirection);
+
+public sealed record DreamPatternInterpretationResponse(
+    string Reflection,
+    string PromptVersion,
+    DateTimeOffset GeneratedAt,
+    Guid[] EvidenceDreamIds);
+
+public sealed record DreamPatternMeaningResponse(
+    string Text,
+    DreamPatternMeaningSourceResponse Source);
+
+public sealed record DreamPatternMeaningSourceResponse(
+    string Id,
+    string Title,
+    string Url,
+    int PublishedYear);
+
+public sealed record DreamPatternMonthlyCountResponse(DateOnly Month, int Count);
 
 public sealed record DreamObservationEvidenceResponse(
     Guid DreamId,

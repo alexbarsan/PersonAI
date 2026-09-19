@@ -296,6 +296,25 @@ export type DreamObservationResponse = {
   averageExtractionConfidence: number | null;
   sourceFields: string[];
   evidence: DreamObservationEvidenceResponse[];
+  firstObservedAt: string;
+  lastObservedAt: string;
+  personalizedInterpretation: {
+    reflection: string;
+    promptVersion: string;
+    generatedAt: string;
+    evidenceDreamIds: string[];
+  } | null;
+  commonMeanings: Array<{
+    text: string;
+    source: {
+      id: string;
+      title: string;
+      url: string;
+      publishedYear: number;
+    };
+  }>;
+  monthlyOccurrences: Array<{ month: string; count: number }>;
+  trendDirection: "increasing" | "decreasing" | "steady" | "not_enough_data";
 };
 
 export type DreamObservationEvidenceResponse = {

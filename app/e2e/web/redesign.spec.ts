@@ -137,6 +137,13 @@ test("Dream Map patterns open in a desktop drawer and support relationship navig
   expect(drawerBounds!.width).toBeLessThanOrEqual(501);
   expect(drawerBounds!.x + drawerBounds!.width).toBeGreaterThanOrEqual(1439);
   await expect(page.getByText("Your DreamDNA interpretation", { exact: true })).toBeVisible();
+  await expect(page.getByText(/Water appears with curiosity in this journal/)).toBeVisible();
+  await expect(page.getByRole("link", { name: /Open source Continuity between waking activities/ })).toBeVisible();
+
+  await page.getByRole("tab", { name: "Trends", exact: true }).click();
+  await expect(page.getByLabel("Monthly pattern occurrences", { exact: true })).toBeVisible();
+  await expect(page.getByText("More monthly history is needed before a direction can be estimated.", { exact: true })).toBeVisible();
+  await page.screenshot({ path: "test-results/dream-map-pattern-trends-desktop.png" });
 
   await page.getByRole("tab", { name: "Related", exact: true }).click();
   await page.getByRole("button", { name: /Explore curiosity, connected in/ }).click();
@@ -183,6 +190,8 @@ test("Dream Map patterns use a readable mobile legend and bottom sheet", async (
     expect(sheetBounds!.height).toBeLessThanOrEqual(viewport.height * 0.9);
     expect(sheetBounds!.y + sheetBounds!.height).toBeGreaterThanOrEqual(viewport.height - 1);
     await expect(page.getByRole("tab", { name: "Dreams", exact: true })).toBeVisible();
+    await page.getByRole("tab", { name: "Trends", exact: true }).click();
+    await expect(page.getByLabel("Monthly pattern occurrences", { exact: true })).toBeVisible();
     await page.screenshot({ path: "test-results/dream-map-pattern-sheet-mobile.png" });
     await noHorizontalOverflow(page);
   } finally {

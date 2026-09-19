@@ -1042,6 +1042,9 @@ public sealed class DreamEndpointTests
         Assert.Equal(4, observation.TotalDreams);
         Assert.Contains("scenarios", observation.SourceFields);
         Assert.All(observation.Evidence, evidence => Assert.Contains(evidence.DreamId, dreams.Select(dream => dream.Id)));
+        Assert.Equal(4, observation.MonthlyOccurrences.Sum(month => month.Count));
+        Assert.All(observation.CommonMeanings, meaning => Assert.StartsWith("https://", meaning.Source.Url));
+        Assert.Contains(observation.TrendDirection, new[] { "increasing", "decreasing", "steady", "not_enough_data" });
         Assert.Equal(HttpStatusCode.OK, noEmbeddingResponse.StatusCode);
         Assert.NotNull(similarDreams);
         Assert.Empty(similarDreams.Matches);
@@ -1922,7 +1925,19 @@ public sealed class DreamEndpointTests
         int TotalDreams,
         decimal? AverageExtractionConfidence,
         string[] SourceFields,
-        DreamObservationEvidenceResponse[] Evidence);
+        DreamObservationEvidenceResponse[] Evidence,
+        DateOnly FirstObservedAt,
+        DateOnly LastObservedAt,
+        JsonElement? PersonalizedInterpretation,
+        DreamPatternMeaningResponse[] CommonMeanings,
+        DreamPatternMonthlyCountResponse[] MonthlyOccurrences,
+        string TrendDirection);
+
+    private sealed record DreamPatternMeaningResponse(string Text, DreamPatternMeaningSourceResponse Source);
+
+    private sealed record DreamPatternMeaningSourceResponse(string Id, string Title, string Url, int PublishedYear);
+
+    private sealed record DreamPatternMonthlyCountResponse(DateOnly Month, int Count);
 
     private sealed record DreamObservationEvidenceResponse(Guid DreamId, string Title, DateOnly ObservedAt, decimal? Score, decimal? ExtractionConfidence, string SourceField, string SourceSchemaVersion, string NormalizationVersion);
 

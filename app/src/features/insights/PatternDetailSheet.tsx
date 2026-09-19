@@ -1,7 +1,8 @@
 import { useEffect } from "react";
-import { Modal, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from "react-native";
+import { Linking, Modal, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from "react-native";
 import ArrowLeft from "lucide-react-native/icons/arrow-left";
 import ChevronRight from "lucide-react-native/icons/chevron-right";
+import ExternalLink from "lucide-react-native/icons/external-link";
 import X from "lucide-react-native/icons/x";
 
 import { DreamObservationResponse } from "@/api/dto";
@@ -128,11 +129,16 @@ export function PatternDetailSheet(props: PatternDetailSheetProps) {
 
 function Overview(props: PatternDetailSheetProps) {
   const theme = useTheme();
+  const interpretation = props.observation?.personalizedInterpretation;
+  const meanings = props.observation?.commonMeanings ?? [];
   return <View style={styles.sections}>
     <View style={[styles.interpretation, { backgroundColor: theme.colors.sage, borderColor: theme.colors.border }]}>
       <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Your DreamDNA interpretation</Text>
-      {props.pattern?.interpretation ? (
-        <Text style={[styles.interpretationText, { color: theme.colors.text }]}>{props.pattern.interpretation}</Text>
+      {interpretation ? (
+        <>
+          <Text style={[styles.interpretationText, { color: theme.colors.text }]}>{interpretation.reflection}</Text>
+          <Text style={[styles.meta, { color: theme.colors.mutedText }]}>Updated {formatTimestamp(interpretation.generatedAt)}</Text>
+        </>
       ) : (
         <Text style={[styles.body, { color: theme.colors.mutedText }]}>A personalized interpretation has not been generated for this pattern yet.</Text>
       )}
@@ -150,8 +156,19 @@ function Overview(props: PatternDetailSheetProps) {
       ) : <Text style={[styles.body, { color: theme.colors.mutedText }]}>No connected patterns meet the current evidence threshold.</Text>}
     </View>
     <View style={styles.section}>
-      <Text style={[styles.secondaryTitle, { color: theme.colors.text }]}>Common meanings</Text>
-      {props.pattern?.commonMeanings?.length ? <View style={styles.meanings}>{props.pattern.commonMeanings.map((meaning) => <Text key={meaning} style={[styles.body, { color: theme.colors.mutedText }]}>• {meaning}</Text>)}</View> : <Text style={[styles.body, { color: theme.colors.mutedText }]}>General meanings are not available for this pattern yet.</Text>}
+      <Text style={[styles.secondaryTitle, { color: theme.colors.text }]}>Research lenses</Text>
+      {meanings.length ? <View style={styles.meanings}>{meanings.map((meaning) => <View key={`${meaning.source.id}:${meaning.text}`} style={styles.meaning}>
+        <Text style={[styles.body, { color: theme.colors.mutedText }]}>{meaning.text}</Text>
+        <Pressable
+          accessibilityLabel={`Open source ${meaning.source.title}`}
+          accessibilityRole="link"
+          onPress={() => void Linking.openURL(meaning.source.url)}
+          style={styles.sourceLink}
+        >
+          <Text style={[styles.sourceText, { color: theme.colors.primary }]}>{meaning.source.title} ({meaning.source.publishedYear})</Text>
+          <ExternalLink color={theme.colors.primary} size={14} />
+        </Pressable>
+      </View>)}</View> : <Text style={[styles.body, { color: theme.colors.mutedText }]}>Research context is not available for this pattern yet.</Text>}
     </View>
   </View>;
 }
@@ -206,18 +223,30 @@ function Dreams(props: PatternDetailSheetProps) {
 
 function Trends(props: PatternDetailSheetProps) {
   const theme = useTheme();
-  const dates = (props.observation?.evidence ?? []).map((item) => item.observedAt).sort();
+  const months = props.observation?.monthlyOccurrences ?? [];
+  const maximum = Math.max(1, ...months.map((item) => item.count));
   return <View style={styles.sections}>
     <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Pattern history</Text>
     <View style={styles.metrics}>
       <Metric label="Occurrences" value={String(props.pattern?.count ?? 0)} />
       <Metric label="Share of journal" value={formatPercentage(props.pattern?.journalPercentage ?? 0)} />
-      <Metric label="First available" value={dates[0] ? formatDate(dates[0]) : "Not available"} />
-      <Metric label="Most recent" value={props.pattern?.lastObservedAt ? formatDate(props.pattern.lastObservedAt) : dates.at(-1) ? formatDate(dates.at(-1)!) : "Not available"} />
+      <Metric label="First available" value={props.observation?.firstObservedAt ? formatDate(props.observation.firstObservedAt) : "Not available"} />
+      <Metric label="Most recent" value={props.observation?.lastObservedAt ? formatDate(props.observation.lastObservedAt) : "Not available"} />
     </View>
     <View style={[styles.lowData, { borderColor: theme.colors.border }]}>
       <Text style={[styles.secondaryTitle, { color: theme.colors.text }]}>Occurrences over time</Text>
-      <Text style={[styles.body, { color: theme.colors.mutedText }]}>A monthly trend line will appear when pattern-level history is available.</Text>
+      {months.length > 0 ? <>
+        <Text style={[styles.body, { color: theme.colors.mutedText }]}>{trendLabel(props.observation?.trendDirection)}</Text>
+        <View accessibilityLabel="Monthly pattern occurrences" style={styles.monthChart}>
+          {months.map((item) => <View key={item.month} style={styles.monthColumn}>
+            <Text style={[styles.monthCount, { color: theme.colors.text }]}>{item.count}</Text>
+            <View style={[styles.monthTrack, { borderColor: theme.colors.border }]}>
+              <View style={[styles.monthBar, { backgroundColor: theme.colors.primary, height: `${Math.max(item.count > 0 ? 12 : 0, item.count / maximum * 100)}%` }]} />
+            </View>
+            <Text style={[styles.monthLabel, { color: theme.colors.mutedText }]}>{formatMonth(item.month)}</Text>
+          </View>)}
+        </View>
+      </> : <Text style={[styles.body, { color: theme.colors.mutedText }]}>Monthly history is not available for this pattern yet.</Text>}
     </View>
   </View>;
 }
@@ -238,6 +267,23 @@ function formatPercentage(value: number) {
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" }).format(new Date(`${value}T00:00:00Z`));
+}
+
+function formatTimestamp(value: string) {
+  return new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" }).format(new Date(value));
+}
+
+function formatMonth(value: string) {
+  return new Intl.DateTimeFormat("en", { month: "short" }).format(new Date(`${value}T00:00:00Z`));
+}
+
+function trendLabel(direction: DreamObservationResponse["trendDirection"] | undefined) {
+  switch (direction) {
+    case "increasing": return "This pattern has appeared more often in recent months.";
+    case "decreasing": return "This pattern has appeared less often in recent months.";
+    case "steady": return "This pattern has remained relatively steady in recent months.";
+    default: return "More monthly history is needed before a direction can be estimated.";
+  }
 }
 
 const styles = StyleSheet.create({
@@ -272,7 +318,10 @@ const styles = StyleSheet.create({
   chips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   chip: { borderRadius: 8, borderWidth: 1, justifyContent: "center", minHeight: 40, paddingHorizontal: 12 },
   chipText: { fontSize: 13, fontWeight: "700" },
-  meanings: { gap: 5 },
+  meanings: { gap: 14 },
+  meaning: { gap: 6 },
+  sourceLink: { alignItems: "center", alignSelf: "flex-start", flexDirection: "row", gap: 5, minHeight: 32 },
+  sourceText: { flexShrink: 1, fontSize: 12, fontWeight: "700", lineHeight: 17 },
   relatedRow: { borderBottomWidth: 1, gap: 10, minHeight: 72, paddingVertical: 12 },
   relatedHeading: { alignItems: "center", flexDirection: "row", gap: 12 },
   relatedCopy: { flex: 1, gap: 3 },
@@ -284,5 +333,11 @@ const styles = StyleSheet.create({
   metric: { flexBasis: "46%", gap: 2, minWidth: 140 },
   metricValue: { fontSize: 17, fontWeight: "800", lineHeight: 23 },
   lowData: { borderTopWidth: 1, gap: 7, paddingTop: 18 },
+  monthChart: { alignItems: "flex-end", flexDirection: "row", gap: 5, height: 150, marginTop: 8 },
+  monthColumn: { alignItems: "center", flex: 1, gap: 4, height: "100%", justifyContent: "flex-end", minWidth: 0 },
+  monthCount: { fontSize: 11, fontWeight: "800", lineHeight: 15 },
+  monthTrack: { borderRadius: 3, borderWidth: 1, height: 92, justifyContent: "flex-end", overflow: "hidden", width: "70%" },
+  monthBar: { borderRadius: 3, minHeight: 0, width: "100%" },
+  monthLabel: { fontSize: 10, lineHeight: 14 },
   state: { gap: 8, paddingVertical: 12 },
 });

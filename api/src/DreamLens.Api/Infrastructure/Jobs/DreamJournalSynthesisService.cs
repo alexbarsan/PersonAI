@@ -32,11 +32,17 @@ public sealed class DreamJournalSynthesisService(
                 SynthesisLatestDreamAt = dbContext.DreamJournalSyntheses
                     .Where(item => item.UserSubject == profile.UserSubject)
                     .Select(item => (DateTimeOffset?)item.SourceLatestDreamAt)
+                    .SingleOrDefault(),
+                SynthesisPromptVersion = dbContext.DreamJournalSyntheses
+                    .Where(item => item.UserSubject == profile.UserSubject)
+                    .Select(item => item.PromptVersion)
                     .SingleOrDefault()
             })
             .Where(candidate => candidate.Dreams >= minimum
                 && candidate.LatestDreamAt != null
-                && (candidate.SynthesisLatestDreamAt == null || candidate.LatestDreamAt > candidate.SynthesisLatestDreamAt))
+                && (candidate.SynthesisLatestDreamAt == null
+                    || candidate.LatestDreamAt > candidate.SynthesisLatestDreamAt
+                    || candidate.SynthesisPromptVersion != options.Value.PromptVersion))
             .Take(500)
             .ToArrayAsync(cancellationToken);
 
@@ -83,7 +89,7 @@ public sealed class DreamJournalSynthesisService(
         DateOnly date,
         CancellationToken cancellationToken) =>
         asyncJobService.EnqueueAsync(
-            $"{AsyncJobTypes.DreamJournalSynthesis}:{profileId:N}:{date:yyyyMMdd}",
+            $"{AsyncJobTypes.DreamJournalSynthesis}:{profileId:N}:{options.Value.PromptVersion}:{date:yyyyMMdd}",
             AsyncJobTypes.DreamJournalSynthesis,
             userSubject,
             profileId,

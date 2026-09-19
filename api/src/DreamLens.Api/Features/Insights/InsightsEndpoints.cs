@@ -20,7 +20,7 @@ public static class InsightsEndpoints
             return observation is null ? Results.NotFound() : Results.Ok(observation);
         })
             .WithName("GetDreamObservation")
-            .WithSummary("Returns the owned journal entries and extraction provenance behind one map observation.");
+            .WithSummary("Returns owner-scoped evidence, a persisted personalized reflection, research lenses, and monthly history for one map observation.");
 
         group.MapGet("", async (
             [FromServices] GetInsightsHandler handler,

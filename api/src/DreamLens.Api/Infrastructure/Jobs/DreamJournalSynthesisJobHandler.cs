@@ -49,6 +49,7 @@ public sealed class DreamJournalSynthesisJobHandler(
         var existing = await dbContext.DreamJournalSyntheses
             .SingleOrDefaultAsync(item => item.UserSubject == message.UserSubject, cancellationToken);
         if (existing is not null
+            && string.Equals(existing.PromptVersion, settings.PromptVersion, StringComparison.Ordinal)
             && (existing.SourceLatestDreamAt >= latestDreamAt || existing.GeneratedAt.UtcDateTime.Date == DateTime.UtcNow.Date))
         {
             return;
@@ -74,7 +75,7 @@ public sealed class DreamJournalSynthesisJobHandler(
                 },
                 cancellationToken);
 
-            var document = ParseAndValidate(response.Text, sourceIds);
+            var document = ParseAndValidate(response.Text, sourceIds, facts);
             var now = DateTimeOffset.UtcNow;
             if (existing is null)
             {
@@ -169,12 +170,23 @@ public sealed class DreamJournalSynthesisJobHandler(
               "evidenceDreamIds": ["UUID from the supplied dreams"]
             }
           ],
-          "reflectionQuestions": ["2-4 optional non-leading questions"]
+          "reflectionQuestions": ["2-4 optional non-leading questions"],
+          "patterns": [
+            {
+              "type": "exact type from supplied patterns",
+              "value": "exact value from supplied patterns",
+              "reflection": "1-2 cautious sentences personalized to the supplied evidence",
+              "evidenceDreamIds": ["UUID from that supplied pattern"]
+            }
+          ]
         }
 
         Requirements:
         - Return 2-5 observations, each supported by 1-5 supplied dream IDs.
         - Prefer repeated patterns over isolated details.
+        - Return 4-8 pattern reflections for the strongest supplied patterns that occur in at least two dreams.
+        - Pattern type and value must exactly match a supplied pattern. Use only its evidenceDreamIds.
+        - Explain how each pattern appears in this journal; do not assign a fixed universal symbolic meaning.
         - Explain uncertainty when evidence is limited.
         - Never give medical advice or a diagnosis.
         - Never include markdown or additional fields.
@@ -183,7 +195,10 @@ public sealed class DreamJournalSynthesisJobHandler(
         {{JsonSerializer.Serialize(source, JsonOptions)}}
         """;
 
-    public static DreamJournalSynthesisDocument ParseAndValidate(string json, IReadOnlyCollection<Guid> allowedDreamIds)
+    public static DreamJournalSynthesisDocument ParseAndValidate(
+        string json,
+        IReadOnlyCollection<Guid> allowedDreamIds,
+        IReadOnlyCollection<DreamFactRecord>? allowedFacts = null)
     {
         var parsed = JsonSerializer.Deserialize<DreamJournalSynthesisDocument>(json, JsonOptions)
             ?? throw new InvalidOperationException("Journal synthesis response was empty.");
@@ -203,6 +218,41 @@ public sealed class DreamJournalSynthesisJobHandler(
             throw new InvalidOperationException("Journal synthesis response did not contain supported observations.");
         }
 
+        var allowedPatterns = (allowedFacts ?? [])
+            .GroupBy(fact => new PatternKey(fact.FactType, fact.NormalizedValue))
+            .Where(group => group.Select(fact => fact.DreamId).Distinct().Count() >= 2)
+            .ToDictionary(
+                group => group.Key,
+                group => new AllowedPattern(
+                    group.OrderByDescending(fact => fact.DisplayValue.Length).First().DisplayValue,
+                    group.Select(fact => fact.DreamId).ToHashSet()));
+        var patterns = (parsed.Patterns ?? [])
+            .Select(item =>
+            {
+                var key = new PatternKey(
+                    item.Type?.Trim().ToLowerInvariant() ?? string.Empty,
+                    DreamFactNormalization.Normalize(item.Value));
+                if (!allowedPatterns.TryGetValue(key, out var supported))
+                {
+                    return null;
+                }
+
+                var evidence = (item.EvidenceDreamIds ?? [])
+                    .Where(supported.DreamIds.Contains)
+                    .Distinct()
+                    .Take(8)
+                    .ToArray();
+                var reflection = Limit(item.Reflection, 1200);
+                return string.IsNullOrWhiteSpace(reflection) || evidence.Length < 2
+                    ? null
+                    : new DreamJournalSynthesisPattern(key.Type, supported.DisplayValue, reflection, evidence);
+            })
+            .Where(item => item is not null)
+            .Cast<DreamJournalSynthesisPattern>()
+            .DistinctBy(item => new PatternKey(item.Type, DreamFactNormalization.Normalize(item.Value)))
+            .Take(8)
+            .ToArray();
+
         return new DreamJournalSynthesisDocument(
             Limit(parsed.Summary, 1800),
             observations,
@@ -211,7 +261,8 @@ public sealed class DreamJournalSynthesisJobHandler(
                 .Select(question => Limit(question, 300))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .Take(4)
-                .ToArray());
+                .ToArray(),
+            patterns);
     }
 
     private AiCostLedgerRecord CreateLedger(
@@ -246,6 +297,10 @@ public sealed class DreamJournalSynthesisJobHandler(
 
     private static string Limit(string? value, int maximum) =>
         string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim()[..Math.Min(value.Trim().Length, maximum)];
+
+    private sealed record PatternKey(string Type, string NormalizedValue);
+
+    private sealed record AllowedPattern(string DisplayValue, HashSet<Guid> DreamIds);
 
     public sealed record DreamJournalSynthesisJobPayload(string PromptVersion);
 }

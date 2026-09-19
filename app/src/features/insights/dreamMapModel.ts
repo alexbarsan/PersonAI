@@ -20,8 +20,6 @@ export type DreamPattern = {
   count: number;
   journalPercentage: number;
   lastObservedAt: string | null;
-  interpretation?: string | null;
-  commonMeanings?: string[];
 };
 
 export type DreamPatternRelation = {

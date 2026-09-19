@@ -34,6 +34,67 @@ public sealed class DreamJournalSynthesisTests
     }
 
     [Fact]
+    public void ParseAndValidateOnlyKeepsPatternsSupportedByExtractedFacts()
+    {
+        var allowedId = Guid.NewGuid();
+        var otherId = Guid.NewGuid();
+        var json = $$"""
+            {
+              "summary": "A grounded summary.",
+              "observations": [{
+                "title": "Repeated water",
+                "reflection": "Water may accompany moments of change.",
+                "evidenceDreamIds": ["{{allowedId}}"]
+              }],
+              "reflectionQuestions": [],
+              "patterns": [{
+                "type": "symbol",
+                "value": "Water",
+                "reflection": "Water appears near transitions in this journal.",
+                "evidenceDreamIds": ["{{allowedId}}", "{{otherId}}"]
+              }, {
+                "type": "symbol",
+                "value": "invented moon",
+                "reflection": "This was not supplied.",
+                "evidenceDreamIds": ["{{allowedId}}"]
+              }]
+            }
+            """;
+        var facts = new[]
+        {
+            new DreamFactRecord
+            {
+                DreamId = allowedId,
+                UserSubject = "subject-a",
+                FactType = "symbol",
+                NormalizedValue = "water",
+                DisplayValue = "water",
+                SourceSchemaVersion = "1.1",
+                SourceField = "symbols.symbol",
+                NormalizationVersion = "v1"
+            },
+            new DreamFactRecord
+            {
+                DreamId = otherId,
+                UserSubject = "subject-a",
+                FactType = "symbol",
+                NormalizedValue = "water",
+                DisplayValue = "water",
+                SourceSchemaVersion = "1.1",
+                SourceField = "symbols.symbol",
+                NormalizationVersion = "v1"
+            }
+        };
+
+        var result = DreamJournalSynthesisJobHandler.ParseAndValidate(json, [allowedId, otherId], facts);
+
+        var pattern = Assert.Single(result.Patterns!);
+        Assert.Equal("symbol", pattern.Type);
+        Assert.Equal("water", pattern.Value);
+        Assert.Equal([allowedId, otherId], pattern.EvidenceDreamIds);
+    }
+
+    [Fact]
     public async Task EnqueueStaleAsyncCoalescesOneJobPerUserAndDay()
     {
         await using var dbContext = CreateDbContext();

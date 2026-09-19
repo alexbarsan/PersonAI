@@ -263,6 +263,29 @@ export const mockDreamObservation = {
   totalDreams: 1,
   averageExtractionConfidence: 0.82,
   sourceFields: ["symbols.symbol"],
+  firstObservedAt: "2026-07-01",
+  lastObservedAt: "2026-07-01",
+  personalizedInterpretation: {
+    reflection: "Water appears with curiosity in this journal, especially around changing places. It may reflect a recurring way of approaching uncertainty with attention rather than urgency.",
+    promptVersion: "journal-synthesis-v2",
+    generatedAt: "2026-07-02T02:00:00Z",
+    evidenceDreamIds: [mockDream.id]
+  },
+  commonMeanings: [{
+    text: "Research does not establish one fixed meaning for water. A useful lens is how it connects with your waking concerns, emotions, and current experiences.",
+    source: {
+      id: "schredl-hofmann-2003",
+      title: "Continuity between waking activities and dream activities",
+      url: "https://pubmed.ncbi.nlm.nih.gov/12763010/",
+      publishedYear: 2003
+    }
+  }],
+  monthlyOccurrences: [
+    { month: "2026-05-01", count: 0 },
+    { month: "2026-06-01", count: 0 },
+    { month: "2026-07-01", count: 1 }
+  ],
+  trendDirection: "not_enough_data" as const,
   evidence: [{
     dreamId: mockDream.id,
     title: mockDream.title,

@@ -70,10 +70,24 @@ describe("InsightsScreen", () => {
 
     expect(await screen.findByLabelText("water pattern details")).toBeTruthy();
     expect(await screen.findByText("Your DreamDNA interpretation")).toBeTruthy();
+    expect(screen.getByText(/Water appears with curiosity in this journal/)).toBeTruthy();
+    expect(screen.getByText("Research lenses")).toBeTruthy();
+    expect(screen.getByLabelText(/Open source Continuity between waking activities/)).toBeTruthy();
     fireEvent.press(screen.getByText("Dreams"));
     expect(screen.getAllByText("The Quiet Shoreline").length).toBeGreaterThan(0);
     expect(screen.queryByText(/Sources:/i)).toBeNull();
     expect(screen.queryByText(/schema\s+\d/i)).toBeNull();
+  });
+
+  it("shows monthly history for a selected pattern", async () => {
+    renderWithProviders(<InsightsScreen />);
+
+    const waterTargets = await screen.findAllByLabelText("Explore water, appearing in 1 dream");
+    fireEvent.press(waterTargets[waterTargets.length - 1]);
+    fireEvent.press(await screen.findByText("Trends"));
+
+    expect(screen.getByLabelText("Monthly pattern occurrences")).toBeTruthy();
+    expect(screen.getByText("More monthly history is needed before a direction can be estimated.")).toBeTruthy();
   });
 
   it("opens the same pattern detail from a donut slice", async () => {
