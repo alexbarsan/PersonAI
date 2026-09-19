@@ -314,6 +314,22 @@ resource "aws_iam_role_policy" "task_transcription" {
   })
 }
 
+resource "aws_iam_role_policy" "task_ses" {
+  count = var.ses_email_identity_arn == null ? 0 : 1
+
+  name = "${var.name_prefix}-transactional-email"
+  role = aws_iam_role.task.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["ses:SendEmail"]
+      Resource = var.ses_email_identity_arn
+    }]
+  })
+}
+
 resource "aws_ecs_task_definition" "api" {
   family                   = "${var.name_prefix}-api"
   requires_compatibilities = ["FARGATE"]

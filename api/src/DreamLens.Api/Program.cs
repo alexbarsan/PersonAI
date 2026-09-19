@@ -47,6 +47,7 @@ builder.Services.AddDreamLensJobs(builder.Configuration);
 builder.Services.AddDreamLensAssets(builder.Configuration);
 builder.Services.AddDreamLensSecurity(builder.Configuration);
 builder.Services.AddDreamLensMonetization(builder.Configuration);
+builder.Services.AddDreamLensPremiumGrantEmail(builder.Configuration);
 builder.Services.AddPersonaKitDeepSeekChatClient(builder.Configuration);
 AddDreamLensPersonaKitCore(builder.Services, builder.Configuration, builder.Environment);
 builder.Services.AddScoped<GetMeHandler>();

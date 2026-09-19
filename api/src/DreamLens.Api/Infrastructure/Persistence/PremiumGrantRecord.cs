@@ -17,4 +17,8 @@ public sealed class PremiumGrantRecord
     public DateTimeOffset? RevokedAt { get; set; }
 
     public string? RevokedBySubject { get; set; }
+
+    public DateTimeOffset? PremiumWelcomeEmailSentAt { get; set; }
+
+    public string? PremiumWelcomeEmailProviderMessageId { get; set; }
 }

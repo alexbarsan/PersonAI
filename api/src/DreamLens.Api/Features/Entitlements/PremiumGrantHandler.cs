@@ -1,5 +1,6 @@
 using System.Net.Mail;
 using DreamLens.Api.Infrastructure.Identity;
+using DreamLens.Api.Infrastructure.Jobs;
 using DreamLens.Api.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -9,7 +10,10 @@ namespace DreamLens.Api.Features.Entitlements;
 public sealed class PremiumGrantHandler(
     DreamLensDbContext dbContext,
     ICurrentUser currentUser,
-    IOptions<PremiumGrantOptions> options)
+    IOptions<PremiumGrantOptions> options,
+    IOptions<PremiumGrantEmailOptions> emailOptions,
+    IServiceProvider serviceProvider,
+    ILogger<PremiumGrantHandler> logger)
 {
     public async Task<PremiumGrantResponse[]> ListAsync(CancellationToken cancellationToken)
     {
@@ -46,6 +50,7 @@ public sealed class PremiumGrantHandler(
         var grant = await dbContext.PremiumGrants.SingleOrDefaultAsync(
             candidate => candidate.UserSubject == profile.UserSubject,
             cancellationToken);
+        var shouldSendWelcomeEmail = grant is null || grant.RevokedAt is not null;
         if (grant is null)
         {
             grant = new PremiumGrantRecord
@@ -65,9 +70,40 @@ public sealed class PremiumGrantHandler(
             grant.GrantedAt = DateTimeOffset.UtcNow;
             grant.RevokedAt = null;
             grant.RevokedBySubject = null;
+            if (shouldSendWelcomeEmail)
+            {
+                grant.PremiumWelcomeEmailSentAt = null;
+                grant.PremiumWelcomeEmailProviderMessageId = null;
+            }
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        if (shouldSendWelcomeEmail && emailOptions.Value.Enabled)
+        {
+            try
+            {
+                var jobService = serviceProvider.GetService<AsyncJobService>();
+                if (jobService is null)
+                {
+                    logger.LogWarning("Premium was granted to {UserSubject}, but asynchronous jobs are not configured for welcome email delivery.", profile.UserSubject);
+                    return PremiumGrantResult.Success(Map(grant));
+                }
+
+                await jobService.EnqueueAsync(
+                    $"{AsyncJobTypes.PremiumGrantEmail}:{grant.Id:N}:{grant.GrantedAt.UtcTicks}",
+                    AsyncJobTypes.PremiumGrantEmail,
+                    profile.UserSubject,
+                    grant.Id,
+                    new PremiumGrantEmailJobHandler.PremiumGrantEmailJobPayload(grant.Id),
+                    cancellationToken);
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                logger.LogError(exception, "Premium was granted to {UserSubject}, but its welcome email could not be queued.", profile.UserSubject);
+            }
+        }
+
         return PremiumGrantResult.Success(Map(grant));
     }
 

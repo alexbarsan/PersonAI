@@ -86,6 +86,12 @@ variable "asset_bucket_arn" {
   default     = null
 }
 
+variable "ses_email_identity_arn" {
+  type        = string
+  description = "Optional SES domain identity ARN the task may send transactional email from."
+  default     = null
+}
+
 variable "secret_kms_key_arn" {
   type        = string
   description = "Optional KMS key ARN used to decrypt injected secrets."

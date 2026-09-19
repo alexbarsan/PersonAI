@@ -48,6 +48,38 @@ resource "aws_acm_certificate_validation" "public" {
   validation_record_fqdns = [for record in aws_route53_record.certificate_validation : record.fqdn]
 }
 
+resource "aws_ses_domain_identity" "premium_email" {
+  domain = "dreamdna.world"
+}
+
+resource "aws_route53_record" "ses_verification" {
+  provider = aws.dns
+
+  allow_overwrite = true
+  name            = "_amazonses.dreamdna.world"
+  records         = [aws_ses_domain_identity.premium_email.verification_token]
+  ttl             = 600
+  type            = "TXT"
+  zone_id         = var.hosted_zone_id
+}
+
+resource "aws_ses_domain_dkim" "premium_email" {
+  domain = aws_ses_domain_identity.premium_email.domain
+}
+
+resource "aws_route53_record" "ses_dkim" {
+  provider = aws.dns
+
+  count = 3
+
+  allow_overwrite = true
+  name            = "${aws_ses_domain_dkim.premium_email.dkim_tokens[count.index]}._domainkey.dreamdna.world"
+  records         = ["${aws_ses_domain_dkim.premium_email.dkim_tokens[count.index]}.dkim.amazonses.com"]
+  ttl             = 600
+  type            = "CNAME"
+  zone_id         = var.hosted_zone_id
+}
+
 module "network" {
   source = "../../modules/network"
 
@@ -87,23 +119,24 @@ module "cognito" {
 module "api" {
   source = "../../modules/ecs-api"
 
-  name_prefix           = local.name_prefix
-  vpc_id                = module.network.vpc_id
-  public_subnet_ids     = module.network.public_subnet_ids
-  private_subnet_ids    = module.network.private_subnet_ids
-  container_image       = var.container_image
-  task_cpu              = 1024
-  task_memory           = 2048
-  desired_count         = 2
-  worker_desired_count  = 1
-  worker_max_count      = 4
-  secret_kms_key_arn    = module.security.kms_key_arn
-  regional_waf_acl_arn  = module.security.regional_waf_acl_arn
-  certificate_arn       = aws_acm_certificate_validation.public.certificate_arn
-  enable_https_listener = true
-  async_queue_arns      = [module.async_jobs.queue_arn, module.async_jobs.dead_letter_queue_arn]
-  async_queue_name      = module.async_jobs.queue_name
-  asset_bucket_arn      = module.private_assets.bucket_arn
+  name_prefix            = local.name_prefix
+  vpc_id                 = module.network.vpc_id
+  public_subnet_ids      = module.network.public_subnet_ids
+  private_subnet_ids     = module.network.private_subnet_ids
+  container_image        = var.container_image
+  task_cpu               = 1024
+  task_memory            = 2048
+  desired_count          = 2
+  worker_desired_count   = 1
+  worker_max_count       = 4
+  secret_kms_key_arn     = module.security.kms_key_arn
+  regional_waf_acl_arn   = module.security.regional_waf_acl_arn
+  certificate_arn        = aws_acm_certificate_validation.public.certificate_arn
+  enable_https_listener  = true
+  async_queue_arns       = [module.async_jobs.queue_arn, module.async_jobs.dead_letter_queue_arn]
+  async_queue_name       = module.async_jobs.queue_name
+  asset_bucket_arn       = module.private_assets.bucket_arn
+  ses_email_identity_arn = aws_ses_domain_identity.premium_email.arn
 
   environment_variables = {
     ASPNETCORE_ENVIRONMENT                            = "Production"
@@ -136,6 +169,10 @@ module "api" {
     Authentication__Cognito__ClientId                 = module.cognito.user_pool_client_id
     Cors__AllowedOrigins__0                           = "https://dreamdna.world"
     FriendsAndFamily__AdministratorEmails__0          = "ai.ro.dodoloata@gmail.com"
+    PremiumGrantEmail__Enabled                        = "true"
+    PremiumGrantEmail__FromAddress                    = "hello@dreamdna.world"
+    PremiumGrantEmail__FromName                       = "Dream DNA"
+    PremiumGrantEmail__ReplyToAddress                 = "hello@dreamdna.world"
     Jobs__QueueUrl                                    = module.async_jobs.queue_url
     Jobs__Worker__Enabled                             = "true"
     Jobs__EmbeddingBackfill__Enabled                  = "false"

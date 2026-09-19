@@ -32,6 +32,7 @@ public static class JobServiceCollectionExtensions
             services.AddScoped<IAsyncJobHandler, DreamImageSafetyJobHandler>();
             services.AddScoped<IAsyncJobHandler, DreamImageJobHandler>();
             services.AddScoped<IAsyncJobHandler, VoiceTranscriptionJobHandler>();
+            services.AddScoped<IAsyncJobHandler, PremiumGrantEmailJobHandler>();
             services.AddScoped<EmbeddingBackfillService>();
             services.AddScoped<DreamJournalSynthesisService>();
             services.AddScoped<IAsyncJobHandler, DreamJournalSynthesisJobHandler>();

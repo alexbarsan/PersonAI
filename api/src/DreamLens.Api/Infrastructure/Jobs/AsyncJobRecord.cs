@@ -54,4 +54,5 @@ public static class AsyncJobTypes
     public const string DreamImage = "dream.image";
     public const string VoiceTranscription = "voice.transcription";
     public const string Export = "export";
+    public const string PremiumGrantEmail = "premium.grant-email";
 }

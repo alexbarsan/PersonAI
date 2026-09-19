@@ -128,6 +128,7 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
             entity.Property(grant => grant.GrantedByEmail).HasMaxLength(320).IsRequired();
             entity.Property(grant => grant.GrantedAt).IsRequired();
             entity.Property(grant => grant.RevokedBySubject).HasMaxLength(256);
+            entity.Property(grant => grant.PremiumWelcomeEmailProviderMessageId).HasMaxLength(256);
         });
 
         modelBuilder.Entity<DreamRecord>(entity =>
