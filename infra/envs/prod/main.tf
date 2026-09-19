@@ -315,8 +315,12 @@ resource "aws_iam_role_policy" "github_terraform_refresh" {
       Sid    = "RefreshManagedInfrastructure"
       Effect = "Allow"
       Action = [
+        "acm:DescribeCertificate",
         "cloudfront:GetOriginAccessControl",
+        "cognito-idp:DescribeUserPoolClient",
+        "cognito-idp:DescribeUserPoolDomain",
         "cognito-idp:DescribeUserPool",
+        "cognito-idp:GetGroup",
         "cognito-idp:GetUserPoolMfaConfig",
         "cloudwatch:DescribeAlarms",
         "ec2:DescribeAddressesAttribute",
@@ -329,14 +333,23 @@ resource "aws_iam_role_policy" "github_terraform_refresh" {
         "iam:GetRolePolicy",
         "kms:DescribeKey",
         "kms:GetKeyPolicy",
+        "kms:GetKeyRotationStatus",
         "rds:ListTagsForResource",
         "s3:GetBucketAcl",
+        "s3:GetBucketCORS",
         "s3:GetBucketPolicy",
+        "ses:GetIdentityDkimAttributes",
+        "ses:GetIdentityVerificationAttributes",
         "sns:GetTopicAttributes",
         "wafv2:GetWebACL",
         "wafv2:GetWebACLForResource"
       ]
       Resource = "*"
+      }, {
+      Sid      = "AssumeDnsManagementRole"
+      Effect   = "Allow"
+      Action   = ["sts:AssumeRole"]
+      Resource = var.dns_management_role_arn
     }]
   })
 }
