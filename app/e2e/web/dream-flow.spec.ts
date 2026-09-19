@@ -8,6 +8,7 @@ test("happy path: onboarding, submit dream, view result", async ({ page }) => {
   await page.getByTestId("mock-sign-in").click();
   await page.getByTestId("go-onboarding").click();
   await expect(page.getByTestId("profile-age")).toBeVisible();
+  await page.getByLabel("Username", { exact: true }).fill("Alex Dreamer");
   await page.getByTestId("profile-age").fill("42");
   await page.getByTestId("profile-fears-input").fill("heights, dark water");
   await page.getByTestId("profile-fears-add").click();

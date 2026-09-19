@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { devices, expect, test } from "@playwright/test";
 
 async function readyArtwork(page: import("@playwright/test").Page) {
   await expect.poll(() => page.locator("img").evaluateAll(images => images.length > 0 && images.every(image => (image as HTMLImageElement).complete && (image as HTMLImageElement).naturalWidth > 0)), { timeout: 30_000 }).toBe(true);
@@ -104,6 +104,90 @@ test("the Dream DNA brand returns a signed-in visitor home", async ({ page }) =>
       exact: true,
     }),
   ).toBeVisible();
+});
+
+test("Dream Map patterns open in a desktop drawer and support relationship navigation", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/");
+  await page.getByTestId("mock-sign-in").click();
+  await page.getByRole("link", { name: "Map", exact: true }).click();
+
+  const waterPattern = page.getByRole("button", {
+    name: "Explore water, appearing in 1 dream",
+    exact: true,
+  });
+  await expect(waterPattern).toBeVisible();
+  const waterSlice = page.locator('circle[aria-label="Explore water, appearing in 1 dream"]');
+  await expect(waterSlice).toHaveCSS("cursor", "pointer");
+  await waterSlice.hover({ position: { x: 50, y: 5 } });
+  await expect(waterPattern.locator("svg")).toHaveCSS("opacity", "1");
+  await waterPattern.hover();
+  await expect(waterSlice).toHaveAttribute("stroke-width", "28");
+
+  const drawer = page.getByLabel("water pattern details", { exact: true });
+  await waterSlice.click({ position: { x: 50, y: 5 } });
+  await expect(drawer).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(drawer).toBeHidden();
+
+  await waterPattern.click();
+  await expect(drawer).toBeVisible();
+  const drawerBounds = await drawer.boundingBox();
+  expect(drawerBounds!.width).toBeGreaterThanOrEqual(439);
+  expect(drawerBounds!.width).toBeLessThanOrEqual(501);
+  expect(drawerBounds!.x + drawerBounds!.width).toBeGreaterThanOrEqual(1439);
+  await expect(page.getByText("Your DreamDNA interpretation", { exact: true })).toBeVisible();
+
+  await page.getByRole("tab", { name: "Related", exact: true }).click();
+  await page.getByRole("button", { name: /Explore curiosity, connected in/ }).click();
+  await expect(page.getByLabel("curiosity pattern details", { exact: true })).toBeVisible();
+  await page.getByLabel("Back to previous pattern", { exact: true }).click();
+  await expect(drawer).toBeVisible();
+  await page.screenshot({ path: "test-results/dream-map-pattern-drawer-desktop.png" });
+
+  await page.keyboard.press("Escape");
+  await expect(drawer).toBeHidden();
+  await expect(waterPattern).toBeFocused();
+});
+
+test("Dream Map patterns use a readable mobile legend and bottom sheet", async ({ browser }) => {
+  const context = await browser.newContext(devices["Pixel 5"]);
+  const page = await context.newPage();
+  try {
+    await page.goto("/");
+    await page.getByTestId("mock-sign-in").click();
+    await page.getByRole("link", { name: "Map", exact: true }).click();
+
+    const chart = page.getByLabel("Recurring symbols distribution", { exact: true });
+    const waterPattern = page.getByRole("button", {
+      name: "Explore water, appearing in 1 dream",
+      exact: true,
+    });
+    await chart.scrollIntoViewIfNeeded();
+    const chartBounds = await chart.boundingBox();
+    const legendBounds = await waterPattern.boundingBox();
+    expect(legendBounds!.y).toBeGreaterThanOrEqual(chartBounds!.y + chartBounds!.height - 1);
+    expect(legendBounds!.width).toBeGreaterThan(chartBounds!.width);
+
+    await waterPattern.click();
+    const sheet = page.getByLabel("water pattern details", { exact: true });
+    await expect(sheet).toBeVisible();
+    await expect.poll(() => sheet.evaluate((element) => {
+      const bounds = element.getBoundingClientRect();
+      const topmost = document.elementFromPoint(bounds.left + bounds.width / 2, bounds.top + 40);
+      return topmost === element || element.contains(topmost);
+    })).toBe(true);
+    const sheetBounds = await sheet.boundingBox();
+    const viewport = page.viewportSize()!;
+    expect(sheetBounds!.height).toBeGreaterThanOrEqual(viewport.height * 0.79);
+    expect(sheetBounds!.height).toBeLessThanOrEqual(viewport.height * 0.9);
+    expect(sheetBounds!.y + sheetBounds!.height).toBeGreaterThanOrEqual(viewport.height - 1);
+    await expect(page.getByRole("tab", { name: "Dreams", exact: true })).toBeVisible();
+    await page.screenshot({ path: "test-results/dream-map-pattern-sheet-mobile.png" });
+    await noHorizontalOverflow(page);
+  } finally {
+    await context.close();
+  }
 });
 
 for (const width of [375, 390, 768]) {

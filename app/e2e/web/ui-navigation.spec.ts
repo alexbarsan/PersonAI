@@ -21,7 +21,7 @@ test("signed-in navigation keeps core screens reachable", async ({ page }) => {
 
   await page.getByLabel("Profile").last().click();
   await expect(page.getByTestId("profile-age")).toBeVisible();
-  await expect(page.getByTestId("request-anonymization")).toBeVisible();
+  await expect(page.getByTestId("request-anonymization")).toHaveCount(0);
 });
 
 test("web home makes voice capture immediately available", async ({ page }) => {

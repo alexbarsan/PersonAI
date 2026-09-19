@@ -65,11 +65,27 @@ describe("InsightsScreen", () => {
   it("reveals the owner-scoped evidence behind a map observation", async () => {
     renderWithProviders(<InsightsScreen />);
 
-    fireEvent.press(await screen.findByLabelText("Show journal evidence for water"));
+    const waterTargets = await screen.findAllByLabelText("Explore water, appearing in 1 dream");
+    fireEvent.press(waterTargets[waterTargets.length - 1]);
 
-    expect(await screen.findByText("Observed in your journal")).toBeTruthy();
-    expect(await screen.findByText("Sources: symbols.symbol")).toBeTruthy();
+    expect(await screen.findByLabelText("water pattern details")).toBeTruthy();
+    expect(await screen.findByText("Your DreamDNA interpretation")).toBeTruthy();
+    fireEvent.press(screen.getByText("Dreams"));
     expect(screen.getAllByText("The Quiet Shoreline").length).toBeGreaterThan(0);
+    expect(screen.queryByText(/Sources:/i)).toBeNull();
+    expect(screen.queryByText(/schema\s+\d/i)).toBeNull();
+  });
+
+  it("opens the same pattern detail from a donut slice", async () => {
+    renderWithProviders(<InsightsScreen />);
+
+    const waterTargets = await screen.findAllByLabelText("Explore water, appearing in 1 dream");
+    fireEvent.press(waterTargets[0]);
+
+    expect(await screen.findByLabelText("water pattern details")).toBeTruthy();
+    expect(screen.getByText("Overview")).toBeTruthy();
+    expect(screen.getByText("Related")).toBeTruthy();
+    expect(screen.getByText("Trends")).toBeTruthy();
   });
 
   it("renders relationship observations with linked owner evidence", async () => {
