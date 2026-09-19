@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRef, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from "react-native";
+import { Platform, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from "react-native";
 import Svg, { Circle, G } from "react-native-svg";
 import { useRouter } from "expo-router";
 import ChevronRight from "lucide-react-native/icons/chevron-right";
@@ -580,7 +580,7 @@ function PieChart({ data, accessibilityLabel, selectedLabel }: { data: PieDatum[
     <View style={[styles.pieLayout, mobile && styles.pieLayoutMobile]}>
       <View style={styles.pieChartWrap}><Svg accessibilityLabel={accessibilityLabel} accessibilityRole="image" height={size} width={size}>
         <Circle cx={center} cy={center} fill="none" r={radius} stroke={theme.colors.background} strokeWidth={strokeWidth} />
-        <G rotation="-90" origin={`${center}, ${center}`}>
+        <G transform={`rotate(-90 ${center} ${center})`}>
           {positiveData.map((item) => {
             const length = (item.value / total) * circumference;
             const dashOffset = -offset;
@@ -588,22 +588,25 @@ function PieChart({ data, accessibilityLabel, selectedLabel }: { data: PieDatum[
             const interactive = Boolean(item.onPress);
             const active = activeLabel === item.label;
             const dimmed = Boolean(activeLabel) && !active;
-            const hoverProps = interactive
-              ? ({
-                  onMouseEnter: () => setHoveredSliceLabel(item.label),
-                  onMouseLeave: () => setHoveredSliceLabel(null),
-                  cursor: "pointer",
-                } as Record<string, unknown>)
-              : {};
+            const interactionProps = !interactive
+              ? {}
+              : Platform.OS === "web"
+                ? ({
+                    cursor: "pointer",
+                    onClick: item.onPress,
+                    onMouseEnter: () => setHoveredSliceLabel(item.label),
+                    onMouseLeave: () => setHoveredSliceLabel(null),
+                    onPress: null,
+                  } as Record<string, unknown>)
+                : { onPress: item.onPress };
             return (
               <Circle
-                {...hoverProps}
+                {...interactionProps}
                 accessibilityLabel={interactive ? `Explore ${item.label}, appearing in ${dreamCountLabel(item.value)}` : item.label}
                 key={item.label}
                 cx={center}
                 cy={center}
                 fill="none"
-                onPress={item.onPress}
                 opacity={dimmed ? 0.28 : 1}
                 r={radius}
                 stroke={item.color}
