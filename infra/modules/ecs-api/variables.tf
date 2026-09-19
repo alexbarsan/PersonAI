@@ -92,6 +92,12 @@ variable "ses_email_identity_arn" {
   default     = null
 }
 
+variable "enable_ses_email" {
+  type        = bool
+  description = "Whether to grant the task role permission to send transactional email through SES."
+  default     = false
+}
+
 variable "secret_kms_key_arn" {
   type        = string
   description = "Optional KMS key ARN used to decrypt injected secrets."

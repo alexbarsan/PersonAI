@@ -315,7 +315,7 @@ resource "aws_iam_role_policy" "task_transcription" {
 }
 
 resource "aws_iam_role_policy" "task_ses" {
-  count = var.ses_email_identity_arn == null ? 0 : 1
+  count = var.enable_ses_email ? 1 : 0
 
   name = "${var.name_prefix}-transactional-email"
   role = aws_iam_role.task.id

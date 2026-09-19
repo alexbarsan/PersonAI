@@ -137,6 +137,7 @@ module "api" {
   async_queue_name       = module.async_jobs.queue_name
   asset_bucket_arn       = module.private_assets.bucket_arn
   ses_email_identity_arn = aws_ses_domain_identity.premium_email.arn
+  enable_ses_email       = true
 
   environment_variables = {
     ASPNETCORE_ENVIRONMENT                            = "Production"
@@ -386,6 +387,40 @@ resource "aws_iam_role_policy" "github_deploy" {
           "cloudfront:GetDistribution"
         ]
         Resource = module.web.cloudfront_distribution_arn
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "github_terraform_state" {
+  name = "${local.name_prefix}-terraform-state"
+  role = module.security.github_deploy_role_name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid      = "TerraformStateBucket"
+        Effect   = "Allow"
+        Action   = ["s3:ListBucket"]
+        Resource = "arn:aws:s3:::dreamlens-prod-tfstate-097079438907-us-east-1"
+      },
+      {
+        Sid      = "TerraformStateObject"
+        Effect   = "Allow"
+        Action   = ["s3:GetObject", "s3:PutObject"]
+        Resource = "arn:aws:s3:::dreamlens-prod-tfstate-097079438907-us-east-1/dreamlens/prod/terraform.tfstate"
+      },
+      {
+        Sid    = "TerraformStateLock"
+        Effect = "Allow"
+        Action = [
+          "dynamodb:DescribeTable",
+          "dynamodb:DeleteItem",
+          "dynamodb:GetItem",
+          "dynamodb:PutItem"
+        ]
+        Resource = "arn:aws:dynamodb:${var.aws_region}:097079438907:table/dreamlens-prod-tflock"
       }
     ]
   })
