@@ -352,6 +352,7 @@ resource "aws_iam_role_policy" "github_terraform_refresh" {
         "s3:GetBucketPolicyStatus",
         "s3:GetBucketPublicAccessBlock",
         "s3:GetBucketReplication",
+        "s3:GetReplicationConfiguration",
         "s3:GetBucketRequestPayment",
         "s3:GetBucketTagging",
         "s3:GetBucketVersioning",
