@@ -316,6 +316,7 @@ resource "aws_iam_role_policy" "github_terraform_refresh" {
       Effect = "Allow"
       Action = [
         "acm:DescribeCertificate",
+        "acm:ListTagsForCertificate",
         "cloudfront:GetOriginAccessControl",
         "cognito-idp:DescribeUserPoolClient",
         "cognito-idp:DescribeUserPoolDomain",
@@ -334,10 +335,12 @@ resource "aws_iam_role_policy" "github_terraform_refresh" {
         "kms:DescribeKey",
         "kms:GetKeyPolicy",
         "kms:GetKeyRotationStatus",
+        "kms:ListAliases",
         "rds:ListTagsForResource",
         "s3:GetBucketAcl",
         "s3:GetBucketCORS",
         "s3:GetBucketPolicy",
+        "s3:GetBucketWebsite",
         "ses:GetIdentityDkimAttributes",
         "ses:GetIdentityVerificationAttributes",
         "sns:GetTopicAttributes",
@@ -350,6 +353,11 @@ resource "aws_iam_role_policy" "github_terraform_refresh" {
       Effect   = "Allow"
       Action   = ["sts:AssumeRole"]
       Resource = var.dns_management_role_arn
+      }, {
+      Sid      = "ReadManagedSecretMetadata"
+      Effect   = "Allow"
+      Action   = ["secretsmanager:DescribeSecret"]
+      Resource = "arn:aws:secretsmanager:${var.aws_region}:097079438907:secret:${local.name_prefix}/*"
     }]
   })
 }
