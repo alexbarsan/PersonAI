@@ -1,5 +1,5 @@
-import { PropsWithChildren, useEffect } from "react";
-import { useRouter, useSegments } from "expo-router";
+import { PropsWithChildren } from "react";
+import { Redirect, useSegments } from "expo-router";
 import { StyleSheet, View } from "react-native";
 
 import { useAuthStore } from "@/auth/authStore";
@@ -7,26 +7,21 @@ import { Text } from "@/components/Text";
 import { useTheme } from "@/theme/ThemeProvider";
 
 export function AuthRouteGuard({ children }: PropsWithChildren) {
-  const router = useRouter();
   const segments = useSegments();
   const user = useAuthStore((state) => state.user);
   const isRestoring = useAuthStore((state) => state.isRestoring);
   const theme = useTheme();
   const protectedRoute = requiresAuthentication(segments);
 
-  useEffect(() => {
-    if (protectedRoute && !isRestoring && !user) {
-      router.replace("/");
-    }
-  }, [isRestoring, protectedRoute, router, user]);
-
-  if (protectedRoute && (isRestoring || !user)) {
+  if (protectedRoute && isRestoring) {
     return <View style={styles.loading}>
       <Text style={{ color: theme.colors.mutedText }}>
-        {isRestoring ? "Restoring your session" : "Redirecting to sign in"}
+        Restoring your session
       </Text>
     </View>;
   }
+
+  if (protectedRoute && !user) return <Redirect href="/" />;
 
   return children;
 }
