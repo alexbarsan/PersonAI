@@ -73,6 +73,10 @@ describe("InsightsScreen", () => {
     expect(screen.getByText(/Water appears with curiosity in this journal/)).toBeTruthy();
     expect(screen.getByText("Research lenses")).toBeTruthy();
     expect(screen.getByLabelText(/Open source Continuity between waking activities/)).toBeTruthy();
+    expect(screen.getByText("curiosity · 66.7%")).toBeTruthy();
+    fireEvent.press(screen.getByText("Related"));
+    expect(screen.getByText("2 of 3 dreams · 66.7%")).toBeTruthy();
+    expect(screen.getByText("2.0× more common with this pattern")).toBeTruthy();
     fireEvent.press(screen.getByText("Dreams"));
     expect(screen.getAllByText("The Quiet Shoreline").length).toBeGreaterThan(0);
     expect(screen.queryByText(/Sources:/i)).toBeNull();

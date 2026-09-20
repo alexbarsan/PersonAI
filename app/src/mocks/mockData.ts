@@ -260,19 +260,38 @@ export const mockInsights: InsightsResponse = {
 export const mockDreamObservation = {
   type: "symbol",
   value: "water",
-  totalDreams: 1,
+  totalDreams: 3,
   averageExtractionConfidence: 0.82,
   sourceFields: ["symbols.symbol"],
   firstObservedAt: "2026-07-01",
   lastObservedAt: "2026-07-01",
   personalizedInterpretation: {
     reflection: "Water appears with curiosity in this journal, especially around changing places. It may reflect a recurring way of approaching uncertainty with attention rather than urgency.",
-    promptVersion: "journal-synthesis-v2",
+    promptVersion: "journal-synthesis-v3",
     generatedAt: "2026-07-02T02:00:00Z",
     evidenceDreamIds: [mockDream.id]
   },
-  commonMeanings: [{
-    text: "Research does not establish one fixed meaning for water. A useful lens is how it connects with your waking concerns, emotions, and current experiences.",
+  relatedPatterns: [{
+    patternId: "emotion:curiosity",
+    patternType: "emotion",
+    name: "curiosity",
+    jointDreamCount: 2,
+    sourceDreamCount: 3,
+    totalPatternDreamCount: 2,
+    coOccurrenceRate: 0.667,
+    baseRate: 0.333,
+    lift: 2,
+    evidenceLevel: "strong" as const
+  }],
+  relationshipReadiness: {
+    completedDreamCount: 6,
+    sourceDreamCount: 3,
+    minimumSourceDreamCount: 3,
+    minimumJointDreamCount: 2,
+    hasSufficientSourceEvidence: true
+  },
+  researchLenses: [{
+    text: "Memory incorporation and dream content analysis offer context for recurring details. They do not establish a fixed universal meaning for a symbol or object.",
     source: {
       id: "schredl-hofmann-2003",
       title: "Continuity between waking activities and dream activities",

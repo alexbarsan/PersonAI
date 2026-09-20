@@ -5,13 +5,16 @@ using DreamLens.Api.Infrastructure.Jobs;
 using DreamLens.Api.Infrastructure.Persistence;
 using DreamLens.Api.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace DreamLens.Api.Features.Insights;
 
 public sealed class GetDreamObservationHandler(
     DreamLensDbContext dbContext,
     ICurrentUser currentUser,
-    IStringEncryptor encryptor)
+    IStringEncryptor encryptor,
+    IOptions<DreamPatternRelationshipOptions> relationshipOptions,
+    IOptions<DreamJournalSynthesisOptions> synthesisOptions)
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -27,11 +30,17 @@ public sealed class GetDreamObservationHandler(
 
         var normalizedType = type.Trim().ToLowerInvariant();
         var normalizedValue = DreamFactNormalization.Normalize(value);
+        var allDreams = await dbContext.Dreams
+            .AsNoTracking()
+            .Where(dream => dream.UserSubject == currentUser.Subject && dream.Status == "completed")
+            .ToArrayAsync(cancellationToken);
+        var allDreamIds = allDreams.Select(dream => dream.Id).ToArray();
         var facts = await dbContext.DreamFacts
             .AsNoTracking()
             .Where(fact => fact.UserSubject == currentUser.Subject
                 && fact.FactType == normalizedType
-                && fact.NormalizedValue == normalizedValue)
+                && fact.NormalizedValue == normalizedValue
+                && allDreamIds.Contains(fact.DreamId))
             .OrderByDescending(fact => fact.CreatedAt)
             .ToArrayAsync(cancellationToken);
         if (facts.Length == 0)
@@ -40,10 +49,14 @@ public sealed class GetDreamObservationHandler(
         }
 
         var dreamIds = facts.Select(fact => fact.DreamId).Distinct().ToArray();
-        var dreams = await dbContext.Dreams
+        var dreams = allDreams
+            .Where(dream => dreamIds.Contains(dream.Id))
+            .ToDictionary(dream => dream.Id);
+        var allFacts = await dbContext.DreamFacts
             .AsNoTracking()
-            .Where(dream => dream.UserSubject == currentUser.Subject && dreamIds.Contains(dream.Id))
-            .ToDictionaryAsync(dream => dream.Id, cancellationToken);
+            .Where(fact => fact.UserSubject == currentUser.Subject
+                && allDreamIds.Contains(fact.DreamId))
+            .ToArrayAsync(cancellationToken);
         var evidence = facts
             .Where(fact => dreams.ContainsKey(fact.DreamId))
             .Select(fact =>
@@ -63,7 +76,7 @@ public sealed class GetDreamObservationHandler(
             .Take(25)
             .ToArray();
         var confidenceRows = facts.Where(fact => fact.ExtractionConfidence is not null).ToArray();
-        var interpretation = await ReadInterpretationAsync(normalizedType, normalizedValue, cancellationToken);
+        var interpretation = await ReadInterpretationAsync(normalizedType, normalizedValue, synthesisOptions.Value.PromptVersion, cancellationToken);
         var monthlyOccurrences = BuildMonthlyOccurrences(facts, dreams);
         var observedDates = facts
             .Where(fact => dreams.ContainsKey(fact.DreamId))
@@ -73,6 +86,12 @@ public sealed class GetDreamObservationHandler(
         {
             return null;
         }
+        var relationships = DreamPatternRelationshipCalculator.Calculate(
+            allFacts.Select(fact => new DreamPatternFact(fact.DreamId, fact.FactType, fact.NormalizedValue, fact.DisplayValue)),
+            allDreams.Length,
+            normalizedType,
+            normalizedValue,
+            relationshipOptions.Value);
 
         return new DreamObservationResponse(
             normalizedType,
@@ -84,7 +103,24 @@ public sealed class GetDreamObservationHandler(
             observedDates.Min(),
             observedDates.Max(),
             interpretation,
-            DreamPatternMeaningCatalog.Get(normalizedType, facts[0].DisplayValue),
+            relationships.Relationships.Select(relationship => new DreamPatternRelationshipResponse(
+                relationship.PatternId,
+                relationship.PatternType,
+                relationship.Name,
+                relationship.JointDreamCount,
+                relationship.SourceDreamCount,
+                relationship.TotalPatternDreamCount,
+                relationship.CoOccurrenceRate,
+                relationship.BaseRate,
+                relationship.Lift,
+                relationship.EvidenceLevel)).ToArray(),
+            new DreamPatternRelationshipReadinessResponse(
+                relationships.CompletedDreamCount,
+                relationships.SourceDreamCount,
+                Math.Max(2, relationshipOptions.Value.MinimumSourceDreamCount),
+                Math.Max(2, relationshipOptions.Value.MinimumJointDreamCount),
+                relationships.HasSufficientSourceEvidence),
+            DreamPatternMeaningCatalog.GetResearchLenses(normalizedType),
             monthlyOccurrences,
             CalculateTrendDirection(monthlyOccurrences));
     }
@@ -92,11 +128,17 @@ public sealed class GetDreamObservationHandler(
     private async Task<DreamPatternInterpretationResponse?> ReadInterpretationAsync(
         string type,
         string normalizedValue,
+        string requiredPromptVersion,
         CancellationToken cancellationToken)
     {
         var synthesis = await dbContext.DreamJournalSyntheses.AsNoTracking()
             .SingleOrDefaultAsync(item => item.UserSubject == currentUser.Subject, cancellationToken);
         if (synthesis is null)
+        {
+            return null;
+        }
+
+        if (!string.Equals(synthesis.PromptVersion, requiredPromptVersion, StringComparison.Ordinal))
         {
             return null;
         }

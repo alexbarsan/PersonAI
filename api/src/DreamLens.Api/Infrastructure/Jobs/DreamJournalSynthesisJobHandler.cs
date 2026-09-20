@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text.Json;
 using DreamLens.Api.Features.Dreams;
+using DreamLens.Api.Features.Insights;
 using DreamLens.Api.Infrastructure.Persistence;
 using DreamLens.Api.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
@@ -13,7 +14,8 @@ public sealed class DreamJournalSynthesisJobHandler(
     DreamLensDbContext dbContext,
     IStringEncryptor encryptor,
     IChatClient chatClient,
-    IOptions<DreamJournalSynthesisOptions> options) : IAsyncJobHandler
+    IOptions<DreamJournalSynthesisOptions> options,
+    IOptions<DreamPatternRelationshipOptions> relationshipOptions) : IAsyncJobHandler
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -60,7 +62,11 @@ public sealed class DreamJournalSynthesisJobHandler(
         var facts = await dbContext.DreamFacts.AsNoTracking()
             .Where(fact => fact.UserSubject == message.UserSubject && sourceIds.Contains(fact.DreamId))
             .ToArrayAsync(cancellationToken);
-        var source = BuildSource(sourceDreams, facts, allDreams.Length);
+        var allDreamIds = allDreams.Select(dream => dream.Id).ToArray();
+        var allFacts = await dbContext.DreamFacts.AsNoTracking()
+            .Where(fact => fact.UserSubject == message.UserSubject && allDreamIds.Contains(fact.DreamId))
+            .ToArrayAsync(cancellationToken);
+        var source = BuildSource(sourceDreams, facts, allFacts, allDreams.Length, relationshipOptions.Value);
         var started = Stopwatch.GetTimestamp();
         ChatResponse? response = null;
         try
@@ -128,11 +134,11 @@ public sealed class DreamJournalSynthesisJobHandler(
     private static object BuildSource(
         IReadOnlyCollection<DreamRecord> dreams,
         IReadOnlyCollection<DreamFactRecord> facts,
-        int totalDreamCount) => new
+        IReadOnlyCollection<DreamFactRecord> allFacts,
+        int totalDreamCount,
+        DreamPatternRelationshipOptions relationshipOptions)
     {
-        totalDreamCount,
-        sourceDreamCount = dreams.Count,
-        patterns = facts
+        var sourcePatterns = facts
             .GroupBy(fact => new { fact.FactType, fact.NormalizedValue })
             .Select(group => new
             {
@@ -143,8 +149,41 @@ public sealed class DreamJournalSynthesisJobHandler(
             })
             .OrderByDescending(pattern => pattern.dreamCount)
             .ThenBy(pattern => pattern.type)
-            .Take(40),
-        dreams = dreams.Select(dream => new
+            .Take(40)
+            .ToArray();
+        var relationshipEvidence = sourcePatterns
+            .Select(pattern => new
+            {
+                pattern.type,
+                pattern.value,
+                relationships = DreamPatternRelationshipCalculator.Calculate(
+                        allFacts.Select(fact => new DreamPatternFact(fact.DreamId, fact.FactType, fact.NormalizedValue, fact.DisplayValue)),
+                        totalDreamCount,
+                        pattern.type,
+                        DreamFactNormalization.Normalize(pattern.value),
+                        relationshipOptions)
+                    .Relationships
+                    .Take(5)
+                    .Select(relationship => new
+                    {
+                        type = relationship.PatternType,
+                        value = relationship.Name,
+                        jointDreamCount = relationship.JointDreamCount,
+                        sourceDreamCount = relationship.SourceDreamCount,
+                        totalPatternDreamCount = relationship.TotalPatternDreamCount,
+                        coOccurrenceRate = relationship.CoOccurrenceRate,
+                        baseRate = relationship.BaseRate,
+                        lift = relationship.Lift
+                    })
+            })
+            .ToArray();
+        return new
+        {
+            totalDreamCount,
+            sourceDreamCount = dreams.Count,
+            patterns = sourcePatterns,
+            patternRelationshipEvidence = relationshipEvidence,
+            dreams = dreams.Select(dream => new
         {
             id = dream.Id,
             title = DreamTitleGenerator.Create(dream.Title, DreamMapper.ReadSummary(dream), dream.Text),
@@ -153,7 +192,8 @@ public sealed class DreamJournalSynthesisJobHandler(
             summary = DreamMapper.ReadSummary(dream),
             tags = DreamMapper.ReadTags(dream)
         })
-    };
+        };
+    }
 
     private static string BuildPrompt(object source) => $$"""
         You are preparing a private whole-journal reflection for a dream journal user.
@@ -186,6 +226,8 @@ public sealed class DreamJournalSynthesisJobHandler(
         - Prefer repeated patterns over isolated details.
         - Return 4-8 pattern reflections for the strongest supplied patterns that occur in at least two dreams.
         - Pattern type and value must exactly match a supplied pattern. Use only its evidenceDreamIds.
+        - The patternRelationshipEvidence data contains calculated journal counts, conditional rates, baseline rates, and lift. Use it when available for a pattern reflection. Do not invent a relationship that is not present there.
+        - Describe a relationship as an observation in this journal, never as causation. Use cautious phrases such as "may", "could", "appears to", and "in your journal".
         - Explain how each pattern appears in this journal; do not assign a fixed universal symbolic meaning.
         - Explain uncertainty when evidence is limited.
         - Never give medical advice or a diagnosis.

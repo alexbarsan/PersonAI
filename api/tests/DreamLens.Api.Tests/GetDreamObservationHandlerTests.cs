@@ -6,6 +6,7 @@ using DreamLens.Api.Infrastructure.Jobs;
 using DreamLens.Api.Infrastructure.Persistence;
 using DreamLens.Api.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace DreamLens.Api.Tests;
 
@@ -41,25 +42,27 @@ public sealed class GetDreamObservationHandlerTests
             SourceLatestDreamAt = DateTimeOffset.UtcNow,
             Provider = "DeepSeek",
             Model = "test-model",
-            PromptVersion = "journal-synthesis-v2",
+            PromptVersion = "journal-synthesis-v3",
             GeneratedAt = new DateTimeOffset(2026, 9, 6, 1, 0, 0, TimeSpan.Zero)
         });
         await dbContext.SaveChangesAsync();
         var handler = new GetDreamObservationHandler(
             dbContext,
             new StubCurrentUser("subject-a", null, null, "UnitTest"),
-            encryption);
+            encryption,
+            Options.Create(new DreamPatternRelationshipOptions()),
+            Options.Create(new DreamJournalSynthesisOptions { PromptVersion = "journal-synthesis-v3" }));
 
         var response = await handler.HandleAsync("symbol", "Water", CancellationToken.None);
 
         Assert.NotNull(response);
         Assert.Equal("Water appears during two changes in this journal.", response.PersonalizedInterpretation?.Reflection);
-        Assert.Equal("journal-synthesis-v2", response.PersonalizedInterpretation?.PromptVersion);
+        Assert.Equal("journal-synthesis-v3", response.PersonalizedInterpretation?.PromptVersion);
         Assert.Equal(new DateOnly(2026, 7, 5), response.FirstObservedAt);
         Assert.Equal(new DateOnly(2026, 9, 5), response.LastObservedAt);
         Assert.Equal(2, response.MonthlyOccurrences.Sum(month => month.Count));
         Assert.Contains(response.MonthlyOccurrences, month => month.Month == new DateOnly(2026, 8, 1) && month.Count == 0);
-        Assert.All(response.CommonMeanings, meaning => Assert.StartsWith("https://", meaning.Source.Url));
+        Assert.All(response.ResearchLenses, meaning => Assert.StartsWith("https://", meaning.Source.Url));
     }
 
     private static DreamRecord AddDreamWithWater(DreamLensDbContext dbContext, string occurredAt)

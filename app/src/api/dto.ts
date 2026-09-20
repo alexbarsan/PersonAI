@@ -304,7 +304,9 @@ export type DreamObservationResponse = {
     generatedAt: string;
     evidenceDreamIds: string[];
   } | null;
-  commonMeanings: Array<{
+  relatedPatterns: DreamPatternRelationshipResponse[];
+  relationshipReadiness: DreamPatternRelationshipReadinessResponse;
+  researchLenses: Array<{
     text: string;
     source: {
       id: string;
@@ -315,6 +317,27 @@ export type DreamObservationResponse = {
   }>;
   monthlyOccurrences: Array<{ month: string; count: number }>;
   trendDirection: "increasing" | "decreasing" | "steady" | "not_enough_data";
+};
+
+export type DreamPatternRelationshipResponse = {
+  patternId: string;
+  patternType: string;
+  name: string;
+  jointDreamCount: number;
+  sourceDreamCount: number;
+  totalPatternDreamCount: number;
+  coOccurrenceRate: number;
+  baseRate: number;
+  lift: number;
+  evidenceLevel: "insufficient" | "weak" | "moderate" | "strong";
+};
+
+export type DreamPatternRelationshipReadinessResponse = {
+  completedDreamCount: number;
+  sourceDreamCount: number;
+  minimumSourceDreamCount: number;
+  minimumJointDreamCount: number;
+  hasSufficientSourceEvidence: boolean;
 };
 
 export type DreamObservationEvidenceResponse = {

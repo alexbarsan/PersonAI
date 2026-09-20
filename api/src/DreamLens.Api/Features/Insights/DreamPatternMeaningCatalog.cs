@@ -20,15 +20,15 @@ public static class DreamPatternMeaningCatalog
         "https://pubmed.ncbi.nlm.nih.gov/32968499/",
         2020);
 
-    public static DreamPatternMeaningResponse[] Get(string type, string value)
+    public static DreamPatternMeaningResponse[] GetResearchLenses(string type)
     {
-        var displayValue = value.Trim();
         var association = type switch
         {
-            "person" => $"A recurring person such as {displayValue} can be explored through your own relationship, memories, and recent concerns rather than treated as a literal message about that person.",
-            "location" => $"A recurring place such as {displayValue} may combine fragments of autobiographical memory. Its personal history and emotional tone are more useful than a universal location dictionary.",
-            "emotion" => $"The repeated presence of {displayValue} is best read as an observed emotional pattern in this journal, not as a diagnosis or prediction.",
-            _ => $"Research does not establish one fixed meaning for {displayValue}. A useful lens is how it connects with your waking concerns, emotions, and current experiences."
+            "person" => "Research on dream social content can be a useful lens for considering memory incorporation and interpersonal simulation. It does not assign a fixed meaning to any individual person.",
+            "location" => "Autobiographical and spatial memory can shape dream locations. A place's personal history and emotional tone are more useful than a universal location dictionary.",
+            "emotion" => "Dream affect can be explored through emotional continuity and waking-life incorporation. Repeated emotion is an observation in this journal, not a diagnosis or prediction.",
+            "scenario" => "Recurring scenarios can be considered alongside waking concerns and continuity across reports. The research lens does not establish a single meaning for a scenario.",
+            _ => "Memory incorporation and dream content analysis offer context for recurring details. They do not establish a fixed universal meaning for a symbol or object."
         };
 
         var associationSource = type is "person" or "location" ? MemorySource : ContinuitySource;
@@ -36,7 +36,7 @@ public static class DreamPatternMeaningCatalog
         [
             new DreamPatternMeaningResponse(association, associationSource),
             new DreamPatternMeaningResponse(
-                $"{char.ToUpperInvariant(type[0])}{type[1..]} patterns can be compared across dreams as journal evidence. Frequency and co-occurrence describe the reports; they do not establish cause or a clinical conclusion.",
+                "Frequency and co-occurrence describe reported dream content. They do not establish cause, a universal symbol dictionary, or a clinical conclusion.",
                 ContentSource)
         ];
     }

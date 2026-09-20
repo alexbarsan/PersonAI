@@ -54,6 +54,7 @@ builder.Services.AddScoped<GetMeHandler>();
 builder.Services.AddScoped<GetEntitlementHandler>();
 builder.Services.Configure<PremiumGrantOptions>(builder.Configuration.GetSection("FriendsAndFamily"));
 builder.Services.Configure<AskDreamsOptions>(builder.Configuration.GetSection("AskDreams"));
+builder.Services.Configure<DreamPatternRelationshipOptions>(builder.Configuration.GetSection(DreamPatternRelationshipOptions.SectionName));
 
 var persistenceEnabled = !string.IsNullOrWhiteSpace(PersistenceServiceCollectionExtensions.ResolveConnectionString(builder.Configuration));
 if (persistenceEnabled)

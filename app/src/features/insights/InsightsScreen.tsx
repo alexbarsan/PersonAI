@@ -20,7 +20,6 @@ import { AppShell, BrandMark } from "@/components/AppShell";
 import {
   DreamPattern,
   patternFromFact,
-  relationsForPattern,
 } from "@/features/insights/dreamMapModel";
 import { PatternDetailSheet, PatternDetailTab } from "@/features/insights/PatternDetailSheet";
 import { useTheme } from "@/theme/ThemeProvider";
@@ -209,7 +208,6 @@ export function InsightsScreen() {
         onOpenDream={(dreamId) => { closePattern(); router.push(`/dreams/${dreamId}`); }}
         onSelectPattern={openPattern}
         pattern={selectedPattern}
-        relatedPatterns={insights.data && selectedPattern ? relationsForPattern(insights.data, selectedPattern) : []}
       />
       </>
     </AppShell>

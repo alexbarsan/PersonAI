@@ -147,7 +147,8 @@ public sealed class DreamJournalSynthesisTests
             dbContext,
             encryption,
             new FakeChatClient(response),
-            settings);
+            settings,
+            Options.Create(new DreamLens.Api.Features.Insights.DreamPatternRelationshipOptions()));
         var payload = System.Text.Json.JsonSerializer.Serialize(
             new DreamJournalSynthesisJobHandler.DreamJournalSynthesisJobPayload(settings.Value.PromptVersion));
 

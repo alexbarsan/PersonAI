@@ -37,7 +37,9 @@ public sealed record DreamObservationResponse(
     DateOnly FirstObservedAt,
     DateOnly LastObservedAt,
     DreamPatternInterpretationResponse? PersonalizedInterpretation,
-    DreamPatternMeaningResponse[] CommonMeanings,
+    DreamPatternRelationshipResponse[] RelatedPatterns,
+    DreamPatternRelationshipReadinessResponse RelationshipReadiness,
+    DreamPatternMeaningResponse[] ResearchLenses,
     DreamPatternMonthlyCountResponse[] MonthlyOccurrences,
     string TrendDirection);
 
@@ -56,6 +58,25 @@ public sealed record DreamPatternMeaningSourceResponse(
     string Title,
     string Url,
     int PublishedYear);
+
+public sealed record DreamPatternRelationshipResponse(
+    string PatternId,
+    string PatternType,
+    string Name,
+    int JointDreamCount,
+    int SourceDreamCount,
+    int TotalPatternDreamCount,
+    decimal CoOccurrenceRate,
+    decimal BaseRate,
+    decimal Lift,
+    string EvidenceLevel);
+
+public sealed record DreamPatternRelationshipReadinessResponse(
+    int CompletedDreamCount,
+    int SourceDreamCount,
+    int MinimumSourceDreamCount,
+    int MinimumJointDreamCount,
+    bool HasSufficientSourceEvidence);
 
 public sealed record DreamPatternMonthlyCountResponse(DateOnly Month, int Count);
 

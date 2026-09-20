@@ -18,5 +18,5 @@ public sealed class DreamJournalSynthesisOptions
 
     public decimal OutputCostPerMillionTokensUsd { get; set; } = 3.96m;
 
-    public string PromptVersion { get; set; } = "journal-synthesis-v2";
+    public string PromptVersion { get; set; } = "journal-synthesis-v3";
 }

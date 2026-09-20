@@ -5,11 +5,10 @@ import ChevronRight from "lucide-react-native/icons/chevron-right";
 import ExternalLink from "lucide-react-native/icons/external-link";
 import X from "lucide-react-native/icons/x";
 
-import { DreamObservationResponse } from "@/api/dto";
+import { DreamObservationResponse, DreamPatternRelationshipResponse } from "@/api/dto";
 import { Text } from "@/components/Text";
 import {
   DreamPattern,
-  DreamPatternRelation,
   patternTypeLabel,
 } from "@/features/insights/dreamMapModel";
 import { useTheme } from "@/theme/ThemeProvider";
@@ -28,7 +27,6 @@ type PatternDetailSheetProps = {
   onOpenDream: (dreamId: string) => void;
   onSelectPattern: (pattern: DreamPattern) => void;
   pattern: DreamPattern | null;
-  relatedPatterns: DreamPatternRelation[];
 };
 
 const tabs: Array<{ id: PatternDetailTab; label: string }> = [
@@ -130,7 +128,7 @@ export function PatternDetailSheet(props: PatternDetailSheetProps) {
 function Overview(props: PatternDetailSheetProps) {
   const theme = useTheme();
   const interpretation = props.observation?.personalizedInterpretation;
-  const meanings = props.observation?.commonMeanings ?? [];
+  const meanings = props.observation?.researchLenses ?? [];
   return <View style={styles.sections}>
     <View style={[styles.interpretation, { backgroundColor: theme.colors.sage, borderColor: theme.colors.border }]}>
       <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Your DreamDNA interpretation</Text>
@@ -145,15 +143,16 @@ function Overview(props: PatternDetailSheetProps) {
     </View>
     <View style={styles.section}>
       <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Connected concepts</Text>
-      {props.relatedPatterns.length > 0 ? (
-        <View style={styles.chips}>{props.relatedPatterns.map((relation) => <Pressable
-          accessibilityLabel={`Explore ${relation.pattern.name}`}
+      {props.observation?.relatedPatterns.length ? (
+        <View style={styles.chips}>{props.observation.relatedPatterns.map((relation) => <Pressable
+          accessibilityHint={`Appears in ${relation.jointDreamCount} of ${relation.sourceDreamCount} dreams with this pattern, ${formatLift(relation.lift)} more common than its usual journal rate.`}
+          accessibilityLabel={`Explore ${relation.name}`}
           accessibilityRole="button"
-          key={relation.pattern.id}
-          onPress={() => props.onSelectPattern(relation.pattern)}
+          key={relation.patternId}
+          onPress={() => props.onSelectPattern(toDreamPattern(relation))}
           style={[styles.chip, { borderColor: theme.colors.border }]}
-        ><Text style={[styles.chipText, { color: theme.colors.text }]}>{relation.pattern.name}</Text></Pressable>)}</View>
-      ) : <Text style={[styles.body, { color: theme.colors.mutedText }]}>No connected patterns meet the current evidence threshold.</Text>}
+        ><Text style={[styles.chipText, { color: theme.colors.text }]}>{relation.name} · {formatRate(relation.coOccurrenceRate)}</Text></Pressable>)}</View>
+      ) : <ConnectionFallback observation={props.observation} />}
     </View>
     <View style={styles.section}>
       <Text style={[styles.secondaryTitle, { color: theme.colors.text }]}>Research lenses</Text>
@@ -175,27 +174,32 @@ function Overview(props: PatternDetailSheetProps) {
 
 function Related(props: PatternDetailSheetProps) {
   const theme = useTheme();
-  if (props.relatedPatterns.length === 0) return <DetailState title="No related patterns yet" body="More repeated patterns are needed before a reliable connection can be shown." />;
+  const relatedPatterns = props.observation?.relatedPatterns ?? [];
+  if (relatedPatterns.length === 0) return <ConnectionFallback observation={props.observation} state />;
+  const groups = groupRelatedPatterns(relatedPatterns);
   return <View style={styles.sections}>
     <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Related patterns</Text>
-    {props.relatedPatterns.map((relation) => <Pressable
-      accessibilityLabel={`Explore ${relation.pattern.name}, connected in ${relation.count} dreams`}
+    {groups.map(([type, patterns]) => <View key={type} style={styles.relatedGroup}>
+      <Text style={[styles.secondaryTitle, { color: theme.colors.text }]}>{patternTypeLabel(type as DreamPattern["type"])}</Text>
+      {patterns.map((relation) => <Pressable
+      accessibilityLabel={`Explore ${relation.name}, connected in ${relation.jointDreamCount} dreams`}
       accessibilityRole="button"
-      key={relation.pattern.id}
-      onPress={() => props.onSelectPattern(relation.pattern)}
+      key={relation.patternId}
+      onPress={() => props.onSelectPattern(toDreamPattern(relation))}
       style={[styles.relatedRow, { borderColor: theme.colors.border }]}
     >
       <View style={styles.relatedHeading}>
         <View style={styles.relatedCopy}>
-          <Text style={[styles.rowTitle, { color: theme.colors.text }]}>{relation.description}</Text>
-          <Text style={[styles.meta, { color: theme.colors.mutedText }]}>{relation.count} / {props.pattern?.count} dreams · {relation.strengthPercent}%</Text>
+          <Text style={[styles.rowTitle, { color: theme.colors.text }]}>{relation.name}</Text>
+          <Text style={[styles.meta, { color: theme.colors.mutedText }]}>{relation.jointDreamCount} of {relation.sourceDreamCount} dreams · {formatRate(relation.coOccurrenceRate)}</Text>
+          <Text style={[styles.meta, { color: theme.colors.mutedText }]}>{formatLift(relation.lift)} more common with this pattern</Text>
         </View>
         <ChevronRight color={theme.colors.mutedText} size={18} />
       </View>
       <View style={[styles.progressTrack, { backgroundColor: theme.colors.softInk }]}>
-        <View style={[styles.progressValue, { backgroundColor: theme.colors.primary, width: `${Math.min(100, relation.strengthPercent)}%` }]} />
+        <View style={[styles.progressValue, { backgroundColor: theme.colors.primary, width: `${Math.min(100, relation.coOccurrenceRate * 100)}%` }]} />
       </View>
-    </Pressable>)}
+    </Pressable>)}</View>)}
   </View>;
 }
 
@@ -219,6 +223,40 @@ function Dreams(props: PatternDetailSheetProps) {
       <ChevronRight color={theme.colors.mutedText} size={18} />
     </Pressable>)}
   </View>;
+}
+
+function ConnectionFallback({ observation, state = false }: { observation?: DreamObservationResponse; state?: boolean }) {
+  const sourceCount = observation?.relationshipReadiness.sourceDreamCount ?? 0;
+  const minimum = observation?.relationshipReadiness.minimumSourceDreamCount ?? 3;
+  const title = sourceCount <= 1 ? "No connected patterns yet" : "No strong connections yet";
+  const body = sourceCount <= 1
+    ? "This pattern has appeared once so far. More dreams are needed before DreamDNA can identify recurring connections."
+    : sourceCount < minimum
+      ? `This pattern has appeared in ${sourceCount} dreams. More repeated dreams are needed before DreamDNA can identify recurring connections.`
+      : `We found this pattern in ${sourceCount} dreams, but there is not enough repeated overlap with another pattern to show a reliable journal connection yet.`;
+  if (state) return <DetailState title={title} body={body} />;
+  const theme = useTheme();
+  return <Text style={[styles.body, { color: theme.colors.mutedText }]}>{body}</Text>;
+}
+
+function groupRelatedPatterns(patterns: DreamPatternRelationshipResponse[]) {
+  return Array.from(patterns.reduce((groups, pattern) => {
+    const group = groups.get(pattern.patternType) ?? [];
+    group.push(pattern);
+    groups.set(pattern.patternType, group);
+    return groups;
+  }, new Map<string, DreamPatternRelationshipResponse[]>()).entries());
+}
+
+function toDreamPattern(relation: DreamPatternRelationshipResponse): DreamPattern {
+  return {
+    id: relation.patternId,
+    type: relation.patternType as DreamPattern["type"],
+    name: relation.name,
+    count: relation.totalPatternDreamCount,
+    journalPercentage: relation.baseRate * 100,
+    lastObservedAt: null,
+  };
 }
 
 function Trends(props: PatternDetailSheetProps) {
@@ -263,6 +301,14 @@ function DetailState({ title, body, warning = false }: { title: string; body: st
 
 function formatPercentage(value: number) {
   return `${Number.isInteger(value) ? value : value.toFixed(1)}%`;
+}
+
+function formatRate(value: number) {
+  return formatPercentage(value * 100);
+}
+
+function formatLift(value: number) {
+  return `${value.toFixed(1)}×`;
 }
 
 function formatDate(value: string) {
@@ -323,6 +369,7 @@ const styles = StyleSheet.create({
   sourceLink: { alignItems: "center", alignSelf: "flex-start", flexDirection: "row", gap: 5, minHeight: 32 },
   sourceText: { flexShrink: 1, fontSize: 12, fontWeight: "700", lineHeight: 17 },
   relatedRow: { borderBottomWidth: 1, gap: 10, minHeight: 72, paddingVertical: 12 },
+  relatedGroup: { gap: 4 },
   relatedHeading: { alignItems: "center", flexDirection: "row", gap: 12 },
   relatedCopy: { flex: 1, gap: 3 },
   rowTitle: { fontSize: 14, fontWeight: "800", lineHeight: 20 },
