@@ -323,9 +323,16 @@ resource "aws_iam_role_policy" "task_ses" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Effect   = "Allow"
-      Action   = ["ses:SendEmail"]
-      Resource = var.ses_email_identity_arn
+      Effect = "Allow"
+      Action = ["ses:SendEmail"]
+      # SES evaluates verified recipient identities while an account is in the sandbox.
+      # Resource must therefore be broad, while the condition preserves a fixed sender.
+      Resource = "*"
+      Condition = {
+        StringEquals = {
+          "ses:FromAddress" = var.ses_from_address
+        }
+      }
     }]
   })
 }

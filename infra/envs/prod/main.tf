@@ -137,6 +137,7 @@ module "api" {
   async_queue_name       = module.async_jobs.queue_name
   asset_bucket_arn       = module.private_assets.bucket_arn
   ses_email_identity_arn = aws_ses_domain_identity.premium_email.arn
+  ses_from_address       = "hello@dreamdna.world"
   enable_ses_email       = true
 
   environment_variables = {

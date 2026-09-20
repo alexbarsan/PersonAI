@@ -92,6 +92,12 @@ variable "ses_email_identity_arn" {
   default     = null
 }
 
+variable "ses_from_address" {
+  type        = string
+  description = "Verified address the task is allowed to use as the SES From address."
+  default     = null
+}
+
 variable "enable_ses_email" {
   type        = bool
   description = "Whether to grant the task role permission to send transactional email through SES."
