@@ -1043,7 +1043,14 @@ public sealed class DreamEndpointTests
         Assert.Contains("scenarios", observation.SourceFields);
         Assert.All(observation.Evidence, evidence => Assert.Contains(evidence.DreamId, dreams.Select(dream => dream.Id)));
         Assert.Equal(4, observation.MonthlyOccurrences.Sum(month => month.Count));
-        Assert.All(observation.CommonMeanings, meaning => Assert.StartsWith("https://", meaning.Source.Url));
+        var relatedPattern = Assert.Single(observation.RelatedPatterns, item => item.Name == "stairs");
+        Assert.Equal(3, relatedPattern.JointDreamCount);
+        Assert.Equal(4, relatedPattern.SourceDreamCount);
+        Assert.Equal(3, relatedPattern.TotalPatternDreamCount);
+        Assert.Equal(0.75m, relatedPattern.CoOccurrenceRate);
+        Assert.Equal(0.5m, relatedPattern.BaseRate);
+        Assert.Equal(1.5m, relatedPattern.Lift);
+        Assert.All(observation.ResearchLenses, meaning => Assert.StartsWith("https://", meaning.Source.Url));
         Assert.Contains(observation.TrendDirection, new[] { "increasing", "decreasing", "steady", "not_enough_data" });
         Assert.Equal(HttpStatusCode.OK, noEmbeddingResponse.StatusCode);
         Assert.NotNull(similarDreams);
@@ -1929,11 +1936,25 @@ public sealed class DreamEndpointTests
         DateOnly FirstObservedAt,
         DateOnly LastObservedAt,
         JsonElement? PersonalizedInterpretation,
-        DreamPatternMeaningResponse[] CommonMeanings,
+        DreamPatternRelationshipResponse[] RelatedPatterns,
+        JsonElement RelationshipReadiness,
+        DreamPatternMeaningResponse[] ResearchLenses,
         DreamPatternMonthlyCountResponse[] MonthlyOccurrences,
         string TrendDirection);
 
     private sealed record DreamPatternMeaningResponse(string Text, DreamPatternMeaningSourceResponse Source);
+
+    private sealed record DreamPatternRelationshipResponse(
+        string PatternId,
+        string PatternType,
+        string Name,
+        int JointDreamCount,
+        int SourceDreamCount,
+        int TotalPatternDreamCount,
+        decimal CoOccurrenceRate,
+        decimal BaseRate,
+        decimal Lift,
+        string EvidenceLevel);
 
     private sealed record DreamPatternMeaningSourceResponse(string Id, string Title, string Url, int PublishedYear);
 
