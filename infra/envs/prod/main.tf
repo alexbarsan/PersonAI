@@ -340,6 +340,7 @@ resource "aws_iam_role_policy" "github_terraform_refresh" {
         "s3:GetBucketAcl",
         "s3:GetBucketCORS",
         "s3:GetBucketEncryption",
+        "s3:GetEncryptionConfiguration",
         "s3:GetBucketIntelligentTieringConfiguration",
         "s3:GetBucketLifecycleConfiguration",
         "s3:GetLifecycleConfiguration",
