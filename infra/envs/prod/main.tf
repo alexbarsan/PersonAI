@@ -339,7 +339,16 @@ resource "aws_iam_role_policy" "github_terraform_refresh" {
         "rds:ListTagsForResource",
         "s3:GetBucketAcl",
         "s3:GetBucketCORS",
+        "s3:GetBucketEncryption",
+        "s3:GetBucketLifecycleConfiguration",
+        "s3:GetBucketLocation",
+        "s3:GetBucketLogging",
+        "s3:GetBucketOwnershipControls",
         "s3:GetBucketPolicy",
+        "s3:GetBucketPolicyStatus",
+        "s3:GetBucketPublicAccessBlock",
+        "s3:GetBucketTagging",
+        "s3:GetBucketVersioning",
         "s3:GetBucketWebsite",
         "ses:GetIdentityDkimAttributes",
         "ses:GetIdentityVerificationAttributes",
@@ -354,9 +363,14 @@ resource "aws_iam_role_policy" "github_terraform_refresh" {
       Action   = ["sts:AssumeRole"]
       Resource = var.dns_management_role_arn
       }, {
-      Sid      = "ReadManagedSecretMetadata"
-      Effect   = "Allow"
-      Action   = ["secretsmanager:DescribeSecret"]
+      Sid    = "ReadManagedSecretMetadata"
+      Effect = "Allow"
+      Action = [
+        "secretsmanager:DescribeSecret",
+        "secretsmanager:GetResourcePolicy",
+        "secretsmanager:ListSecretVersionIds",
+        "secretsmanager:ListTagsForResource"
+      ]
       Resource = "arn:aws:secretsmanager:${var.aws_region}:097079438907:secret:${local.name_prefix}/*"
     }]
   })
