@@ -169,6 +169,7 @@ module "api" {
     Authentication__Cognito__Audience                 = module.cognito.user_pool_client_id
     Authentication__Cognito__ClientId                 = module.cognito.user_pool_client_id
     Cors__AllowedOrigins__0                           = "https://dreamdna.world"
+    Cors__AllowedOrigins__1                           = "https://www.dreamdna.world"
     FriendsAndFamily__AdministratorEmails__0          = "ai.ro.dodoloata@gmail.com"
     PremiumGrantEmail__Enabled                        = "true"
     PremiumGrantEmail__FromAddress                    = "hello@dreamdna.world"
