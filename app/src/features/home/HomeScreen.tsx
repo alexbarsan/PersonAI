@@ -121,8 +121,18 @@ export function HomeScreen() {
         {profile.isLoading ? (
           <Text style={s.body}>Preparing your private journal</Text>
         ) : (
-          <View style={[s.workspace, wide && s.workspaceWide]}>
-            <View style={s.captureColumn}>
+          <View style={s.dashboard}>
+            <View style={[s.voiceCard, { backgroundColor: theme.colors.primary }]}>
+              <VoiceCapturePanel
+                prominent
+                onTranscript={(transcript) => {
+                  draft.setText(transcript);
+                  draft.saveDraft();
+                }}
+              />
+            </View>
+            <View style={[s.workspace, wide && s.workspaceWide]}>
+              <View style={s.captureColumn}>
               <View style={s.sectionHeading}>
                 <Text style={s.sectionTitle}>Today&apos;s dream</Text>
                 <Text
@@ -249,19 +259,8 @@ export function HomeScreen() {
                   <Text style={[s.saveText, { color: theme.colors.primary }]}>Add details before interpreting</Text>
                 </Pressable>
               </Link>
-              <View
-                style={[s.voiceCard, { backgroundColor: theme.colors.primary }]}
-              >
-                <VoiceCapturePanel
-                  prominent
-                  onTranscript={(transcript) => {
-                    draft.setText(transcript);
-                    draft.saveDraft();
-                  }}
-                />
               </View>
-            </View>
-            <View style={[s.historyColumn, wide && s.historyWide]}>
+              <View style={[s.historyColumn, wide && s.historyWide]}>
               <View style={s.sectionHeading}>
                 <Text style={s.sectionTitle}>Recent memories</Text>
                 <Link href="/journal" asChild>
@@ -368,6 +367,7 @@ export function HomeScreen() {
                   </Pressable>
                 </Link>
               </View>
+              </View>
             </View>
           </View>
         )}
@@ -428,6 +428,7 @@ const s = StyleSheet.create({
     color: "#345d4e",
     maxWidth: 310,
   },
+  dashboard: { gap: 24 },
   workspace: { gap: 30 },
   workspaceWide: { flexDirection: "row", alignItems: "flex-start" },
   captureColumn: { flex: 1.35, minWidth: 0, gap: 16 },

@@ -106,7 +106,7 @@ test("the Dream DNA brand returns a signed-in visitor home", async ({ page }) =>
   ).toBeVisible();
 });
 
-test("completed voice recording controls stay inside the capture column", async ({ page }) => {
+test("completed voice recording controls stay clear of the journal workspace", async ({ page }) => {
   await page.addInitScript(() => {
     class MockMediaRecorder {
       static isTypeSupported() {
@@ -152,7 +152,7 @@ test("completed voice recording controls stay inside the capture column", async 
   await expect(recent).toBeVisible();
   const transcribeBounds = await transcribe.boundingBox();
   const recentBounds = await recent.boundingBox();
-  expect(transcribeBounds!.x + transcribeBounds!.width).toBeLessThanOrEqual(recentBounds!.x);
+  expect(transcribeBounds!.y + transcribeBounds!.height).toBeLessThanOrEqual(recentBounds!.y);
   await noHorizontalOverflow(page);
   await page.screenshot({ path: "test-results/dream-dna-voice-ready-desktop.png", fullPage: true });
 });
