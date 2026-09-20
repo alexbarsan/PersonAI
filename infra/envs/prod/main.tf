@@ -342,6 +342,7 @@ resource "aws_iam_role_policy" "github_terraform_refresh" {
         "s3:GetBucketEncryption",
         "s3:GetBucketIntelligentTieringConfiguration",
         "s3:GetBucketLifecycleConfiguration",
+        "s3:GetLifecycleConfiguration",
         "s3:GetBucketLocation",
         "s3:GetBucketLogging",
         "s3:GetBucketNotification",
