@@ -319,6 +319,7 @@ resource "aws_iam_role_policy" "github_terraform_refresh" {
         "acm:ListTagsForCertificate",
         "application-autoscaling:DescribeScalableTargets",
         "application-autoscaling:DescribeScalingPolicies",
+        "application-autoscaling:ListTagsForResource",
         "cloudfront:GetOriginAccessControl",
         "cognito-idp:DescribeUserPoolClient",
         "cognito-idp:DescribeUserPoolDomain",
