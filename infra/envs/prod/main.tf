@@ -183,7 +183,7 @@ module "api" {
     ImageGeneration__Premium__Enabled                 = "false"
     ImageGeneration__FreeDailyLimit                   = "1"
     ImageGeneration__PremiumDailyLimit                = "5"
-    VoiceTranscription__Enabled                       = "false"
+    VoiceTranscription__Enabled                       = "true"
     VoiceTranscription__Provider                      = "amazon-transcribe"
     VoiceTranscription__Model                         = "amazon-transcribe-standard"
     VoiceTranscription__DailyLimit                    = "3"

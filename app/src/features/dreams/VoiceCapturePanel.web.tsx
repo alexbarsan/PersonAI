@@ -207,22 +207,23 @@ function delay(milliseconds: number) {
 function errorMessage(error: unknown) {
   if (error instanceof ApiError && error.status === 403) return "Voice transcription requires Premium access.";
   if (error instanceof ApiError && error.status === 429) return "You have reached today's voice transcription limit.";
+  if (error instanceof ApiError && error.status === 503) return "Voice transcription is temporarily unavailable. Please try again shortly.";
   return error instanceof Error ? error.message : "Voice transcription failed. Please try again.";
 }
 
 const styles = StyleSheet.create({
-  panel: { gap: 10 },
+  panel: { alignSelf: "stretch", gap: 12, minWidth: 0, width: "100%" },
   prominent: { marginTop: 2 },
   heading: { alignItems: "baseline", flexDirection: "row", justifyContent: "space-between" },
   title: { fontSize: 16, fontWeight: "800" },
   body: { fontSize: 13, lineHeight: 19 },
   detail: { fontSize: 12, lineHeight: 17 },
-  recordButton: { alignItems: "center", borderRadius: 6, borderWidth: 1, justifyContent: "center", minHeight: 48, paddingHorizontal: 14 },
-  recordButtonText: { fontSize: 15, fontWeight: "800" },
+  recordButton: { alignItems: "center", alignSelf: "stretch", borderRadius: 6, borderWidth: 1, justifyContent: "center", minHeight: 48, minWidth: 0, paddingHorizontal: 14, width: "100%" },
+  recordButtonText: { flexShrink: 1, fontSize: 15, fontWeight: "800", textAlign: "center" },
   retentionRow: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", minHeight: 48 },
   retentionCopy: { flex: 1, gap: 1, paddingRight: 12 },
   retentionTitle: { fontSize: 14, fontWeight: "700" },
-  transcribeButton: { alignItems: "center", borderRadius: 6, justifyContent: "center", minHeight: 46, paddingHorizontal: 14 },
-  transcribeButtonText: { fontSize: 15, fontWeight: "800" },
+  transcribeButton: { alignItems: "center", alignSelf: "stretch", borderRadius: 6, justifyContent: "center", minHeight: 46, minWidth: 0, paddingHorizontal: 14, width: "100%" },
+  transcribeButtonText: { flexShrink: 1, fontSize: 15, fontWeight: "800", textAlign: "center" },
   message: { fontSize: 13, lineHeight: 19 }
 });

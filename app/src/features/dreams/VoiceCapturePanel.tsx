@@ -150,5 +150,8 @@ function errorMessage(error: unknown) {
   if (error instanceof ApiError && error.status === 429) {
     return "You have reached today's voice transcription limit.";
   }
+  if (error instanceof ApiError && error.status === 503) {
+    return "Voice transcription is temporarily unavailable. Please try again shortly.";
+  }
   return error instanceof Error ? error.message : "Voice transcription failed. Please try again.";
 }

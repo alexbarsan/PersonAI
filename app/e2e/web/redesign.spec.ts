@@ -106,6 +106,57 @@ test("the Dream DNA brand returns a signed-in visitor home", async ({ page }) =>
   ).toBeVisible();
 });
 
+test("completed voice recording controls stay inside the capture column", async ({ page }) => {
+  await page.addInitScript(() => {
+    class MockMediaRecorder {
+      static isTypeSupported() {
+        return true;
+      }
+
+      mimeType = "audio/webm";
+      ondataavailable: ((event: { data: Blob }) => void) | null = null;
+      onstop: (() => void) | null = null;
+      state = "inactive";
+
+      start() {
+        this.state = "recording";
+      }
+
+      stop() {
+        this.state = "inactive";
+        this.ondataavailable?.({ data: new Blob(["recording"], { type: this.mimeType }) });
+        this.onstop?.();
+      }
+    }
+
+    Object.defineProperty(window, "MediaRecorder", { configurable: true, value: MockMediaRecorder });
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: {
+        getUserMedia: async () => ({ getTracks: () => [{ stop: () => undefined }] }),
+      },
+    });
+  });
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("/");
+  await page.getByTestId("mock-sign-in").click();
+
+  const record = page.getByTestId("voice-record-toggle");
+  await record.click();
+  await expect(record).toContainText("Stop recording");
+  await record.click();
+
+  const transcribe = page.getByTestId("voice-transcribe");
+  const recent = page.getByText("Recent memories", { exact: true });
+  await expect(transcribe).toBeVisible();
+  await expect(recent).toBeVisible();
+  const transcribeBounds = await transcribe.boundingBox();
+  const recentBounds = await recent.boundingBox();
+  expect(transcribeBounds!.x + transcribeBounds!.width).toBeLessThanOrEqual(recentBounds!.x);
+  await noHorizontalOverflow(page);
+  await page.screenshot({ path: "test-results/dream-dna-voice-ready-desktop.png", fullPage: true });
+});
+
 test("Dream Map patterns open in a desktop drawer and support relationship navigation", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto("/");

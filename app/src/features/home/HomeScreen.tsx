@@ -250,7 +250,7 @@ export function HomeScreen() {
                 </Pressable>
               </Link>
               <View
-                style={{ backgroundColor: theme.colors.primary, padding: 20 }}
+                style={[s.voiceCard, { backgroundColor: theme.colors.primary }]}
               >
                 <VoiceCapturePanel
                   prominent
@@ -511,6 +511,14 @@ const s = StyleSheet.create({
     justifyContent: "center",
     minHeight: 40,
     paddingHorizontal: 4
+  },
+  voiceCard: {
+    alignSelf: "stretch",
+    borderRadius: 8,
+    minWidth: 0,
+    overflow: "hidden",
+    padding: 20,
+    width: "100%",
   },
   textAction: {
     flexDirection: "row",
