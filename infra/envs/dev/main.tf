@@ -43,6 +43,8 @@ module "cognito" {
   callback_urls = var.callback_urls
   domain_prefix = var.cognito_domain_prefix
   logout_urls   = var.logout_urls
+  google_oauth  = var.google_oauth
+  apple_oauth   = var.apple_oauth
   tags          = local.tags
 }
 

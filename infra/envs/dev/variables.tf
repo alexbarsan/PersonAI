@@ -34,6 +34,28 @@ variable "cognito_domain_prefix" {
   default     = null
 }
 
+variable "google_oauth" {
+  type = object({
+    client_id     = string
+    client_secret = string
+  })
+  description = "Optional Google OAuth credentials for the dev Cognito managed login."
+  default     = null
+  sensitive   = true
+}
+
+variable "apple_oauth" {
+  type = object({
+    client_id   = string
+    team_id     = string
+    key_id      = string
+    private_key = string
+  })
+  description = "Optional Sign in with Apple credentials for the dev Cognito managed login."
+  default     = null
+  sensitive   = true
+}
+
 variable "alert_email" {
   type        = string
   description = "Optional alert email address."

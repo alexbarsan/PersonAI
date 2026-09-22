@@ -32,7 +32,11 @@ resource "aws_cognito_user_pool_client" "app" {
   callback_urls                        = var.callback_urls
   logout_urls                          = var.logout_urls
   prevent_user_existence_errors        = "ENABLED"
-  supported_identity_providers         = ["COGNITO"]
+  supported_identity_providers = concat(
+    ["COGNITO"],
+    var.google_oauth != null ? ["Google"] : [],
+    var.apple_oauth != null ? ["SignInWithApple"] : []
+  )
 
   explicit_auth_flows = [
     "ALLOW_REFRESH_TOKEN_AUTH",
@@ -40,6 +44,51 @@ resource "aws_cognito_user_pool_client" "app" {
   ]
 
   generate_secret = false
+
+  depends_on = [
+    aws_cognito_identity_provider.google,
+    aws_cognito_identity_provider.apple
+  ]
+}
+
+resource "aws_cognito_identity_provider" "google" {
+  count = var.google_oauth == null ? 0 : 1
+
+  user_pool_id  = aws_cognito_user_pool.this.id
+  provider_name = "Google"
+  provider_type = "Google"
+
+  provider_details = {
+    authorize_scopes = "openid profile email"
+    client_id        = var.google_oauth.client_id
+    client_secret    = var.google_oauth.client_secret
+  }
+
+  attribute_mapping = {
+    email = "email"
+    name  = "name"
+  }
+}
+
+resource "aws_cognito_identity_provider" "apple" {
+  count = var.apple_oauth == null ? 0 : 1
+
+  user_pool_id  = aws_cognito_user_pool.this.id
+  provider_name = "SignInWithApple"
+  provider_type = "SignInWithApple"
+
+  provider_details = {
+    authorize_scopes = "email name"
+    client_id        = var.apple_oauth.client_id
+    team_id          = var.apple_oauth.team_id
+    key_id           = var.apple_oauth.key_id
+    private_key      = var.apple_oauth.private_key
+  }
+
+  attribute_mapping = {
+    email = "email"
+    name  = "name"
+  }
 }
 
 resource "aws_cognito_user_group" "privacy_admin" {

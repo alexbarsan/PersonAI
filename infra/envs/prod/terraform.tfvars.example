@@ -19,6 +19,23 @@ logout_urls = [
 
 cognito_domain_prefix = "dreamlens-prod-<account-id>"
 
+# See docs/operations/social-login.md. Supply these via untracked local tfvars
+# or TF_VAR_* variables. Never commit client secrets or the Apple private key.
+# google_oauth = {
+#   client_id     = "...apps.googleusercontent.com"
+#   client_secret = "..."
+# }
+# apple_oauth = {
+#   client_id   = "world.dreamdna.login"
+#   team_id     = "..."
+#   key_id      = "..."
+#   private_key = <<-PEM
+# -----BEGIN PRIVATE KEY-----
+# ...
+# -----END PRIVATE KEY-----
+# PEM
+# }
+
 alert_email = null
 
 web_domain_aliases = [
