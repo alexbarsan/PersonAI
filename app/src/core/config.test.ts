@@ -7,13 +7,15 @@ describe("app config", () => {
         apiBaseUrl: "http://localhost:5000",
         mockApi: true,
         cognitoDomain: "",
-        cognitoClientId: ""
+        cognitoClientId: "",
+        revenueCatWebApiKey: ""
       },
       {
         EXPO_PUBLIC_API_BASE_URL: "https://api.dev.dreamdna.world",
         EXPO_PUBLIC_MOCK_API: "false",
         EXPO_PUBLIC_COGNITO_DOMAIN: "https://dreamlens-dev.auth.us-east-1.amazoncognito.com",
-        EXPO_PUBLIC_COGNITO_CLIENT_ID: "client-id"
+        EXPO_PUBLIC_COGNITO_CLIENT_ID: "client-id",
+        EXPO_PUBLIC_REVENUECAT_WEB_API_KEY: "web-api-key"
       }
     );
 
@@ -21,7 +23,8 @@ describe("app config", () => {
       apiBaseUrl: "https://api.dev.dreamdna.world",
       mockApi: false,
       cognitoDomain: "https://dreamlens-dev.auth.us-east-1.amazoncognito.com",
-      cognitoClientId: "client-id"
+      cognitoClientId: "client-id",
+      revenueCatWebApiKey: "web-api-key"
     });
   });
 });

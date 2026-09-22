@@ -5,6 +5,7 @@ export type AppConfig = {
   mockApi: boolean;
   cognitoDomain: string;
   cognitoClientId: string;
+  revenueCatWebApiKey: string;
 };
 
 const extra = Constants.expoConfig?.extra ?? {};
@@ -12,7 +13,8 @@ const environment = {
   EXPO_PUBLIC_API_BASE_URL: process.env.EXPO_PUBLIC_API_BASE_URL,
   EXPO_PUBLIC_MOCK_API: process.env.EXPO_PUBLIC_MOCK_API,
   EXPO_PUBLIC_COGNITO_DOMAIN: process.env.EXPO_PUBLIC_COGNITO_DOMAIN,
-  EXPO_PUBLIC_COGNITO_CLIENT_ID: process.env.EXPO_PUBLIC_COGNITO_CLIENT_ID
+  EXPO_PUBLIC_COGNITO_CLIENT_ID: process.env.EXPO_PUBLIC_COGNITO_CLIENT_ID,
+  EXPO_PUBLIC_REVENUECAT_WEB_API_KEY: process.env.EXPO_PUBLIC_REVENUECAT_WEB_API_KEY
 };
 
 export const appConfig: AppConfig = readAppConfig(extra, environment);
@@ -25,7 +27,8 @@ export function readAppConfig(
     apiBaseUrl: readString(environment, expoExtra, "EXPO_PUBLIC_API_BASE_URL", "apiBaseUrl", "http://localhost:5000"),
     mockApi: readBoolean(environment, expoExtra, "EXPO_PUBLIC_MOCK_API", "mockApi", true),
     cognitoDomain: readString(environment, expoExtra, "EXPO_PUBLIC_COGNITO_DOMAIN", "cognitoDomain", ""),
-    cognitoClientId: readString(environment, expoExtra, "EXPO_PUBLIC_COGNITO_CLIENT_ID", "cognitoClientId", "")
+    cognitoClientId: readString(environment, expoExtra, "EXPO_PUBLIC_COGNITO_CLIENT_ID", "cognitoClientId", ""),
+    revenueCatWebApiKey: readString(environment, expoExtra, "EXPO_PUBLIC_REVENUECAT_WEB_API_KEY", "revenueCatWebApiKey", "")
   };
 }
 

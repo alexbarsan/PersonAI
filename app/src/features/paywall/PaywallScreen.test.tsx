@@ -13,14 +13,14 @@ describe("PaywallScreen", () => {
     useAuthStore.getState().signInWithMockUser();
   });
 
-  it("renders mock paywall tiers without connecting purchases", async () => {
+  it("keeps the paywall useful until a web billing key is configured", async () => {
     renderWithProviders(<PaywallScreen />);
 
     expect(screen.getAllByText("Premium")).toHaveLength(2);
     expect(screen.getByText("Free")).toBeTruthy();
     expect(screen.getByText("3 dream interpretations per day.")).toBeTruthy();
     expect(screen.getByText("25 dream interpretations per day.")).toBeTruthy();
-    await waitFor(() => expect(screen.getByText("Subscriptions will be available here when purchases are connected.")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("Premium purchases are not configured for this environment yet.")).toBeTruthy());
   });
 });
 

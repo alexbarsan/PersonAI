@@ -37,7 +37,8 @@
       "apiBaseUrl": "http://localhost:5000",
       "mockApi": true,
       "cognitoDomain": "",
-      "cognitoClientId": ""
+      "cognitoClientId": "",
+      "revenueCatWebApiKey": ""
     }
   }
 }
