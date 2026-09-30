@@ -34,6 +34,18 @@ variable "cognito_domain_prefix" {
   default     = null
 }
 
+variable "cognito_custom_domain" {
+  type        = string
+  description = "Optional Cognito custom auth domain."
+  default     = null
+}
+
+variable "cognito_custom_domain_certificate_arn" {
+  type        = string
+  description = "Optional validated us-east-1 ACM certificate ARN dedicated to the Cognito custom domain."
+  default     = null
+}
+
 variable "google_oauth" {
   type = object({
     client_id     = string

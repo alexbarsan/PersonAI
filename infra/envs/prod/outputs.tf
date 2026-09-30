@@ -28,6 +28,16 @@ output "cognito_hosted_ui_domain" {
   description = "Cognito hosted UI base URL."
 }
 
+output "cognito_custom_domain" {
+  value       = var.cognito_custom_domain == null ? null : "https://${var.cognito_custom_domain}"
+  description = "Cognito custom authentication domain."
+}
+
+output "cognito_custom_domain_cloudfront_target" {
+  value       = module.cognito.custom_domain_cloudfront_target
+  description = "CloudFront distribution backing the Cognito custom authentication domain."
+}
+
 output "web_bucket_name" {
   value       = module.web.bucket_name
   description = "S3 web bucket name."

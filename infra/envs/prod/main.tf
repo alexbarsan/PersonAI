@@ -48,6 +48,49 @@ resource "aws_acm_certificate_validation" "public" {
   validation_record_fqdns = [for record in aws_route53_record.certificate_validation : record.fqdn]
 }
 
+resource "aws_acm_certificate" "cognito_auth" {
+  count = var.cognito_custom_domain == null ? 0 : 1
+
+  domain_name       = var.cognito_custom_domain
+  validation_method = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  tags = local.tags
+}
+
+resource "aws_route53_record" "cognito_auth_certificate_validation" {
+  provider = aws.dns
+
+  for_each = {
+    for option in flatten([
+      for certificate in aws_acm_certificate.cognito_auth : certificate.domain_validation_options
+      ]) : option.domain_name => {
+      name   = option.resource_record_name
+      record = option.resource_record_value
+      type   = option.resource_record_type
+    }
+  }
+
+  allow_overwrite = true
+  name            = each.value.name
+  records         = [each.value.record]
+  ttl             = 60
+  type            = each.value.type
+  zone_id         = var.hosted_zone_id
+}
+
+resource "aws_acm_certificate_validation" "cognito_auth" {
+  count = var.cognito_custom_domain == null ? 0 : 1
+
+  certificate_arn = aws_acm_certificate.cognito_auth[0].arn
+  validation_record_fqdns = [
+    for record in aws_route53_record.cognito_auth_certificate_validation : record.fqdn
+  ]
+}
+
 resource "aws_ses_domain_identity" "premium_email" {
   domain = "dreamdna.world"
 }
@@ -109,14 +152,31 @@ module "security" {
 module "cognito" {
   source = "../../modules/cognito"
 
-  name_prefix                           = local.name_prefix
-  callback_urls                         = var.callback_urls
-  domain_prefix                         = var.cognito_domain_prefix
+  name_prefix   = local.name_prefix
+  callback_urls = var.callback_urls
+  domain_prefix = var.cognito_domain_prefix
+  custom_domain = var.cognito_custom_domain
+  custom_domain_certificate_arn = var.cognito_custom_domain == null ? null : (
+    var.cognito_custom_domain_certificate_arn != null
+    ? var.cognito_custom_domain_certificate_arn
+    : aws_acm_certificate_validation.cognito_auth[0].certificate_arn
+  )
   logout_urls                           = var.logout_urls
   google_oauth                          = var.google_oauth
   apple_oauth                           = var.apple_oauth
   use_existing_google_identity_provider = var.use_existing_google_identity_provider
   tags                                  = local.tags
+}
+
+resource "aws_route53_record" "cognito_custom_domain" {
+  provider = aws.dns
+  count    = var.cognito_custom_domain == null ? 0 : 1
+
+  name    = var.cognito_custom_domain
+  records = [module.cognito.custom_domain_cloudfront_target]
+  ttl     = 60
+  type    = "CNAME"
+  zone_id = var.hosted_zone_id
 }
 
 module "api" {
@@ -395,6 +455,9 @@ resource "aws_iam_role_policy" "github_terraform_refresh" {
       Sid    = "UpdateManagedCognito"
       Effect = "Allow"
       Action = [
+        "cognito-idp:CreateUserPoolDomain",
+        "cognito-idp:DeleteUserPoolDomain",
+        "cognito-idp:UpdateUserPoolDomain",
         "cognito-idp:UpdateUserPool",
         "cognito-idp:UpdateUserPoolClient"
       ]

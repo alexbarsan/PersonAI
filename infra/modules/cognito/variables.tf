@@ -19,6 +19,18 @@ variable "domain_prefix" {
   default     = null
 }
 
+variable "custom_domain" {
+  type        = string
+  description = "Optional custom Cognito auth domain, without scheme. Requires a validated us-east-1 ACM certificate ARN."
+  default     = null
+}
+
+variable "custom_domain_certificate_arn" {
+  type        = string
+  description = "Optional us-east-1 ACM certificate ARN for the Cognito custom domain."
+  default     = null
+}
+
 variable "privacy_admin_group_name" {
   type        = string
   description = "Cognito group allowed to approve user anonymization requests."

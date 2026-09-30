@@ -8,9 +8,10 @@ availability_zones = [
 container_image = "public.ecr.aws/docker/library/nginx:stable-alpine"
 
 callback_urls = [
-  "https://dev.dreamdna.world",
-  "http://localhost:8081",
-  "exp://127.0.0.1:8081"
+  "https://dev.dreamdna.world/auth/callback",
+  "http://localhost:8081/auth/callback",
+  "dreamlens://auth/callback",
+  "exp://127.0.0.1:8081/--/auth/callback"
 ]
 
 logout_urls = [
@@ -19,6 +20,8 @@ logout_urls = [
 ]
 
 cognito_domain_prefix = "dreamlens-dev-<account-id>"
+cognito_custom_domain = null
+cognito_custom_domain_certificate_arn = null
 
 # See docs/operations/social-login.md. Supply these via untracked local tfvars
 # or TF_VAR_* variables. Never commit client secrets or the Apple private key.

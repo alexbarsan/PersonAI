@@ -123,3 +123,11 @@ resource "aws_cognito_user_pool_domain" "hosted_ui" {
   managed_login_version = 1
   user_pool_id          = aws_cognito_user_pool.this.id
 }
+
+resource "aws_cognito_user_pool_domain" "custom" {
+  count = var.custom_domain == null ? 0 : 1
+
+  domain          = var.custom_domain
+  certificate_arn = var.custom_domain_certificate_arn
+  user_pool_id    = aws_cognito_user_pool.this.id
+}

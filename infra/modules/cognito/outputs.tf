@@ -28,4 +28,9 @@ output "hosted_ui_domain" {
   description = "Cognito hosted UI base URL."
 }
 
+output "custom_domain_cloudfront_target" {
+  value       = length(aws_cognito_user_pool_domain.custom) == 0 ? null : aws_cognito_user_pool_domain.custom[0].cloudfront_distribution
+  description = "CloudFront target for the Cognito custom auth domain CNAME record."
+}
+
 data "aws_region" "current" {}
