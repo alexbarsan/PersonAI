@@ -42,7 +42,7 @@ variable "google_oauth" {
 
   validation {
     condition = var.google_oauth == null || (
-      trim(var.google_oauth.client_id) != "" && trim(var.google_oauth.client_secret) != ""
+      trimspace(var.google_oauth.client_id) != "" && trimspace(var.google_oauth.client_secret) != ""
     )
     error_message = "google_oauth requires both a non-empty client_id and client_secret."
   }
@@ -67,10 +67,10 @@ variable "apple_oauth" {
 
   validation {
     condition = var.apple_oauth == null || alltrue([
-      trim(var.apple_oauth.client_id) != "",
-      trim(var.apple_oauth.team_id) != "",
-      trim(var.apple_oauth.key_id) != "",
-      trim(var.apple_oauth.private_key) != ""
+      trimspace(var.apple_oauth.client_id) != "",
+      trimspace(var.apple_oauth.team_id) != "",
+      trimspace(var.apple_oauth.key_id) != "",
+      trimspace(var.apple_oauth.private_key) != ""
     ])
     error_message = "apple_oauth requires client_id, team_id, key_id, and private_key."
   }
