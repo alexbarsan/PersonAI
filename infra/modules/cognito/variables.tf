@@ -41,9 +41,10 @@ variable "google_oauth" {
   sensitive   = true
 
   validation {
-    condition = var.google_oauth == null || (
-      trimspace(var.google_oauth.client_id) != "" && trimspace(var.google_oauth.client_secret) != ""
-    )
+    condition = var.google_oauth == null ? true : alltrue([
+      trimspace(var.google_oauth.client_id) != "",
+      trimspace(var.google_oauth.client_secret) != ""
+    ])
     error_message = "google_oauth requires both a non-empty client_id and client_secret."
   }
 }
@@ -66,7 +67,7 @@ variable "apple_oauth" {
   sensitive   = true
 
   validation {
-    condition = var.apple_oauth == null || alltrue([
+    condition = var.apple_oauth == null ? true : alltrue([
       trimspace(var.apple_oauth.client_id) != "",
       trimspace(var.apple_oauth.team_id) != "",
       trimspace(var.apple_oauth.key_id) != "",
