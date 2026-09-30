@@ -35,6 +35,10 @@ Apple only returns the user name on the first successful authorization. Dream DN
 
 Copy the commented examples in `infra/envs/<environment>/terraform.tfvars.example` into the untracked local `terraform.tfvars` file, then fill in the values. Alternatively provide `TF_VAR_google_oauth` and `TF_VAR_apple_oauth` through a protected deployment environment.
 
+If Google was deliberately configured directly in Cognito, keep its OAuth secret out of Terraform and set `use_existing_google_identity_provider = true`. This manages the App Client's `Google` provider selection without taking ownership of the manually administered identity provider. Use one approach or the other for a given environment.
+
+The Cognito user pool uses verified email as its explicit account-recovery mechanism. The managed login therefore provides the standard **Forgot password** flow for email/password users. Social-only users continue through their selected provider.
+
 The values are marked sensitive in Terraform output, but Cognito federation credentials are represented in encrypted remote Terraform state. Restrict state access to production operators. Never commit `.tfvars`, `.p8` files, client secrets, or shell history containing those values.
 
 ## Apply And Verify

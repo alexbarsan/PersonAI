@@ -44,6 +44,12 @@ variable "google_oauth" {
   sensitive   = true
 }
 
+variable "use_existing_google_identity_provider" {
+  type        = bool
+  description = "Enable a Google provider already configured directly in the production Cognito user pool."
+  default     = false
+}
+
 variable "apple_oauth" {
   type = object({
     client_id   = string

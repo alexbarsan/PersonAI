@@ -109,13 +109,14 @@ module "security" {
 module "cognito" {
   source = "../../modules/cognito"
 
-  name_prefix   = local.name_prefix
-  callback_urls = var.callback_urls
-  domain_prefix = var.cognito_domain_prefix
-  logout_urls   = var.logout_urls
-  google_oauth  = var.google_oauth
-  apple_oauth   = var.apple_oauth
-  tags          = local.tags
+  name_prefix                           = local.name_prefix
+  callback_urls                         = var.callback_urls
+  domain_prefix                         = var.cognito_domain_prefix
+  logout_urls                           = var.logout_urls
+  google_oauth                          = var.google_oauth
+  apple_oauth                           = var.apple_oauth
+  use_existing_google_identity_provider = var.use_existing_google_identity_provider
+  tags                                  = local.tags
 }
 
 module "api" {

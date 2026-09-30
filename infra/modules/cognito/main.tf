@@ -17,6 +17,14 @@ resource "aws_cognito_user_pool" "this" {
     enabled = true
   }
 
+  # Keep account recovery available through the verified email address used to sign in.
+  account_recovery_setting {
+    recovery_mechanism {
+      name     = "verified_email"
+      priority = 1
+    }
+  }
+
   username_attributes = ["email"]
 
   tags = var.tags
@@ -34,7 +42,7 @@ resource "aws_cognito_user_pool_client" "app" {
   prevent_user_existence_errors        = "ENABLED"
   supported_identity_providers = concat(
     ["COGNITO"],
-    var.google_oauth != null ? ["Google"] : [],
+    var.google_oauth != null || var.use_existing_google_identity_provider ? ["Google"] : [],
     var.apple_oauth != null ? ["SignInWithApple"] : []
   )
 

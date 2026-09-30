@@ -25,6 +25,9 @@ cognito_domain_prefix = "dreamlens-prod-<account-id>"
 #   client_id     = "...apps.googleusercontent.com"
 #   client_secret = "..."
 # }
+# Set this only when Google is configured directly in Cognito rather than in
+# google_oauth above. It keeps Google enabled on the existing App Client.
+# use_existing_google_identity_provider = true
 # apple_oauth = {
 #   client_id   = "world.dreamdna.login"
 #   team_id     = "..."

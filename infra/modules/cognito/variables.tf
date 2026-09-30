@@ -48,6 +48,12 @@ variable "google_oauth" {
   }
 }
 
+variable "use_existing_google_identity_provider" {
+  type        = bool
+  description = "Enable the Google identity provider on the app client when it is administered directly in Cognito rather than by this Terraform module."
+  default     = false
+}
+
 variable "apple_oauth" {
   type = object({
     client_id   = string
