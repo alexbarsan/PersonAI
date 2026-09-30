@@ -1,0 +1,50 @@
+name: prod-cognito
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  apply:
+    name: Apply production Cognito configuration
+    runs-on: ubuntu-latest
+    environment: prod
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME }}
+
+      - name: Terraform init
+        run: terraform -chdir=infra/envs/prod init -input=false
+
+      - name: Write Terraform input variables
+        env:
+          TERRAFORM_TFVARS_JSON: ${{ vars.TERRAFORM_TFVARS_JSON }}
+        run: |
+          test -n "$TERRAFORM_TFVARS_JSON" || { echo "TERRAFORM_TFVARS_JSON is not configured for prod."; exit 1; }
+          printf '%s' "$TERRAFORM_TFVARS_JSON" > infra/envs/prod/terraform.auto.tfvars.json
+          sed -i '1s/^\xEF\xBB\xBF//' infra/envs/prod/terraform.auto.tfvars.json
+
+      - name: Plan scoped Cognito update
+        run: >-
+          terraform -chdir=infra/envs/prod plan -input=false
+          -target='module.cognito.aws_cognito_user_pool.this'
+          -target='module.cognito.aws_cognito_user_pool_client.app'
+          -out=tfplan-cognito
+
+      - name: Apply scoped Cognito update
+        run: terraform -chdir=infra/envs/prod apply -input=false -auto-approve tfplan-cognito
