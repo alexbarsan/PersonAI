@@ -1,6 +1,16 @@
 # Remaining Work
 
-Last updated during S47 admin operations and dream inspection on 2026-09-12.
+Last updated during UX49 Dream DNA cross-platform redesign on 2026-09-13.
+
+## After The UX Refresh
+
+- Review the local mock preview at `http://localhost:8082`. UX49 includes the original owl branding, web landing, responsive shared app, and UI regression tests; see [the design record](../design/dream-dna-ux.md).
+- Isolate UI changes from the pre-existing backend/admin work before committing and deploying to dev. This redesign is not yet deployed.
+- Run live Cognito/profile/dream/voice/image smoke tests against the deployed redesign. Current UI verification uses the mock client, not paid AI calls.
+- Validate physical Android/iOS devices, software keyboard behavior, safe areas, screen readers, larger accessibility text, and native recording. Bundle exports passed for both mobile platforms but do not replace device testing.
+- Prepare launcher/adaptive/splash and store artwork, create store listings, then set `EXPO_PUBLIC_IOS_STORE_URL` and `EXPO_PUBLIC_ANDROID_STORE_URL`. Until then, mobile download controls remain explicitly unavailable; web entry works.
+- Complete RevenueCat purchase integration and production privacy/terms/contact pages. Review dependency audit findings before public launch.
+- Keep S48 live image timing verification, historical fact backfill, and relationship analytics on the backend follow-up list. The visual refresh does not complete these tasks.
 
 ## Planned Slices
 
@@ -19,10 +29,10 @@ The imported Catch Dreamer feature notes add several capabilities that are not f
 - S28 Ask Dream DNA is implemented with owner-scoped semantic retrieval, safety/schema validation, quotas, cost rows, evidence links, and UI. Live Titan-backed memory is available in dev and an authenticated five-source response passes.
 - S34 interpretation feedback is implemented with persisted like/dislike state, controlled dislike reasons, optional details, export coverage, and anonymization cleanup.
 - S29 Premium Deep Interpretation is deployed in dev with persisted owner-scoped results, `deepseek-v4-pro`, Titan/pgvector related-dream context, consent and quota controls, cost/latency ledger entries, and app UI. S39 raised the output cap to 4,096 after live 2,048-token truncation; the authenticated retry completed with five sources.
-- Cognito social sign-in provider setup for Google and Apple first; Facebook remains optional after product/privacy review.
+- Cognito Google and Apple federation is implemented as optional Terraform configuration. Create separate dev provider credentials, apply, and complete a real social-login smoke test before configuring production. See [social-login.md](../operations/social-login.md). Facebook remains optional after product/privacy review.
 - Cognito password policy: dev now permits six-character passwords while retaining lowercase, uppercase, number, and symbol requirements. Apply and verify the same policy in QA and production before public launch.
 - S31 provides an aggregate-only admin metrics API for active users, conversion, dream completion, AI cost, cost per active user, and operation latency. RevenueCat revenue and AWS Cost Explorer ingestion remain before gross margin can be calculated; an internal dashboard remains optional.
-- S47 is deployed in dev. Operations health and recovery use `dreamlens-metrics-admin`; cross-user dream search and detail use the stronger `dreamlens-admin` privacy role. Opening original dream text, interpretations, and signed images requires a case-specific purpose and writes an immutable access audit. A final real-account smoke check should confirm both roles after the admin next signs in.
+- S47 is deployed in dev. Operations health and recovery use `dreamlens-metrics-admin`; cross-user dream search and detail use the stronger `dreamlens-admin` privacy role. Opening original dream text, interpretations, and signed images writes an immutable access audit automatically. A final real-account smoke check should confirm both roles after the admin next signs in.
 - S48 is complete in code. Dev deployment must create the separate worker service and apply the latency migration, then controlled Free and Premium image requests should establish p50/p95 request-to-image baselines. Keep image generation explicitly on request; do not spend on speculative images.
 - Next product slice: backfill historical `DreamFacts` for retained dreams, then use the normalized facts plus semantic similarity to improve recurring-person, location, scenario, timing, and relationship analytics in the personal subconscious map.
 - S37 sensitive-dream safety workflow: allow private adult sexual, violent, and trauma dream content while using contextual safety categories rather than keyword alerts. Notify reviewers with category, confidence, anonymized subject, dream ID, and timestamp only; raw-text access must be explicit, audited, and privacy-governed.

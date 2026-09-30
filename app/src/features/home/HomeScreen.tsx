@@ -21,7 +21,6 @@ import Wind from "lucide-react-native/icons/wind";
 import { useApiClient } from "@/api/apiContext";
 import { ApiError } from "@/api/errors";
 import { useAuthStore } from "@/auth/authStore";
-import { useCognitoSignIn } from "@/auth/cognitoAuth";
 import { AppShell, BrandMark } from "@/components/AppShell";
 import { gardenSource } from "@/components/OwlMark";
 import { Text } from "@/components/Text";
@@ -49,7 +48,6 @@ export function HomeScreen() {
   const isRestoring = useAuthStore((state) => state.isRestoring);
   const signIn = useAuthStore((state) => state.signInWithMockUser);
   const signOut = useAuthStore((state) => state.signOut);
-  const cognito = useCognitoSignIn();
   const draft = useDreamDraftStore();
   const submitDream = useDreamSubmission();
   const wide = useWindowDimensions().width >= 1200;
@@ -88,10 +86,8 @@ export function HomeScreen() {
   if (!user)
     return (
       <LandingScreen
-        onStart={appConfig.mockApi ? signIn : cognito.signIn}
+        onStart={() => appConfig.mockApi ? signIn() : router.push("/sign-in")}
         mock={appConfig.mockApi}
-        pending={cognito.isSigningIn}
-        error={cognito.error}
       />
     );
 
@@ -382,7 +378,12 @@ export function HomeScreen() {
               <Text style={s.small}>Set up profile</Text>
             </Pressable>
           </Link>
-          <Pressable accessibilityRole="button" onPress={signOut}>
+          <Pressable accessibilityRole="button" onPress={() => {
+            void import("@/auth/cognitoAmplify")
+              .then(({ signOutFromCognito }) => signOutFromCognito())
+              .catch(() => undefined)
+              .finally(signOut);
+          }}>
             <Text style={s.small}>Sign out</Text>
           </Pressable>
         </View>

@@ -47,18 +47,7 @@ public sealed class UpdateProfileHandler(
             dbContext.UserProfiles.Add(profile);
         }
 
-        profile.Age = request.Age;
-        profile.PreferredName = Normalize(request.PreferredName);
-        profile.PreferredNameNormalized = normalizedUsername;
-        profile.EmailNormalized = NormalizeEmail(currentUser.Email);
-        profile.Sex = Normalize(request.Sex);
-        profile.Language = NormalizeRequired(request.Language);
-        profile.Timezone = NormalizeRequired(request.Timezone);
-        profile.EncryptedTraitsJson = encryptor.Encrypt(JsonSerializer.Serialize(NormalizeTraits(request.Traits!)));
-        profile.ConsentAiProcessing = request.Consent!.AiProcessing;
-        profile.ConsentSensitiveTraits = request.Consent.SensitiveTraits;
-        profile.ConsentHistoryUse = request.Consent.HistoryUse;
-        profile.UpdatedAt = DateTimeOffset.UtcNow;
+        ApplyProfile(profile, request, normalizedUsername, encryptor, currentUser.Email);
 
         try
         {
@@ -70,6 +59,26 @@ public sealed class UpdateProfileHandler(
             {
                 ["username"] = ["This username is already taken."]
             });
+        }
+        catch (DbUpdateException exception) when (IsSubjectUniqueViolation(exception))
+        {
+            // Another request provisioned this Cognito subject after our initial lookup.
+            dbContext.Entry(profile).State = EntityState.Detached;
+            profile = await dbContext.UserProfiles
+                .SingleAsync(candidate => candidate.UserSubject == currentUser.Subject, cancellationToken);
+            ApplyProfile(profile, request, normalizedUsername, encryptor, currentUser.Email);
+
+            try
+            {
+                await dbContext.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException uniqueException) when (IsUsernameUniqueViolation(uniqueException))
+            {
+                return UpdateProfileResult.Invalid(new Dictionary<string, string[]>(StringComparer.Ordinal)
+                {
+                    ["username"] = ["This username is already taken."]
+                });
+            }
         }
 
         return UpdateProfileResult.Valid(GetProfileHandler.Map(profile, encryptor));
@@ -125,6 +134,27 @@ public sealed class UpdateProfileHandler(
         AddLengthErrors(errors, "preferredName", request.PreferredName, 80);
 
         return errors;
+    }
+
+    private static void ApplyProfile(
+        UserProfile profile,
+        UpdateProfileRequest request,
+        string normalizedUsername,
+        IStringEncryptor encryptor,
+        string? email)
+    {
+        profile.Age = request.Age;
+        profile.PreferredName = Normalize(request.PreferredName);
+        profile.PreferredNameNormalized = normalizedUsername;
+        profile.EmailNormalized = NormalizeEmail(email);
+        profile.Sex = Normalize(request.Sex);
+        profile.Language = NormalizeRequired(request.Language);
+        profile.Timezone = NormalizeRequired(request.Timezone);
+        profile.EncryptedTraitsJson = encryptor.Encrypt(JsonSerializer.Serialize(NormalizeTraits(request.Traits!)));
+        profile.ConsentAiProcessing = request.Consent!.AiProcessing;
+        profile.ConsentSensitiveTraits = request.Consent.SensitiveTraits;
+        profile.ConsentHistoryUse = request.Consent.HistoryUse;
+        profile.UpdatedAt = DateTimeOffset.UtcNow;
     }
 
     private static void AddLengthErrors(
@@ -184,6 +214,15 @@ public sealed class UpdateProfileHandler(
     private static bool IsUsernameUniqueViolation(DbUpdateException exception)
     {
         return exception.InnerException is Npgsql.PostgresException { SqlState: "23505", ConstraintName: "IX_UserProfiles_PreferredNameNormalized" };
+    }
+
+    private static bool IsSubjectUniqueViolation(DbUpdateException exception)
+    {
+        return exception.InnerException is Npgsql.PostgresException
+        {
+            SqlState: "23505",
+            ConstraintName: "IX_UserProfiles_UserSubject"
+        };
     }
 
     private static string? NormalizeEmail(string? value)

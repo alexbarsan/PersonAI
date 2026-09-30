@@ -26,14 +26,27 @@ Set these as GitHub environment variables for `dev`, `qa`, and `prod`:
 - `CLOUDFRONT_DISTRIBUTION_ID`: CloudFront distribution id for the web app.
 - `API_BASE_URL`: public API base URL used by the Expo web build, for example `https://api.dev.dreamdna.world`.
 - `MOCK_API`: `false` for deployed environments.
-- `COGNITO_DOMAIN`: Cognito hosted-login domain, after it is configured.
+- `COGNITO_DOMAIN`: Cognito OAuth domain (dev currently uses its prefix; prod switches to `https://auth.dreamdna.world` only after activation).
 - `COGNITO_CLIENT_ID`: Cognito app client id.
+- `COGNITO_USER_POOL_ID`: Cognito User Pool id used by Amplify Auth.
+- `COGNITO_GOOGLE_ENABLED`: `true` only when Google is enabled on the Cognito app client.
+- `COGNITO_APPLE_ENABLED`: `true` only when Apple is enabled on the Cognito app client.
 
 Current `dev` auth values:
 
 - `COGNITO_DOMAIN`: `https://dreamlens-dev-379959319368.auth.us-east-1.amazoncognito.com`
 - `COGNITO_CLIENT_ID`: `lbo45bf92ungifar7qab459gi`
+- `COGNITO_USER_POOL_ID`: `us-east-1_SgF5CJILc`
+- `COGNITO_GOOGLE_ENABLED`: `false` until Google is enabled in the dev app client.
+- `COGNITO_APPLE_ENABLED`: `false` until Apple is configured in the dev app client.
 - `MOCK_API`: `false`
+
+Production Cognito values:
+
+- `COGNITO_CLIENT_ID`: `2jrf5ldt95mqaav475ar0bjsa8`
+- `COGNITO_USER_POOL_ID`: `us-east-1_ro01gHST1`
+- Keep its current Cognito prefix in `COGNITO_DOMAIN` until `auth.dreamdna.world` is active.
+- Set `COGNITO_GOOGLE_ENABLED=true` after confirming Google is enabled on that app client; Apple remains `false` until its provider is configured.
 
 The Expo web build reads these through direct `process.env.EXPO_PUBLIC_*` references in `app/src/core/config.ts`. Metro embeds them into the generated JavaScript bundle at build time. Do not rely on browser runtime `process.env` for deployed config.
 
@@ -122,10 +135,11 @@ cognito_domain_prefix = "dreamlens-dev-379959319368"
 
 The current Terraform provider manages the classic hosted UI domain (`managed_login_version = 1`). Before public launch, prefer upgrading QA/prod to a branded managed-login v2 or custom auth domain after confirming provider support for managed-login branding resources, or apply Cognito branding as a documented one-time operational step.
 
-Registered callback/logout URLs must match the app runtime URLs exactly. The web launch path is:
+Registered callback/logout URLs must match the app runtime URLs exactly. The web OAuth callback paths are:
 
-- Dev callback/logout: `https://dev.dreamdna.world`
-- Local web callback/logout: `http://localhost:8081`
+- Dev callback: `https://dev.dreamdna.world/auth/callback`
+- Local web callback: `http://localhost:8081/auth/callback`
+- Production callbacks: `https://dreamdna.world/auth/callback` and `https://www.dreamdna.world/auth/callback`
 
 Add exact native mobile callback URLs after the EAS/dev-client URL scheme is verified.
 

@@ -21,13 +21,13 @@ export function AuthRouteGuard({ children }: PropsWithChildren) {
     </View>;
   }
 
-  if (protectedRoute && !user) return <Redirect href="/" />;
+  if (protectedRoute && !user) return <Redirect href="/sign-in" />;
 
   return children;
 }
 
 export function requiresAuthentication(segments: readonly string[]) {
-  return segments.some((segment) => segment !== "index");
+  return segments.some((segment) => !["index", "sign-in", "auth", "callback"].includes(segment));
 }
 
 const styles = StyleSheet.create({

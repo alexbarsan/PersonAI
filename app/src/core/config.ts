@@ -5,6 +5,9 @@ export type AppConfig = {
   mockApi: boolean;
   cognitoDomain: string;
   cognitoClientId: string;
+  cognitoUserPoolId: string;
+  cognitoGoogleEnabled: boolean;
+  cognitoAppleEnabled: boolean;
   revenueCatWebApiKey: string;
 };
 
@@ -14,6 +17,9 @@ const environment = {
   EXPO_PUBLIC_MOCK_API: process.env.EXPO_PUBLIC_MOCK_API,
   EXPO_PUBLIC_COGNITO_DOMAIN: process.env.EXPO_PUBLIC_COGNITO_DOMAIN,
   EXPO_PUBLIC_COGNITO_CLIENT_ID: process.env.EXPO_PUBLIC_COGNITO_CLIENT_ID,
+  EXPO_PUBLIC_COGNITO_USER_POOL_ID: process.env.EXPO_PUBLIC_COGNITO_USER_POOL_ID,
+  EXPO_PUBLIC_COGNITO_GOOGLE_ENABLED: process.env.EXPO_PUBLIC_COGNITO_GOOGLE_ENABLED,
+  EXPO_PUBLIC_COGNITO_APPLE_ENABLED: process.env.EXPO_PUBLIC_COGNITO_APPLE_ENABLED,
   EXPO_PUBLIC_REVENUECAT_WEB_API_KEY: process.env.EXPO_PUBLIC_REVENUECAT_WEB_API_KEY
 };
 
@@ -28,6 +34,9 @@ export function readAppConfig(
     mockApi: readBoolean(environment, expoExtra, "EXPO_PUBLIC_MOCK_API", "mockApi", true),
     cognitoDomain: readString(environment, expoExtra, "EXPO_PUBLIC_COGNITO_DOMAIN", "cognitoDomain", ""),
     cognitoClientId: readString(environment, expoExtra, "EXPO_PUBLIC_COGNITO_CLIENT_ID", "cognitoClientId", ""),
+    cognitoUserPoolId: readString(environment, expoExtra, "EXPO_PUBLIC_COGNITO_USER_POOL_ID", "cognitoUserPoolId", ""),
+    cognitoGoogleEnabled: readBoolean(environment, expoExtra, "EXPO_PUBLIC_COGNITO_GOOGLE_ENABLED", "cognitoGoogleEnabled", false),
+    cognitoAppleEnabled: readBoolean(environment, expoExtra, "EXPO_PUBLIC_COGNITO_APPLE_ENABLED", "cognitoAppleEnabled", false),
     revenueCatWebApiKey: readString(environment, expoExtra, "EXPO_PUBLIC_REVENUECAT_WEB_API_KEY", "revenueCatWebApiKey", "")
   };
 }

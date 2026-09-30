@@ -38,6 +38,9 @@
       "mockApi": true,
       "cognitoDomain": "",
       "cognitoClientId": "",
+      "cognitoUserPoolId": "",
+      "cognitoGoogleEnabled": false,
+      "cognitoAppleEnabled": false,
       "revenueCatWebApiKey": ""
     }
   }

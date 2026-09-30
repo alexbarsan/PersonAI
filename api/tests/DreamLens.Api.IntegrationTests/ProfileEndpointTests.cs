@@ -31,6 +31,12 @@ public sealed class ProfileEndpointTests
         Assert.False(profile.Consent.AiProcessing);
         Assert.False(profile.Consent.SensitiveTraits);
         Assert.False(profile.Consent.HistoryUse);
+
+        var repeated = await client.GetAsync("/v1/profile");
+        Assert.Equal(HttpStatusCode.OK, repeated.StatusCode);
+        await using var scope = app.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<DreamLensDbContext>();
+        Assert.Equal(1, await db.UserProfiles.CountAsync(row => row.UserSubject == "subject-a"));
     }
 
     [Fact]

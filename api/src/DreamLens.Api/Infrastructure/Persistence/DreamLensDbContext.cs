@@ -98,8 +98,7 @@ public sealed class DreamLensDbContext(DbContextOptions<DreamLensDbContext> opti
                 .HasFilter("\"PreferredNameNormalized\" IS NOT NULL");
             entity.Property(profile => profile.EmailNormalized)
                 .HasMaxLength(320);
-            entity.HasIndex(profile => profile.EmailNormalized)
-                .IsUnique();
+            entity.HasIndex(profile => profile.EmailNormalized);
             entity.Property(profile => profile.Sex)
                 .HasMaxLength(64);
             entity.Property(profile => profile.Language)

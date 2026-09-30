@@ -3,6 +3,7 @@ module.exports = {
   setupFilesAfterEnv: ["<rootDir>/src/test/setup.ts"],
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
+    "^react-native-get-random-values$": "<rootDir>/src/test/getRandomValuesMock.ts",
     "^msw/node$": "<rootDir>/node_modules/msw/lib/node/index.js"
   },
   testMatch: ["**/*.test.ts", "**/*.test.tsx"],
