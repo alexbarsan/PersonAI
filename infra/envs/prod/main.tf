@@ -324,6 +324,8 @@ resource "aws_iam_role_policy_attachment" "github_terraform_view" {
   policy_arn = "arn:aws:iam::aws:policy/job-function/ViewOnlyAccess"
 }
 
+data "aws_caller_identity" "current" {}
+
 resource "aws_iam_role_policy" "github_terraform_refresh" {
   name = "${local.name_prefix}-terraform-refresh"
   role = module.security.github_deploy_role_name
@@ -389,6 +391,14 @@ resource "aws_iam_role_policy" "github_terraform_refresh" {
         "wafv2:GetWebACLForResource"
       ]
       Resource = "*"
+      }, {
+      Sid    = "UpdateManagedCognito"
+      Effect = "Allow"
+      Action = [
+        "cognito-idp:UpdateUserPool",
+        "cognito-idp:UpdateUserPoolClient"
+      ]
+      Resource = "arn:aws:cognito-idp:${var.aws_region}:${data.aws_caller_identity.current.account_id}:userpool/${module.cognito.user_pool_id}"
       }, {
       Sid      = "AssumeDnsManagementRole"
       Effect   = "Allow"
