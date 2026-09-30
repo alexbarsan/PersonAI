@@ -31,7 +31,10 @@ public sealed class SearchAdminDreamsHandler(
                 ? dreams.Where(dream => dream.Id == dreamId)
                 : dreams.Where(dream => dream.Text.ToLower().Contains(normalizedQuery)
                     || dream.TagsJson.ToLower().Contains(normalizedQuery)
-                    || dream.ResultJson != null && dream.ResultJson.ToLower().Contains(normalizedQuery));
+                    || dream.ResultJson != null && dream.ResultJson.ToLower().Contains(normalizedQuery)
+                    || dbContext.UserProfiles.Any(profile => profile.UserSubject == dream.UserSubject
+                        && profile.EmailNormalized != null
+                        && profile.EmailNormalized.Contains(normalizedQuery)));
         }
         if (!string.IsNullOrWhiteSpace(status))
         {
@@ -49,6 +52,10 @@ public sealed class SearchAdminDreamsHandler(
             .Where(image => dreamIds.Contains(image.DreamId))
             .OrderByDescending(image => image.CreatedAt)
             .ToArrayAsync(cancellationToken);
+        var emailsBySubject = await dbContext.UserProfiles.AsNoTracking()
+            .Where(profile => records.Select(dream => dream.UserSubject).Contains(profile.UserSubject))
+            .Select(profile => new { profile.UserSubject, profile.EmailNormalized })
+            .ToDictionaryAsync(profile => profile.UserSubject, profile => profile.EmailNormalized, cancellationToken);
 
         return new AdminDreamSearchResponse(
             page,
@@ -60,6 +67,7 @@ public sealed class SearchAdminDreamsHandler(
                 return new AdminDreamSearchItemResponse(
                     dream.Id,
                     pseudonymService.CreatePseudonym(dream.UserSubject),
+                    emailsBySubject.GetValueOrDefault(dream.UserSubject),
                     dream.CreatedAt,
                     dream.OccurredAt,
                     dream.Status,
@@ -105,6 +113,10 @@ public sealed class AccessAdminDreamHandler(
             .ToArrayAsync(cancellationToken);
         var deep = await dbContext.DreamDeepInterpretations.AsNoTracking()
             .SingleOrDefaultAsync(item => item.DreamId == dreamId, cancellationToken);
+        var ownerEmail = await dbContext.UserProfiles.AsNoTracking()
+            .Where(profile => profile.UserSubject == dream.UserSubject)
+            .Select(profile => profile.EmailNormalized)
+            .SingleOrDefaultAsync(cancellationToken);
         var audit = RequeueAdminJobHandler.CreateAudit(
             dream.Id,
             null,
@@ -119,6 +131,7 @@ public sealed class AccessAdminDreamHandler(
         return AdminDreamAccessResult.Success(new AdminDreamDetailResponse(
             dream.Id,
             pseudonymService.CreatePseudonym(dream.UserSubject),
+            ownerEmail,
             dream.CreatedAt,
             dream.OccurredAt,
             dream.Status,

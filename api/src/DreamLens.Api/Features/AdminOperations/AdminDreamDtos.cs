@@ -11,6 +11,7 @@ public sealed record AdminDreamSearchResponse(
 public sealed record AdminDreamSearchItemResponse(
     Guid Id,
     string SubjectPseudonym,
+    string? OwnerEmail,
     DateTimeOffset CreatedAt,
     string? OccurredAt,
     string Status,
@@ -23,6 +24,7 @@ public sealed record AdminDreamSearchItemResponse(
 public sealed record AdminDreamDetailResponse(
     Guid Id,
     string SubjectPseudonym,
+    string? OwnerEmail,
     DateTimeOffset CreatedAt,
     string? OccurredAt,
     string Status,

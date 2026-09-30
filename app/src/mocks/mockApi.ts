@@ -92,11 +92,12 @@ export const mockApiClient: ApiClient = {
     page: 1,
     pageSize: 50,
     total: 1,
-    items: [{ id: mockDream.id, subjectPseudonym: "dreamer_mock", createdAt: mockDream.createdAt, occurredAt: mockDream.occurredAt ?? null, status: mockDream.status, mood: "curious", tags: ["river"], summary: mockDream.result?.summary ?? null, imageCount: 1, latestImageStatus: "completed" }]
+    items: [{ id: mockDream.id, subjectPseudonym: "dreamer_mock", ownerEmail: "dreamer@example.com", createdAt: mockDream.createdAt, occurredAt: mockDream.occurredAt ?? null, status: mockDream.status, mood: "curious", tags: ["river"], summary: mockDream.result?.summary ?? null, imageCount: 1, latestImageStatus: "completed" }]
   }),
   accessAdminDream: async () => ({
     id: mockDream.id,
     subjectPseudonym: "dreamer_mock",
+    ownerEmail: "dreamer@example.com",
     createdAt: mockDream.createdAt,
     occurredAt: mockDream.occurredAt ?? null,
     status: mockDream.status,

@@ -519,6 +519,7 @@ export type AdminDreamSearchResponse = {
 export type AdminDreamSearchItemResponse = {
   id: string;
   subjectPseudonym: string;
+  ownerEmail: string | null;
   createdAt: string;
   occurredAt: string | null;
   status: string;
@@ -532,6 +533,7 @@ export type AdminDreamSearchItemResponse = {
 export type AdminDreamDetailResponse = {
   id: string;
   subjectPseudonym: string;
+  ownerEmail: string | null;
   createdAt: string;
   occurredAt: string | null;
   status: string;

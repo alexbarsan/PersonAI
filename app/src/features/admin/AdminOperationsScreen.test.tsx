@@ -29,6 +29,8 @@ describe("AdminOperationsScreen", () => {
     renderWithProviders(<AdminOperationsScreen />, { accessAdminDream });
 
     fireEvent.press(screen.getByText("Dreams"));
+    expect(await screen.findByText("dreamer@example.com")).toBeTruthy();
+    expect(screen.getByText("1 dream in these results")).toBeTruthy();
     fireEvent.press(await screen.findByTestId("admin-dream-dream_mock_1"));
     fireEvent.press(screen.getByText("View original dream"));
 

@@ -47,7 +47,7 @@ public static class AdminOperationsEndpoints
             .RequireAuthorization(PrivacyAuthorizationExtensions.PrivacyAdminPolicy)
             .WithTags("Admin")
             .WithName("SearchAdminDreams")
-            .WithSummary("Searches private dreams and returns bounded metadata for privacy administrators.");
+            .WithSummary("Searches private dreams and returns bounded metadata with saved account email for privacy administrators.");
 
         app.MapPost("/v1/admin/dreams/{id:guid}/access", async (
             Guid id,
